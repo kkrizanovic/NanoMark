@@ -55,7 +55,7 @@ def benchmark(reads_file, reference_file):
         shutil.copy(reference_file, crefpath)
         logfile.write('Reference file: %s\n' % reference_file)
 
-        # Copy reds file to output folder while preserving extension
+        # Copy reads file to output folder while preserving extension
         shutil.copy(reads_file, creadspath)
         logfile.write('Reads file: %s\n' % reads_file)
 

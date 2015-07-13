@@ -9,10 +9,11 @@ import subprocess
 
 import basicdefines
 
-QUAST_ZIP_FILE = 'quast-2.3.tar.gz'
+QUAST_URL = 'http://sourceforge.net/projects/quast/files/quast-3.0.tar.gz'
+QUAST_ZIP_FILE = 'quast-3.0.tar.gz'
 QUAST_ZIP_PATH = os.path.join(basicdefines.TOOLS_ROOT_ABS, QUAST_ZIP_FILE)
 QUAST_BIN_FILE = 'quast.py'
-QUAST_BIN_PATH = os.path.join(basicdefines.TOOLS_ROOT_ABS, 'quast-2.3', QUAST_BIN_FILE)
+QUAST_BIN_PATH = os.path.join(basicdefines.TOOLS_ROOT_ABS, 'quast-3.0', QUAST_BIN_FILE)
 CGMEMTIME_FILE = 'cgmemtime'
 CGMEMTIME_PATH = os.path.join(basicdefines.TOOLS_ROOT_ABS, 'cgmemtime', CGMEMTIME_FILE)
 
@@ -57,9 +58,9 @@ def setup_tools():
 		sys.stderr.write('Quast already installed. Skipping ....\n')
 	else:
 		if not os.path.exists(QUAST_ZIP_PATH):
-			sys.stderr.write('Downloading Quast 2.3 from Sourceforge. Need tar to decompress.\n')
+			sys.stderr.write('Downloading Quast 3.0 from Sourceforge. Need tar to decompress.\n')
 			# Download
-			command = 'cd %s; wget http://sourceforge.net/projects/quast/files/quast-2.3.tar.gz' % basicdefines.TOOLS_ROOT_ABS
+			command = 'cd %s; wget %s' % (basicdefines.TOOLS_ROOT_ABS, QUAST_URL)
 			subprocess.call(command, shell='True')
 
 		# Decompress
