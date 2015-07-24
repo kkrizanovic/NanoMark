@@ -37,11 +37,14 @@ BAMTOOLS_BIN = os.path.join(BAMTOOLS_PATH, 'bin/bamtools')
 def run(reads_file, reference_file, machine_name, output_path, output_suffix=''):
     # SGA has a rathar long series of steps to do to run an assembly
     # TODO: Here is one sequence of programs producing one results
-    #        Parameters are many and they could all influence end result
-    #        Some parameters should be inferred from the reads file or set by user
+    #       Parameters are many and they could all influence end result
+    #       Some parameters should be inferred from the reads file or set by user
 
     # COMMENT: changing directory every time because it seems that it is not preserved
     #          across multiple shell commands
+
+    # The pipile implemented here will be based on sga-celegans example
+    # because that example used pacbio dataset
 
     num_threads = multiprocessing.cpu_count() / 2
 

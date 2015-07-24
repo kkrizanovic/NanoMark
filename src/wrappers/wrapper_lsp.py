@@ -37,11 +37,7 @@ FQ2FA_BIN = os.path.join(ASSEMBLER_PATH, 'bin/fq2fa')
 #    output_suffix        A custom suffix that can be added to the output filename.
 def run(reads_file, reference_file, machine_name, output_path, output_suffix=''):
 
-    num_threads = multiprocessing.cpu_count() / 2
-
-    memtime_path = os.path.join(output_path, ASSEMBLER_NAME + '.memtime')
-    command = '%s %s  %d -r %s -o %s' % (basicdefines.measure_command(memtime_path), ASSEMBLER_BIN, num_threads, reads_file, output_path)
-    subprocess.call(command, shell='True')
+    sys.stderr.write('\n\nAssembler %s not yet fully implemented!\n' % ASSEMBLER_NAME)
 
     # Atm, quast is run in the main program
 
@@ -56,13 +52,16 @@ def run_quast():
 # this is specific for each wrapper
 # Returns relevant real time, user time and maximum memory reserved
 def get_memtime():
-
+    pass
 
 
 # This is a standard interface for setting up an assembler. It should assume that the assembler
 # is not present localy, but needs to be retrieved, unpacked, compiled and set-up, without requireing
 # root privileges.
 def download_and_install():
+    # ATM installing only Celera
+    # TODO: check the whole pipeline and see what else it requires
+
     if os.path.exists(ASSEMBLER_BIN):
         sys.stderr.write('[%s wrapper] Bin found at %s. Skipping installation ...\n' % (ASSEMBLER_NAME, ASSEMBLER_BIN))
     else:
@@ -80,7 +79,7 @@ def download_and_install():
         subprocess.call(command, shell='True')
 
         # make
-		# WGS/Celera comes as precompiled binaries
+        # WGS/Celera comes as precompiled binaries
         # Doesn't require make
 
 

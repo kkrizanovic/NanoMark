@@ -76,7 +76,7 @@ def download_and_install():
         subprocess.call(command, shell='True')
 
         # make
-		# WGS/Celera comes as precompiled binaries
+        # WGS/Celera comes as precompiled binaries
         # Doesn't require make
 
 
