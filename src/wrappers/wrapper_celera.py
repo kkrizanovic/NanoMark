@@ -16,10 +16,19 @@ ASSEMBLER_PATH = os.path.join(basicdefines.ASSEMBLERS_PATH_ROOT_ABS, 'wgs-8.3rc2
 ZIP_FILE = 'wgs-8.3rc2-Linux_amd64.tar.bz2'
 ZIP_PATH = os.path.join(basicdefines.ASSEMBLERS_PATH_ROOT_ABS, ZIP_FILE)
 ASSEMBLER_BIN = os.path.join(ASSEMBLER_PATH,'Linux-amd64/bin/runCA')
+ASSEMBLER_ECBIN = os.path.join(ASSEMBLER_PATH,'Linux-amd64/bin/PBcR')
 ASSEMBLER_NAME = 'Celera'
-ASSEMBLER_RESULTS = 'contig-100.fa'
+ASSEMBLER_RESULTS = 'out/9-terminator/asm.ctg.fasta'
 CREATE_OUTPUT_FOLDER = True
 
+PACBIO_SPEC = os.path.join(basicdefines.ASSEMBLERS_PATH_ROOT_ABS, 'wgs_pacbio.spec')
+OXFORD_SPEC = os.path.join(basicdefines.ASSEMBLERS_PATH_ROOT_ABS, 'wgs_oxford.spec')
+
+DO_ERROR_CORRECTION = True
+
+# Run parameters
+P_LENGTH = 500
+P_PARTITIONS = 200
 
 
 # Function 'run' should provide a standard interface for running a mapper. Given input parameters, it should run the
@@ -35,9 +44,28 @@ def run(reads_file, reference_file, machine_name, output_path, output_suffix='')
     # TODO: Finish this
     num_threads = multiprocessing.cpu_count() / 2
 
+    used_bin = ''
+    if DO_ERROR_CORRECTION:
+        used_bin = ASSEMBLER_ECBIN
+    else:
+        used_bin = ASSEMBLER_BIN
     memtime_path = os.path.join(output_path, ASSEMBLER_NAME + '.memtime')
-    command = '%s %s -d %s -p %s' % (basicdefines.measure_command(memtime_path), ASSEMBLER_BIN, output_path, reads_file)
-    subprocess.call(command, shell='True')
+
+    spec_file = ''
+    if machine_name == 'pacbio':
+        spec_file = PACBIO_SPEC
+        command = 'cd %s; %s %s -pbCNS -length 500 -partitions 200 -l %s -s %s -fastq %s ' % (output_path, basicdefines.measure_command(memtime_path), used_bin, ASSEMBLER_NAME, spec_file, reads_file)
+        subprocess.call(command, shell='True')
+    elif machine_name == 'nanopore':
+        spec_file = OXFORD_SPEC
+        command = 'cd %s; %s %s -length 500 -partitions 200 -l %s -s %s -fastq %s ' % (output_path, basicdefines.measure_command(memtime_path), used_bin, ASSEMBLER_NAME, spec_file, reads_file)
+        subprocess.call(command, shell='True')
+    elif machine_name == 'illumina':
+        sys.stderr.write('\n\nmachine_name \'illumina\' not implemented for assembler %s' % ASSEMBLER_NAME)
+        sys.stderr.write('\nSkipping ....')
+    else:
+        sys.stderr.write('Invalid machine_name parameter for assembler %s' % ASSEMBLER_NAME)
+        sys.stderr.write('\nSkipping ....')
 
     # Atm, quast is run in the main program
 

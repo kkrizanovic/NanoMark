@@ -47,7 +47,7 @@ def list_wrappers():
 
 
 
-def benchmark(reads_file, reference_file, wrapper_list = []):
+def benchmark(reads_file, reference_file, technology, wrapper_list = []):
 
     uuid_string = str(uuid.uuid4())            # Generate a random UUID so that multiple runs don't clash
     output_folder = 'benchmark_' + uuid_string
@@ -125,7 +125,7 @@ def benchmark(reads_file, reference_file, wrapper_list = []):
             # Run each wrapper
             # def run(reads_file, reference_file, machine_name, output_path, output_suffix=''):
             sys.stderr.write('\n\nRunning assembler %s\n' % assembler_name)
-            command = 'import %s; %s.run(\'%s\', \'%s\', \'machine_name\', \'%s\')' % (wrapper, wrapper, creadspath, crefpath, assembler_folder)
+            command = 'import %s; %s.run(\'%s\', \'%s\', \'%s\', \'%s\')' % (wrapper, wrapper, creadspath, crefpath, technology, assembler_folder)
             exec(command)
 
             # Run quast on results file?
@@ -356,22 +356,31 @@ def main():
         setup_DNAssMark.setup_all()
 
     elif mode == 'benchmark':
-        if (len(sys.argv) < 4 or len(sys.argv) > 6):
+        if (len(sys.argv) < 5 or len(sys.argv) > 7):
             sys.stderr.write('Runs a benchmark on given reads and reference files.\n')
             sys.stderr.write('\n')
             sys.stderr.write('Usage:\n')
-            sys.stderr.write('\t%s %s <reads_file> <reference_file> options' % (sys.argv[0], sys.argv[1]))
+            sys.stderr.write('%s %s <reads_file> <reference_file> <technology> options' % (sys.argv[0], sys.argv[1]))
             sys.stderr.write('\n')
-            sys.stderr.write('\toptions:"\n')
-            sys.stderr.write('\t-as <assemblers> - comma separated list of assemblers to be used"\n')
-            sys.stderr.write('\t                   wrapper files are of the form: wrapper_[aligner name].py"\n')
-            sys.stderr.write('\t                   available wrappers can be obtained using option: list\n')
-            sys.stderr.write('\t                   if not specified, all available assemblers are used"\n')
+            sys.stderr.write('<technology> can be one of: \n')
+            sys.stderr.write('\t%s\n' % ', '.join(basicdefines.TECH))
+            sys.stderr.write('options:"\n')
+            sys.stderr.write('-as <assemblers> - comma separated list of assemblers to be used"\n')
+            sys.stderr.write('                   wrapper files are of the form: wrapper_[aligner name].py"\n')
+            sys.stderr.write('                   available wrappers can be obtained using option: list\n')
+            sys.stderr.write('                   if not specified, all available assemblers are used"\n')
             sys.stderr.write('\n')
             exit(1)
 
         reads_file = sys.argv[2]
         reference_file = sys.argv[3]
+        technology = sys.argv[4].lower()
+
+        if technology not in basicdefines.TECH:
+            sys.stderr.write('\nInvalid Technology!')
+            sys.stderr.write('\nTechnology must be one of:')
+            sys.stderr.write('\t%s\n' % ', '.join(basicdefines.TECH))
+            verbose_usage_and_exit()
 
         used_assemblers = []
         all_assemblers = get_allwrappers()
@@ -381,7 +390,7 @@ def main():
                 assemblersstring = sys.argv[i+1]
                 assemblers = assemblersstring.split(',')
                 for assembler in assemblers:
-                    if assemblers not in all_assemblers:
+                    if assembler not in all_assemblers:
                         sys.stderr.write('\nUnavailable assembler: %s\n\n' % assembler)
                         exit(1)
                     else:
@@ -394,7 +403,7 @@ def main():
         if len(used_assemblers) == 0:
             used_assemblers = all_assemblers
 
-        benchmark(reads_file, reference_file, used_assemblers)
+        benchmark(reads_file, reference_file, technology, used_assemblers)
 
     elif mode == 'continue':
         if (len(sys.argv) != 3):
