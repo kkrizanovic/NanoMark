@@ -4,7 +4,7 @@ import os
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
 import sys
-sys.path.append(SCRIPT_PATH + '/../src')
+sys.path.append(SCRIPT_PATH + '/../')
 
 import subprocess
 import multiprocessing
@@ -12,12 +12,13 @@ import multiprocessing
 import basicdefines
 
 # Loman Simpson pipeline
+# https://github.com/jts/nanopore-paper-analysis/blob/master/full-pipeline.make
 
-ASSEMBLER_URL = 'http://sourceforge.net/projects/wgs-assembler/files/wgs-assembler/wgs-8.3/wgs-8.3rc2-Linux_amd64.tar.bz2'
-ASSEMBLER_PATH = os.path.join(basicdefines.ASSEMBLERS_PATH_ROOT_ABS, 'wgs-8.3rc2')
-ZIP_FILE = 'wgs-8.3rc2-Linux_amd64.tar.bz2'
-ZIP_PATH = os.path.join(basicdefines.ASSEMBLERS_PATH_ROOT_ABS, ZIP_FILE)
-ASSEMBLER_BIN = os.path.join(ASSEMBLER_PATH,'Linux-amd64/bin/runCA')
+ASSEMBLER_URL = 'https://github.com/jts/nanopore-paper-analysis.git'
+ASSEMBLER_PATH = os.path.join(basicdefines.ASSEMBLERS_PATH_ROOT_ABS, 'LSP')
+# ZIP_FILE = 'wgs-8.3rc2-Linux_amd64.tar.bz2'
+# ZIP_PATH = os.path.join(basicdefines.ASSEMBLERS_PATH_ROOT_ABS, ZIP_FILE)
+ASSEMBLER_BIN = os.path.join(ASSEMBLER_PATH, 'full-pipeline.make')
 ASSEMBLER_NAME = 'LSP'
 ASSEMBLER_RESULTS = 'contig-100.fa'
 CREATE_OUTPUT_FOLDER = True
@@ -38,6 +39,7 @@ FQ2FA_BIN = os.path.join(ASSEMBLER_PATH, 'bin/fq2fa')
 def run(reads_file, reference_file, machine_name, output_path, output_suffix=''):
 
     sys.stderr.write('\n\nAssembler %s not yet fully implemented!\n' % ASSEMBLER_NAME)
+    ### make -f full-pipeline.make CORES=64 polished_genome.fasta
 
     # Atm, quast is run in the main program
 
@@ -59,28 +61,18 @@ def get_memtime():
 # is not present localy, but needs to be retrieved, unpacked, compiled and set-up, without requireing
 # root privileges.
 def download_and_install():
-    # ATM installing only Celera
-    # TODO: check the whole pipeline and see what else it requires
-
     if os.path.exists(ASSEMBLER_BIN):
         sys.stderr.write('[%s wrapper] Bin found at %s. Skipping installation ...\n' % (ASSEMBLER_NAME, ASSEMBLER_BIN))
     else:
         sys.stderr.write('[%s wrapper] Started installation of %s.\n' % (ASSEMBLER_NAME, ASSEMBLER_NAME))
+        if (not os.path.exists(ASSEMBLER_PATH)):
+            sys.stderr.write('[%s wrapper] Creating a directory on path "%s".\n' % (ASSEMBLER_NAME, ASSEMBLER_PATH))
+            os.makedirs(ASSEMBLER_PATH);
 
-        if not os.path.exists(ZIP_PATH):
-            sys.stderr.write('[%s wrapper] Downloading tar.bz2...\n' % (ASSEMBLER_NAME))
-            command = 'cd %s; wget %s' % (basicdefines.ASSEMBLERS_PATH_ROOT_ABS, ASSEMBLER_URL)
-            sys.stderr.write('[%s wrapper] %s\n' % (ASSEMBLER_NAME, command))
-            subprocess.call(command, shell='True')
-
-        # Decompress
-        command = 'cd %s; tar -xvjf %s' % (basicdefines.ASSEMBLERS_PATH_ROOT_ABS, ZIP_FILE)
+        command = 'cd %s; git clone %s' % (ASSEMBLER_PATH, ASSEMBLER_URL)
         sys.stderr.write('[%s wrapper] %s\n' % (ASSEMBLER_NAME, command))
         subprocess.call(command, shell='True')
 
-        # make
-        # WGS/Celera comes as precompiled binaries
-        # Doesn't require make
 
 
 def verbose_usage_and_exit():
