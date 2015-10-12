@@ -21,6 +21,8 @@ QUAST_PATH = 'quast-3.0'
 QUAST_PATH_ROOT_ABS = os.path.join(TOOLS_ROOT_ABS, QUAST_PATH)
 QUAST_BIN = os.path.join(QUAST_PATH_ROOT_ABS, 'quast.py')
 
+TECH = ['illumina', 'pacbio', 'nanopore']
+
 
 
 # Finds all files with a given filename pattern starting from the given path, recursivelly.

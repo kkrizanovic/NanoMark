@@ -10,6 +10,7 @@ import subprocess
 import multiprocessing
 
 import basicdefines
+import fastqparser
 
 ASSEMBLER_URL = 'http://sourceforge.net/projects/sparseassembler/files/SparseAssembler.zip'
 ASSEMBLER_PATH = os.path.join(basicdefines.ASSEMBLERS_PATH_ROOT_ABS, 'SparseAssembler')
@@ -37,9 +38,22 @@ def run(reads_file, reference_file, machine_name, output_path, output_suffix='')
     #       callculate estimated genome size (GS) from reference and/or reads files
     num_threads = multiprocessing.cpu_count() / 2
 
-    memtime_path = os.path.join(output_path, ASSEMBLER_NAME + '.memtime')
-    command = 'cd %s; %s %s -t %d k 21 GS 60000000 f %s' % (output_path, basicdefines.measure_command(memtime_path), ASSEMBLER_BIN, num_threads, reads_file)
-    subprocess.call(command, shell='True')
+    # ATM using the same set of parametars for all sequencers
+    if machine_name in basicdefines.TECH:
+
+        genomesize = 60000000       # Starting value / historical reasons
+
+        # Calculating reference size
+        reference_fastq = fastqparser.read_fastq(reference_file)
+        reference_seq = reference_fastq[1][0]
+        genomesize = len(reference_seq)
+
+        memtime_path = os.path.join(output_path, ASSEMBLER_NAME + '.memtime')
+        command = 'cd %s; %s %s -t %d k 21 GS %d f %s' % (output_path, basicdefines.measure_command(memtime_path), ASSEMBLER_BIN, num_threads, 10*genomesize, reads_file)
+        subprocess.call(command, shell='True')
+    else:
+        sys.stderr.write('\}\nInvalid machine_name parameter for assembler %s' % ASSEMBLER_NAME)
+        sys.stderr.write('\nSkipping ....')
 
     # Atm, quast is run in the main program
 

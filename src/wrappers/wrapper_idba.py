@@ -65,7 +65,7 @@ def run_quast():
 # this is specific for each wrapper
 # Returns relevant real time, user time and maximum memory reserved
 def get_memtime():
-
+    pass
 
 
 # This is a standard interface for setting up an assembler. It should assume that the assembler
