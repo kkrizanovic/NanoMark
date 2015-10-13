@@ -4,7 +4,7 @@ import os
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
 import sys
-sys.path.append(SCRIPT_PATH + '/../src')
+sys.path.append(SCRIPT_PATH + '/../')
 
 import subprocess
 import multiprocessing
@@ -28,8 +28,8 @@ ASSEMBLER_NAME = 'FALCON'
 # ASSEMBLER_RESULTS = 'contig-100.fa'
 CREATE_OUTPUT_FOLDER = True
 
-DRY_RUN = True;
-# DRY_RUN = False;
+# DRY_RUN = True;
+DRY_RUN = False;
 
 def execute_command(command, dry_run=True):
     if (dry_run == True):
@@ -206,9 +206,11 @@ def download_and_install():
 
 def verbose_usage_and_exit():
     sys.stderr.write('Usage:\n')
-    sys.stderr.write('\t%s mode [<reads_file> <reference_file> <machine_name> <output_path> [<output_suffix>]]\n' % sys.argv[0])
+    sys.stderr.write('\t%s mode [<reads_file1>,<reads_file2>,...,<reads_fileN> <machine_name> <output_path> <reference_file> [<output_suffix>]]\n' % sys.argv[0])
     sys.stderr.write('\n')
     sys.stderr.write('\t- mode - either "run" or "install". Is "install" other parameters can be ommitted.\n')
+    # sys.stderr.write('\n');
+    # sys.stderr.write('\tMultiple reads file can')
 
     exit(0)
 
@@ -225,20 +227,16 @@ if __name__ == "__main__":
             verbose_usage_and_exit()
 
         reads_files = sys.argv[2].split(',')         ### Enable specifying multiple FASTQ files for input.
-        reference_file = sys.argv[3]
-        machine_name = sys.argv[4]
-        output_path = sys.argv[5]
+        machine_name = sys.argv[3]
+        output_path = sys.argv[4]
+        reference_file = '';
         output_suffix = ''
 
+        if (len(sys.argv) >= 6):
+            reference_file = sys.argv[5]
         if (len(sys.argv) == 7):
             output_suffix = sys.argv[6]
         run(reads_files, reference_file, machine_name, output_path, output_suffix)
 
     else:
         verbose_usage_and_exit()
-
-
-
-
-
-
