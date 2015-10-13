@@ -29,8 +29,8 @@ ASSEMBLER_NAME = 'FALCON'
 # ASSEMBLER_RESULTS = 'contig-100.fa'
 CREATE_OUTPUT_FOLDER = True
 
-DRY_RUN = True;
-# DRY_RUN = False;
+# DRY_RUN = True;
+DRY_RUN = False;
 
 def execute_command(command, dry_run=True):
     if (dry_run == True):
