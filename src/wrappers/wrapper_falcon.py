@@ -9,6 +9,7 @@ sys.path.append(SCRIPT_PATH + '/../')
 import subprocess
 import multiprocessing
 import getpass
+from time import gmtime, strftime
 
 try:
     import basicdefines
@@ -28,8 +29,8 @@ ASSEMBLER_NAME = 'FALCON'
 # ASSEMBLER_RESULTS = 'contig-100.fa'
 CREATE_OUTPUT_FOLDER = True
 
-# DRY_RUN = True;
-DRY_RUN = False;
+DRY_RUN = True;
+# DRY_RUN = False;
 
 def execute_command(command, dry_run=True):
     if (dry_run == True):
@@ -66,6 +67,10 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
 
     reference_file = os.path.abspath(reference_file);
     output_path = os.path.abspath(output_path);
+
+    if (os.path.exists(output_path)):
+        timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
+        os.rename(output_path, '%s.bak_%s' % (output_path, timestamp));
 
     if (not os.path.exists(output_path)):
         sys.stderr.write('[%s wrapper] Creating a directory on path "%s".\n' % (ASSEMBLER_NAME, output_path))
