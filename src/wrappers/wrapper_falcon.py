@@ -223,7 +223,7 @@ if __name__ == "__main__":
         exit(0)
 
     elif (sys.argv[1] == 'run'):
-        if (len(sys.argv) < 6):
+        if (len(sys.argv) < 5 or len(sys.argv) > 7):
             verbose_usage_and_exit()
 
         reads_files = sys.argv[2].split(',')         ### Enable specifying multiple FASTQ files for input.
