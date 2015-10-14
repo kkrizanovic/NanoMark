@@ -161,7 +161,6 @@ def convert_reads_to_pacbio_format(reads_file, out_reads_file, fp_log, read_coun
         trimmed_header = re.sub('[^0-9a-zA-Z]', '_', header.split()[0]); # re.sub("[|:", "_", read[0][1:]);
 
         # pacbio_header = '%s/%d/0_%d RQ=0.850' % (trimmed_header, current_read, len(read[1]));
-        # pacbio_header = '%s/%d/0_%d RQ=0.850' % (trimmed_header, current_read, len(read[1]));
         pacbio_header = 'S1/%d/0_%d' % (current_read, len(read[1]));
         header_conversion_hash[pacbio_header] = header;
         read[0] = '%s%s' % (read[0][0], pacbio_header); ### Keep the first char of the header line.
@@ -291,6 +290,65 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         cfg_lines += 'overlap_filtering_setting = --max_diff 100 --max_cov 100 --min_cov 20 --bestn 10 --n_core 24\n';
         cfg_lines += '\n';
         cfg_lines += '# Running a PacBio reads configuration.\n';
+
+    elif (machine_name == 'nanopore'):
+        # -t parameter which suppresses the use of any k-mer that occurs more than t times in either the subject or target block
+        # -h the total number of bases covered by the k-mer hits is h (default 35)
+        # -l searching for local alignments involving at least -l base pairs (default 1000)
+        # -s The local alignments found will be output in a sparse encoding where a trace point on the alignment is recorded every -s base pairs of the a-read (default 100bp)
+        # 
+        # The options -k, -h, and -w control the initial filtration search for possible matches
+        # between reads.  Specifically, our search code looks for a pair of diagonal bands of
+        # width 2^w (default 2^6 = 64) that contain a collection of exact matching k-mers
+        # (default 14) between the two reads, such that the total number of bases covered by the
+        # k-mer hits is h (default 35). k cannot be larger than 32 in the current implementation.
+
+        cfg_lines = '';
+        cfg_lines += '[General]\n';
+        cfg_lines += 'job_type = local\n';
+        cfg_lines += '# list of files of the initial bas.h5 files\n';
+        cfg_lines += 'input_fofn = %s\n' % (fofn_file);
+        cfg_lines += '\n';
+        cfg_lines += 'input_type = raw\n';
+        cfg_lines += '#input_type = preads\n';
+        cfg_lines += '\n';
+        cfg_lines += '# The length cutoff used for seed reads used for initial mapping\n';
+        cfg_lines += 'length_cutoff = 12000\n';
+        cfg_lines += '\n';
+        cfg_lines += '# The length cutoff used for seed reads usef for pre-assembly\n';
+        cfg_lines += 'length_cutoff_pr = 12000\n';
+        cfg_lines += '\n';
+        cfg_lines += '# job_type= local\n';
+        cfg_lines += 'jobqueue = your_queue\n';
+        cfg_lines += 'sge_option_da =\n';
+        cfg_lines += 'sge_option_la =\n';
+        cfg_lines += 'sge_option_pda =\n';
+        cfg_lines += 'sge_option_pla =\n';
+        cfg_lines += 'sge_option_fc =\n';
+        cfg_lines += 'sge_option_cns =\n';
+        cfg_lines += '\n';
+        cfg_lines += 'pa_concurrent_jobs = 24\n';
+        cfg_lines += 'ovlp_concurrent_jobs = 24\n';
+        cfg_lines += '\n';
+        cfg_lines += 'pa_HPCdaligner_option =  -v -dal4 -t16 -e.70 -l1000 -s1000\n';
+        cfg_lines += 'ovlp_HPCdaligner_option = -v -dal4 -t32 -h60 -e.96 -l500 -s1000\n';
+        cfg_lines += '\n';
+        cfg_lines += 'pa_DBsplit_option = -x500 -s50\n';
+        cfg_lines += 'ovlp_DBsplit_option = -x500 -s50\n';
+#        cfg_lines += 'falcon_sense_option = --output_multi --min_idt 0.70 --min_cov 4 --local_match_count_threshold 2 --max_n_read 200 --n_core 6\n';
+#        cfg_lines += 'overlap_filtering_setting = --max_diff 100 --max_cov 100 --min_cov 20 --bestn 10 --n_core 24\n';
+
+# --max_n_read put a cap on the number of reads used for error correction. In high repetitive genome, you will need to put smaller --max_n_read to make sure the consensus code does not waste time aligning repeats.
+        cfg_lines += 'falcon_sense_option = --output_multi --min_idt 0.50 --local_match_count_threshold 0 --max_n_read 200 --n_core 12\n';
+
+# The --max_diff parameter can be used to filter out the reads where one ends has much more coverage than the other end.
+# The --max_cov and --min_cov are used for filtering reads that have too high or too low overlaps.
+# The --bestn parameter in overlap_filtering_setting option can be used to control the maximum overlap reported for each read.
+        cfg_lines += 'overlap_filtering_setting = --max_diff 100 --max_cov 100 --min_cov 10 --bestn 10 --n_core 24\n';
+
+        cfg_lines += '\n';
+        cfg_lines += '# Running an Oxford Nanopore reads configuration.\n';
+
     else:
         log('ERROR: Unknown machine name: "%s". Skipping assembly.\n' % (machine_name), fp_log);
         return;
