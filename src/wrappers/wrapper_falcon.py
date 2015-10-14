@@ -161,7 +161,8 @@ def convert_reads_to_pacbio_format(reads_file, out_reads_file, fp_log, read_coun
         trimmed_header = re.sub('[^0-9a-zA-Z]', '_', header.split()[0]); # re.sub("[|:", "_", read[0][1:]);
 
         # pacbio_header = '%s/%d/0_%d RQ=0.850' % (trimmed_header, current_read, len(read[1]));
-        pacbio_header = '%s/%d/0_%d RQ=0.850' % (trimmed_header, current_read, len(read[1]));
+        # pacbio_header = '%s/%d/0_%d RQ=0.850' % (trimmed_header, current_read, len(read[1]));
+        pacbio_header = 'S1/%d/0_%d' % (current_read, len(read[1]));
         header_conversion_hash[pacbio_header] = header;
         read[0] = '%s%s' % (read[0][0], pacbio_header); ### Keep the first char of the header line.
         read[1] = re.sub("(.{500})", "\\1\n", read[1], 0, re.DOTALL);   ### Wrap the sequence line, because DALIGNER has a 9998bp line len limit.
