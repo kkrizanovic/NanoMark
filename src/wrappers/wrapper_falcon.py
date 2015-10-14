@@ -227,7 +227,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
     for reads_file in reads_files:
         i += 1;
         reads_file = os.path.abspath(reads_file);
-        out_reads_file = '%s.pbheader.fasta' % (os.path.splitext(reads_file)[0], os.path.splitext(reads_file)[1]);
+        out_reads_file = '%s.pbheader.fasta' % (os.path.splitext(reads_file)[0]);
         # sys.stderr.write('[%s wrapper] \t(%d) %s -> %s\n' % (ASSEMBLER_NAME, i, reads_file, out_reads_file))
         log('\t(%d) %s -> %s' % (i, reads_file, out_reads_file), fp_log);
         fofn_paths.append(out_reads_file);
