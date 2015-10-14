@@ -117,11 +117,13 @@ def get_single_read(fp):
     
     return [header, lines];
 
-### DALIGNER requires PacBio format of headers in reads
+### DALIGNER requires PacBio format of headers in reads.
 ### Parameter read_count_offset specifies the ID of the first read in the file.
 ### For every read, this ID gets updated.
 ### This ID is given as the first added parameter to the PacBio header.
 ### The new header will be formatted as: old_header/read_id/0_readlen .
+### IMPORTANT: Falcon requires FASTA format of input files, so this function converts
+### from FASTQ to FASTA in case reads_file was FASTQ.
 def convert_reads_to_pacbio_format(reads_file, out_reads_file, fp_log, read_count_offset=0):
     try:
         fp_in = open(reads_file, 'r');
@@ -159,13 +161,15 @@ def convert_reads_to_pacbio_format(reads_file, out_reads_file, fp_log, read_coun
         trimmed_header = re.sub('[^0-9a-zA-Z]', '_', header.split()[0]); # re.sub("[|:", "_", read[0][1:]);
 
         # pacbio_header = '%s/%d/0_%d RQ=0.850' % (trimmed_header, current_read, len(read[1]));
-        pacbio_header = '%s/%d/0_%d' % (trimmed_header, current_read, len(read[1]));
+        pacbio_header = '%s/%d/0_%d RQ=0.850' % (trimmed_header, current_read, len(read[1]));
         header_conversion_hash[pacbio_header] = header;
         read[0] = '%s%s' % (read[0][0], pacbio_header); ### Keep the first char of the header line.
         read[1] = re.sub("(.{500})", "\\1\n", read[1], 0, re.DOTALL);   ### Wrap the sequence line, because DALIGNER has a 9998bp line len limit.
-        if (len(read) == 4):
-            read[3] = re.sub("(.{500})", "\\1\n", read[3], 0, re.DOTALL);   ### Wrap the qual line, because DALIGNER has a 9998bp line len limit.
-        fp_out.write('\n'.join(read) + '\n');
+#        if (len(read) == 4):
+#            read[3] = re.sub("(.{500})", "\\1\n", read[3], 0, re.DOTALL);   ### Wrap the qual line, because DALIGNER has a 9998bp line len limit.
+#        fp_out.write('\n'.join(read) + '\n');
+        fp_out.write('>%s\n' % (pacbio_header));
+        fp_out.write('%s\n' % (read[1]));   ### Wrap the sequence line, because DALIGNER has a 9998bp line len limit.
 
     log('\n', fp_log);
     fp_in.close();
@@ -223,7 +227,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
     for reads_file in reads_files:
         i += 1;
         reads_file = os.path.abspath(reads_file);
-        out_reads_file = '%s.pbheader%s' % (os.path.splitext(reads_file)[0], os.path.splitext(reads_file)[1]);
+        out_reads_file = '%s.pbheader.fasta' % (os.path.splitext(reads_file)[0], os.path.splitext(reads_file)[1]);
         # sys.stderr.write('[%s wrapper] \t(%d) %s -> %s\n' % (ASSEMBLER_NAME, i, reads_file, out_reads_file))
         log('\t(%d) %s -> %s' % (i, reads_file, out_reads_file), fp_log);
         fofn_paths.append(out_reads_file);
