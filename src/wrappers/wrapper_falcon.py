@@ -292,17 +292,6 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         cfg_lines += '# Running a PacBio reads configuration.\n';
 
     elif (machine_name == 'nanopore'):
-        # -t parameter which suppresses the use of any k-mer that occurs more than t times in either the subject or target block
-        # -h the total number of bases covered by the k-mer hits is h (default 35)
-        # -l searching for local alignments involving at least -l base pairs (default 1000)
-        # -s The local alignments found will be output in a sparse encoding where a trace point on the alignment is recorded every -s base pairs of the a-read (default 100bp)
-        # 
-        # The options -k, -h, and -w control the initial filtration search for possible matches
-        # between reads.  Specifically, our search code looks for a pair of diagonal bands of
-        # width 2^w (default 2^6 = 64) that contain a collection of exact matching k-mers
-        # (default 14) between the two reads, such that the total number of bases covered by the
-        # k-mer hits is h (default 35). k cannot be larger than 32 in the current implementation.
-
         cfg_lines = '';
         cfg_lines += '[General]\n';
         cfg_lines += 'job_type = local\n';
@@ -330,6 +319,22 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         cfg_lines += 'pa_concurrent_jobs = 24\n';
         cfg_lines += 'ovlp_concurrent_jobs = 24\n';
         cfg_lines += '\n';
+
+        ### DALIGNER options:
+        ### -dal4   The -dal option (default 4) gives the desired number of block comparisons per call to
+        ###         daligner. Some must contain dal-1 comparisons, and the first dal-2 block comparisons
+        ###         even less, but the HPCdaligner "planner" does the best it can to give an average load
+        ###         of dal block comparisons per command.
+        ### -t parameter which suppresses the use of any k-mer that occurs more than t times in either the subject or target block
+        ### -h the total number of bases covered by the k-mer hits is h (default 35)
+        ### -l searching for local alignments involving at least -l base pairs (default 1000)
+        ### -s The local alignments found will be output in a sparse encoding where a trace point on the alignment is recorded every -s base pairs of the a-read (default 100bp)
+        ### 
+        ### The options -k, -h, and -w control the initial filtration search for possible matches
+        ### between reads.  Specifically, our search code looks for a pair of diagonal bands of
+        ### width 2^w (default 2^6 = 64) that contain a collection of exact matching k-mers
+        ### (default 14) between the two reads, such that the total number of bases covered by the
+        ### k-mer hits is h (default 35). k cannot be larger than 32 in the current implementation.
         cfg_lines += 'pa_HPCdaligner_option =  -v -dal4 -t16 -e.70 -l1000 -s1000\n';
         cfg_lines += 'ovlp_HPCdaligner_option = -v -dal4 -t32 -h60 -e.96 -l500 -s1000\n';
         cfg_lines += '\n';
