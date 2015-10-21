@@ -117,6 +117,12 @@ def get_single_read(fp):
     
     return [header, lines];
 
+##############################################################
+##############################################################
+##############################################################
+
+
+
 ### DALIGNER requires PacBio format of headers in reads.
 ### Parameter read_count_offset specifies the ID of the first read in the file.
 ### For every read, this ID gets updated.
@@ -346,9 +352,9 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
 # --max_n_read put a cap on the number of reads used for error correction. In high repetitive genome, you will need to put smaller --max_n_read to make sure the consensus code does not waste time aligning repeats.
         cfg_lines += 'falcon_sense_option = --output_multi --min_idt 0.50 --local_match_count_threshold 0 --max_n_read 200 --n_core 12\n';
 
-# The --max_diff parameter can be used to filter out the reads where one ends has much more coverage than the other end.
-# The --max_cov and --min_cov are used for filtering reads that have too high or too low overlaps.
-# The --bestn parameter in overlap_filtering_setting option can be used to control the maximum overlap reported for each read.
+        ### The --max_diff parameter can be used to filter out the reads where one ends has much more coverage than the other end.
+        ### The --max_cov and --min_cov are used for filtering reads that have too high or too low overlaps.
+        ### The --bestn parameter in overlap_filtering_setting option can be used to control the maximum overlap reported for each read.
         cfg_lines += 'overlap_filtering_setting = --max_diff 100 --max_cov 100 --min_cov 10 --bestn 10 --n_core 24\n';
 
         cfg_lines += '\n';
@@ -375,11 +381,12 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
 
     memtime_file = '%s/%s.memtime' % (output_path, ASSEMBLER_NAME);
     FC_path = '%s/fc_env' % (ASSEMBLER_PATH);
-    setup_commands = [];
-    setup_commands.append('. %s/bin/activate' % (FC_path));
-    setup_commands.append('cd %s' % (output_path));
-    setup_commands.append('%s fc_run.py %s' % (measure_command(memtime_file), cfg_file));
-    command = '; '.join(setup_commands);
+    run_commands = [];
+    run_commands.append('. %s/bin/activate' % (FC_path));
+    run_commands.append('cd %s' % (output_path));
+    run_commands.append('%s fc_run.py %s' % (measure_command(memtime_file), cfg_file));
+    run_commands.append('cp %s/2-asm-falcon/p_ctg.fa %s/benchmark-final_assembly.fasta' % (output_path, output_path));
+    command = '; '.join(run_commands);
     execute_command(command, fp_log, dry_run=DRY_RUN);
 
     if (fp_log != None):
