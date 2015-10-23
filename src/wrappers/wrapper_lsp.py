@@ -307,6 +307,9 @@ def download_and_install():
         setup_commands.append('cd %s' % (ASSEMBLER_PATH));
         setup_commands.append('sudo apt-get install bioperl');
         setup_commands.append('sudo apt-get install parallel');
+	setup_commands.append('sudo apt-get install ncurses-dev');
+	setup_commands.append('sudo apt-get install libhdf5-dev');
+	setup_commands.append('sudo apt-get install r-base');
         setup_commands.append('sudo pip install virtualenv');
         # Install Python dependencies.
         setup_commands.append('LS_ENV=%s/ls_env' % (ASSEMBLER_PATH));
@@ -314,6 +317,8 @@ def download_and_install():
         # Activate the virtual environment.
         setup_commands.append('. $LS_ENV/bin/activate');
         # Install the required Python packages in the virtual environment.
+	setup_commands.append('pip install rpy2');
+	setup_commands.append('pip install --upgrade setuptools');
         setup_commands.append('pip install pysam > pythonlibs.version');
         setup_commands.append('pip install cython >> pythonlibs.version');
         setup_commands.append('pip install numpy==1.8.1 >> pythonlibs.version');

@@ -6,6 +6,9 @@
 *.maf
 *.pyc
 *.log
+*.tee
+temp*
+*.temp
 intermediate/
 tools/
 src/wrappers_old/
