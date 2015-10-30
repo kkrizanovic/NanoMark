@@ -298,15 +298,17 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         cfg_lines += '\n';
         cfg_lines += '# Running a PacBio reads configuration.\n';
 
-    elif (machine_name == 'nanopore'):
+    elif (machine_name == 'nanopore' or machine_name == 'nanoporenocorrect'):
         cfg_lines = '';
         cfg_lines += '[General]\n';
         cfg_lines += 'job_type = local\n';
         cfg_lines += '# list of files of the initial bas.h5 files\n';
         cfg_lines += 'input_fofn = %s\n' % (fofn_file);
         cfg_lines += '\n';
-        cfg_lines += 'input_type = raw\n';
-        cfg_lines += '#input_type = preads\n';
+        if (machine_name == 'nanoporenocorrect'):
+            cfg_lines += 'input_type = preads\n';
+        else:
+            cfg_lines += 'input_type = raw\n';
         cfg_lines += '\n';
         cfg_lines += '# The length cutoff used for seed reads used for initial mapping\n';
         cfg_lines += 'length_cutoff = 1000\n';

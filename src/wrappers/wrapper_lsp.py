@@ -228,35 +228,47 @@ def run(reads_file, reference_file, machine_name, output_path, output_suffix='')
     commands.append('. $LS_ENV/bin/activate');
 
     # Error correction, the first step.
-    commands.append('make -f nanocorrect/nanocorrect-overlap.make INPUT=%s NAME=%s' % (raw_reads_path, raw_reads_basename));
-    commands.append('samtools faidx %s.pp.fasta' % (raw_reads_basename));
-    commands.append('python nanocorrect/makerange.py %s | parallel -v --eta -P $NC_PROCESS \'python nanocorrect/nanocorrect.py %s {} > %s.{}.corrected.fasta\'' % (raw_reads_path, raw_reads_basename, raw_reads_basename));
-    commands.append('cat %s.*.corrected.fasta | python lengthsort.py > %s.corrected.fasta' % (raw_reads_basename, raw_reads_basename));
+    current_memtime_id += 1;
+    commands.append('%s make -f nanocorrect/nanocorrect-overlap.make INPUT=%s NAME=%s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_path, raw_reads_basename));
+    current_memtime_id += 1;
+    commands.append('%s samtools faidx %s.pp.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename));
+    current_memtime_id += 1;
+    commands.append('%s python nanocorrect/makerange.py %s | parallel -v --eta -P $NC_PROCESS \'python nanocorrect/nanocorrect.py %s {} > %s.{}.corrected.fasta\'' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_path, raw_reads_basename, raw_reads_basename));
+    current_memtime_id += 1;
+    commands.append('%s cat %s.*.corrected.fasta | python lengthsort.py > %s.corrected.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename, raw_reads_basename));
     #rm raw.reads.*.corrected.fasta
     # Error correction, the second step.
-    commands.append('make -f nanocorrect/nanocorrect-overlap.make INPUT=%s.corrected.fasta NAME=%s.corrected' % (raw_reads_basename, raw_reads_basename));
-    commands.append('samtools faidx %s.corrected.pp.fasta' % (raw_reads_basename));
-    commands.append('python nanocorrect/makerange.py %s.corrected.fasta | parallel -v --eta -P $NC_PROCESS \'python nanocorrect/nanocorrect.py %s.corrected {} > %s.corrected.{}.corrected.fasta\'' % (raw_reads_basename, raw_reads_basename, raw_reads_basename));
-    commands.append('cat %s.corrected.*.corrected.fasta | python lengthsort.py > %s.corrected.corrected.fasta' % (raw_reads_basename));
+    current_memtime_id += 1;
+    commands.append('%s make -f nanocorrect/nanocorrect-overlap.make INPUT=%s.corrected.fasta NAME=%s.corrected' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename, raw_reads_basename));
+    current_memtime_id += 1;
+    commands.append('%s samtools faidx %s.corrected.pp.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename));
+    current_memtime_id += 1;
+    commands.append('%s python nanocorrect/makerange.py %s.corrected.fasta | parallel -v --eta -P $NC_PROCESS \'python nanocorrect/nanocorrect.py %s.corrected {} > %s.corrected.{}.corrected.fasta\'' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename, raw_reads_basename, raw_reads_basename));
+    current_memtime_id += 1;
+    commands.append('%s cat %s.corrected.*.corrected.fasta | python lengthsort.py > %s.corrected.corrected.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename));
     # commands.append('rm raw.reads.corrected.*.corrected.fasta');
 
     reads_error_corrected = 'raw.reads.corrected.corrected.fasta';
     reads_assembly_input = 'assembly.input.fastq';
-    commands.append('java -Xmx1024M -jar ./wgs-8.2/Linux-amd64/bin/convertFastaAndQualToFastq.jar %s > %s' % (reads_error_corrected, reads_assembly_input));
-    commands.append('fastqToCA -technology sanger -libraryname assembly -reads %s > assembly.frg' % (reads_assembly_input));
-    commands.append('runCA -d celera-assembly -p asm -s revised_ovlErrorRate0.04.spec assembly.frg');
-    commands.append('ln -s celera-assembly/9-terminator/asm.scf.fasta draft_genome.fasta');
+    current_memtime_id += 1;
+    commands.append('%s java -Xmx1024M -jar ./wgs-8.2/Linux-amd64/bin/convertFastaAndQualToFastq.jar %s > %s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), reads_error_corrected, reads_assembly_input));
+    current_memtime_id += 1;
+    commands.append('%s fastqToCA -technology sanger -libraryname assembly -reads %s > assembly.frg' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), reads_assembly_input));
+    current_memtime_id += 1;
+    commands.append('%s runCA -d celera-assembly -p asm -s revised_ovlErrorRate0.04.spec assembly.frg' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))));
+    current_memtime_id += 1;
+    commands.append('%s ln -s celera-assembly/9-terminator/asm.scf.fasta draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))));
 
     # preprocess the fasta file for nanopolish
-    commands.append('nanopolish/consensus-preprocess.pl %s > %s.np.fasta' % (raw_reads_path, raw_reads_basename));
+    commands.append('%s nanopolish/consensus-preprocess.pl %s > %s.np.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_path, raw_reads_basename));
     # index the draft assembly for bwa
-    commands.append('bwa index draft_genome.fasta');
+    commands.append('%s bwa index draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))));
     # index the draft assembly for faidx
-    commands.append('samtools faidx draft_genome.fasta');
+    commands.append('%s samtools faidx draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))));
     # align reads to draft assembly
-    commands.append('bwa mem -t $THREADS -x ont2d draft_genome.fasta %s.np.fasta | samtools view -Sb - | samtools sort -f - reads_to_draft.sorted.bam' % (raw_reads_basename));
+    commands.append('%s bwa mem -t $THREADS -x ont2d draft_genome.fasta %s.np.fasta | samtools view -Sb - | samtools sort -f - reads_to_draft.sorted.bam' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename));
     # index the bam file
-    commands.append('samtools index reads_to_draft.sorted.bam');
+    commands.append('%s samtools index reads_to_draft.sorted.bam' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))));
     # run nanopolish
     commands.append('python nanopolish/nanopolish_makerange.py draft_genome.fasta | parallel --progress -P $NP_PROCESS nanopolish/nanopolish consensus -o nanopolish.{1}.fa -r %s.np.fasta -b reads_to_draft.sorted.bam -g draft_genome.fasta -w {1} -t $THREADS python nanopolish/nanopolish_merge.py draft_genome.fasta nanopolish.scf*.fa > polished_genome.fasta' % (raw_reads_basename));
 
