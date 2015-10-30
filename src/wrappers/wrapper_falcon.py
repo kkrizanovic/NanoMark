@@ -198,6 +198,7 @@ def convert_reads_to_pacbio_format(reads_file, out_reads_file, fp_log, read_coun
 def run(reads_files, reference_file, machine_name, output_path, output_suffix=''):
     ### Reference for running a local job instead of using an SGE cluster:
     ### http://seqanswers.com/forums/showthread.php?t=50937
+    num_threads = multiprocessing.cpu_count() / 2;
 
     reference_file = os.path.abspath(reference_file);
     output_path = os.path.abspath(output_path);
@@ -291,9 +292,9 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         cfg_lines += 'pa_DBsplit_option = -x500 -s50\n';
         cfg_lines += 'ovlp_DBsplit_option = -x500 -s50\n';
         cfg_lines += '\n';
-        cfg_lines += 'falcon_sense_option = --output_multi --min_idt 0.70 --min_cov 4 --local_match_count_threshold 2 --max_n_read 200 --n_core 6\n';
+        cfg_lines += 'falcon_sense_option = --output_multi --min_idt 0.70 --min_cov 4 --local_match_count_threshold 2 --max_n_read 200 --n_core %d\n' % (num_threads);
         cfg_lines += '\n';
-        cfg_lines += 'overlap_filtering_setting = --max_diff 100 --max_cov 100 --min_cov 20 --bestn 10 --n_core 24\n';
+        cfg_lines += 'overlap_filtering_setting = --max_diff 100 --max_cov 100 --min_cov 20 --bestn 10 --n_core %d\n' % (num_threads);
         cfg_lines += '\n';
         cfg_lines += '# Running a PacBio reads configuration.\n';
 
@@ -308,10 +309,10 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         cfg_lines += '#input_type = preads\n';
         cfg_lines += '\n';
         cfg_lines += '# The length cutoff used for seed reads used for initial mapping\n';
-        cfg_lines += 'length_cutoff = 12000\n';
+        cfg_lines += 'length_cutoff = 1000\n';
         cfg_lines += '\n';
         cfg_lines += '# The length cutoff used for seed reads usef for pre-assembly\n';
-        cfg_lines += 'length_cutoff_pr = 12000\n';
+        cfg_lines += 'length_cutoff_pr = 1000\n';
         cfg_lines += '\n';
         cfg_lines += '# job_type= local\n';
         cfg_lines += 'jobqueue = your_queue\n';
@@ -341,21 +342,21 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         ### width 2^w (default 2^6 = 64) that contain a collection of exact matching k-mers
         ### (default 14) between the two reads, such that the total number of bases covered by the
         ### k-mer hits is h (default 35). k cannot be larger than 32 in the current implementation.
-        cfg_lines += 'pa_HPCdaligner_option =  -v -dal4 -t16 -e.70 -l1000 -s1000\n';
-        cfg_lines += 'ovlp_HPCdaligner_option = -v -dal4 -t32 -h60 -e.96 -l500 -s1000\n';
+        cfg_lines += 'pa_HPCdaligner_option =  -v -dal4 -t100 -e.70 -l100 -s100\n';
+        cfg_lines += 'ovlp_HPCdaligner_option = -v -dal4 -t100 -h60 -e.92 -l100 -s100\n';
         cfg_lines += '\n';
-        cfg_lines += 'pa_DBsplit_option = -x500 -s50\n';
-        cfg_lines += 'ovlp_DBsplit_option = -x500 -s50\n';
+        cfg_lines += 'pa_DBsplit_option = -x100 -s50\n';
+        cfg_lines += 'ovlp_DBsplit_option = -x100 -s50\n';
 #        cfg_lines += 'falcon_sense_option = --output_multi --min_idt 0.70 --min_cov 4 --local_match_count_threshold 2 --max_n_read 200 --n_core 6\n';
 #        cfg_lines += 'overlap_filtering_setting = --max_diff 100 --max_cov 100 --min_cov 20 --bestn 10 --n_core 24\n';
 
 # --max_n_read put a cap on the number of reads used for error correction. In high repetitive genome, you will need to put smaller --max_n_read to make sure the consensus code does not waste time aligning repeats.
-        cfg_lines += 'falcon_sense_option = --output_multi --min_idt 0.50 --local_match_count_threshold 0 --max_n_read 200 --n_core 12\n';
+        cfg_lines += 'falcon_sense_option = --output_multi --min_idt 0.50 --local_match_count_threshold 0 --max_n_read 200 --n_core %d\n' % (num_threads);
 
         ### The --max_diff parameter can be used to filter out the reads where one ends has much more coverage than the other end.
         ### The --max_cov and --min_cov are used for filtering reads that have too high or too low overlaps.
         ### The --bestn parameter in overlap_filtering_setting option can be used to control the maximum overlap reported for each read.
-        cfg_lines += 'overlap_filtering_setting = --max_diff 100 --max_cov 100 --min_cov 10 --bestn 10 --n_core 24\n';
+        cfg_lines += 'overlap_filtering_setting = --max_diff 100 --max_cov 100 --min_cov 5 --bestn 20 --n_core %d\n' % (num_threads);
 
         cfg_lines += '\n';
         cfg_lines += '# Running an Oxford Nanopore reads configuration.\n';

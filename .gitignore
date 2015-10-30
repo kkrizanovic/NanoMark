@@ -16,3 +16,6 @@ tools/gepard-1.30/
 temp/
 assemblers/
 datasets/
+results/
+run-test.sh
+run-crosstest.sh
