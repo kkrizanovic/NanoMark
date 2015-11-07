@@ -342,7 +342,6 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
 
 
     log('Running assembly using %s.' % (ASSEMBLER_NAME), fp_log);
-    current_memtime_id = 0;
 
     if (MODULE_BASICDEFINES == True):
         command = 'sudo %s/cgmemtime/cgmemtime --setup -g %s --perm 775' % (basicdefines.TOOLS_ROOT, getpass.getuser());
@@ -364,6 +363,8 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
 
     commands.append('LS_ENV=%s/ls_env' % (ASSEMBLER_PATH));
     commands.append('. $LS_ENV/bin/activate');
+
+    current_memtime_id = 0;
 
     # Error correction, the first step.
     current_memtime_id += 1;
@@ -423,7 +424,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
 
 
 
-    all_memtimes = ['%s-%s.memtime' % (memtime_files_prefix, value) for value in xrange(current_memtime_id)];
+    all_memtimes = ['%s-%s.memtime' % (memtime_files_prefix, value) for value in xrange(1, current_memtime_id)];
     parse_memtime_files_and_accumulate(all_memtimes, memtime_file);
 
     # Atm, quast is run in the main program
