@@ -348,6 +348,8 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         command = 'sudo %s/cgmemtime/cgmemtime --setup -g %s --perm 775' % (basicdefines.TOOLS_ROOT, getpass.getuser());
         execute_command(command, fp_log, dry_run=DRY_RUN);
     memtime_file = '%s/%s.memtime' % (output_path, ASSEMBLER_NAME);
+    # memtime_files_prefis = 
+    memtime_files_prefix =  '%s/%s' % (output_path, ASSEMBLER_NAME);
 
     commands = [];
     commands.append('cd %s' % (output_path));
