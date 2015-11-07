@@ -422,7 +422,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
 
 
 
-    all_memtimes = ['%s-%s.memtime' % (memtime_files_prefix, current_memtime_id) for value in xrange(current_memtime_id)];
+    all_memtimes = ['%s-%s.memtime' % (memtime_files_prefix, value) for value in xrange(current_memtime_id)];
     parse_memtime_files_and_accumulate(all_memtimes, memtime_file);
 
     # Atm, quast is run in the main program
