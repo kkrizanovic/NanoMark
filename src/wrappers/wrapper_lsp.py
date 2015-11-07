@@ -175,27 +175,26 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
     # reads_file = os.path.abspath(reads_file);
     reference_file = os.path.abspath(reference_file);
     output_path = os.path.abspath(output_path);
-    reads_folder = os.path.dirname(reads_file);
-    reads_basename = os.path.basename(reads_file);
     raw_reads_path = '%s/raw.reads.fasta' % (output_path);
     raw_reads_filename = os.path.basename(raw_reads_path);
     raw_reads_basename = os.path.splitext(os.path.basename(raw_reads_path))[0];
 
-
-    reads_file = os.path.abspath('%s/joint_reads.fasta' % (output_path));
-    try:
-        fp = open(reads_file, 'w');
-        fp.close();
-    except:
-        log('ERROR: Could not open file "%s" for writing!\n' % (reads_file));
-        return;
-
-    i = 0;
+    ### Collect all reads paths.
+    reads_folder = None;
+    reads_folders = [];
     for single_reads_file in reads_files:
-        i += 1;
-        single_reads_file = os.path.abspath(single_reads_file);
-        execute_command('cat %s > %s' % (single_reads_file, reads_file), fp_log, dry_run=DRY_RUN);
-        log('\t(%d) %s -> %s' % (i, single_reads_file, reads_file), fp_log);
+        if (reads_folder == None):
+            reads_folder = os.path.dirname(single_reads_file);
+            reads_folders.append(reads_folder);
+            reads_basename = os.path.basename(single_reads_file);
+        if (os.path.dirname(single_reads_file != reads_folder):
+            sys.stderr.write('ERROR: Files containing reads are not located in the same folder!\n');
+            return;
+    if (reads_folder == None):
+        sys.stderr.write('ERROR: reads_folder is None!\n');
+        return;
+    # reads_folder = os.path.dirname(reads_file);
+    # reads_basename = os.path.basename(reads_file);
 
     ### Backup old assembly results, and create the new output folder.
     if (os.path.exists(output_path)):
@@ -205,6 +204,17 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         log('Creating a directory on path "%s".' % (output_path), None);
         os.makedirs(output_path);
 
+
+    ### If more than one file given, they will be joined into this file (reads_file).
+    reads_file = os.path.abspath('%s/joint_reads.fast' % (output_path));
+    try:
+        fp = open(reads_file, 'w');
+        fp.close();
+    except:
+        log('ERROR: Could not open file "%s" for writing!\n' % (reads_file));
+        return;
+
+    ### Set-up the logging file.
     log_file = '%s/wrapper_log.txt' % (output_path);
     try:
         fp_log = open(log_file, 'a');
@@ -213,8 +223,14 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         # sys.stderr.write(str(e) + '\n');
         fp_log = None;
 
-
+    ### Concatenating the reads into a single file.
     log('Preparing raw reads.', fp_log);
+    i = 0;
+    for single_reads_file in reads_files:
+        i += 1;
+        single_reads_file = os.path.abspath(single_reads_file);
+        execute_command('cat %s >> %s' % (single_reads_file, reads_file), fp_log, dry_run=DRY_RUN);
+        log('\t(%d) %s -> %s' % (i, single_reads_file, reads_file), fp_log);
 
     if (os.path.exists(raw_reads_path) == True):
         os.rename(raw_reads_path, raw_reads_path + '.bak');
@@ -233,7 +249,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
     commands = [];
     commands.append('cd %s' % (output_path));
     # The programs we will install must be on the PATH
-    commands.append('export PATH=%s/DAZZ_DB:%s/DALIGNER:%s/nanocorrect:%s/poaV2:%s/wgs-8.2/Linux-amd64/bin/:%s/samtools/:%s/bwa/:%s/:$PATH' % (ASSEMBLER_PATH, ASSEMBLER_PATH, ASSEMBLER_PATH, ASSEMBLER_PATH, ASSEMBLER_PATH, ASSEMBLER_PATH, ASSEMBLER_PATH, reads_folder));
+    commands.append('export PATH=%s/DAZZ_DB:%s/DALIGNER:%s/nanocorrect:%s/poaV2:%s/wgs-8.2/Linux-amd64/bin/:%s/samtools/:%s/bwa/:%s/:$PATH' % (ASSEMBLER_PATH, ASSEMBLER_PATH, ASSEMBLER_PATH, ASSEMBLER_PATH, ASSEMBLER_PATH, ASSEMBLER_PATH, ASSEMBLER_PATH, ':'.join(reads_folders)));
     # Parameters to control execution
     commands.append('CORES=%d' % (num_cores));
     commands.append('THREADS=%d' % (num_threads));
