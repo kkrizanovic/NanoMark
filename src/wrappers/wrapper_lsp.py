@@ -382,7 +382,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
     current_memtime_id += 1;
     commands.append('%s python nanocorrect/makerange.py %s.corrected.fasta | parallel -v --eta -P $NC_PROCESS \'python nanocorrect/nanocorrect.py %s.corrected {} > %s.corrected.{}.corrected.fasta\'' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename, raw_reads_basename, raw_reads_basename));
     current_memtime_id += 1;
-    commands.append('%s cat %s.corrected.*.corrected.fasta | python lengthsort.py > %s.corrected.corrected.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename));
+    commands.append('%s cat %s.corrected.*.corrected.fasta | python lengthsort.py > %s.corrected.corrected.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename, raw_reads_basename));
     # commands.append('rm raw.reads.corrected.*.corrected.fasta');
 
     reads_error_corrected = 'raw.reads.corrected.corrected.fasta';
