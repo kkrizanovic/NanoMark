@@ -154,7 +154,109 @@ def convert_to_fasta(fastq_path, out_fasta_path):
 ##############################################################
 ##############################################################
 ##############################################################
+def parse_memtime(memtime_path):
+    cmdline = '';
+    realtime = 0;
+    cputime = 0;
+    usertime = 0;
+    systemtime = 0;
+    maxrss = 0;
+    rsscache = 0;
+    time_unit = '';
+    mem_unit = '';
 
+    try:
+        fp = open(memtime_path, 'r');
+        lines = [line.strip() for line in fp.readlines() if (len(line.strip()) > 0)];
+        fp.close();
+    except Exception, e:
+        sys.stderr.write('Could not find memory and time statistics in file "%s".\n' % (memtime_path));
+        return [cmdline, realtime, cputime, usertime, systemtime, maxrss, time_unit, mem_unit];
+
+    for line in lines:
+        if (line.startswith('Command line:')):
+            cmdline = line.split(':')[1].strip();
+        elif (line.startswith('Real time:')):
+            split_line = line.split(':')[1].strip().split(' ');
+            realtime = float(split_line[0].strip());
+            time_unit = split_line[1].strip();
+        elif (line.startswith('CPU time:')):
+            split_line = line.split(':')[1].strip().split(' ');
+            cputime = float(split_line[0].strip());
+            time_unit = split_line[1].strip();
+        elif (line.startswith('User time:')):
+            split_line = line.split(':')[1].strip().split(' ');
+            usertime = float(split_line[0].strip());
+            time_unit = split_line[1].strip();
+        elif (line.startswith('System time:')):
+            split_line = line.split(':')[1].strip().split(' ');
+            systemtime = float(split_line[0].strip());
+            time_unit = split_line[1].strip();
+        elif (line.startswith('Maximum RSS:')):
+            split_line = line.split(':')[1].strip().split(' ');
+            maxrss = float(split_line[0].strip());
+            mem_unit = split_line[1].strip();
+        # elif (line.startswith('')):
+        #   split_line = line.split(':')[1].strip().split(' ');
+        #   rsscache = float(split_line[0].strip());
+        #   mem_unit = split_line[1].strip();
+
+    return [cmdline, realtime, cputime, usertime, systemtime, maxrss, time_unit, mem_unit];
+
+def parse_memtime_files_and_accumulate(memtime_files, final_memtime_file):
+    final_command_line = '';
+    final_real_time = 0.0;
+    final_cpu_time = 0.0;
+    final_user_time = 0.0;
+    final_system_time = 0.0;
+    final_time_unit = '';
+    final_max_rss = 0;
+    final_mem_unit = '';
+
+    i = 0;
+    for memtime_file in memtime_files:
+        i += 1;
+        sys.stderr.write('Parsing memtime file "%s"...\n' % (memtime_file));
+
+        [cmdline, realtime, cputime, usertime, systemtime, maxrss, time_unit, mem_unit] = parse_memtime(memtime_file);
+        if (i == 1):
+            final_command_line = cmdline;
+            final_real_time = realtime;
+            final_cpu_time = cputime;
+            final_user_time = usertime;
+            final_system_time = systemtime;
+            final_max_rss += maxrss;
+            final_time_unit = time_unit;
+            final_mem_unit = mem_unit;
+        else:
+            if (time_unit == final_time_unit and mem_unit == final_mem_unit):
+                final_command_line += '; ' + cmdline;
+                final_real_time += realtime;
+                final_cpu_time += cputime;
+                final_user_time += usertime;
+                final_system_time += systemtime;
+                final_max_rss += maxrss;
+            else:
+                sys.stderr.write('Memory or time units not the same in all files! Instead of handling this, we decided to be lazy and just give up.\n');
+                break;
+
+    try:
+        fp = open(final_memtime_file, 'w');
+    except Exception, e:
+        sys.stderr.write('ERROR: Could not open file "%s" for writing!\n' % (final_memtime_file));
+        return;
+
+    if (final_cpu_time <= 0.0):
+        final_cpu_time = final_user_time + final_system_time;
+
+    fp.write('Command line: %s\n' % (final_command_line));
+    fp.write('Real time: %f %s\n' % (final_real_time, final_time_unit));
+    fp.write('CPU time: %f %s\n' % (final_cpu_time, final_time_unit));
+    fp.write('User time: %f %s\n' % (final_user_time, final_time_unit));
+    fp.write('System time: %f %s\n' % (final_system_time, final_time_unit));
+    fp.write('Maximum RSS: %f %s\n' % (final_max_rss, final_mem_unit));
+
+    fp.close();
 
 
 # Function 'run' should provide a standard interface for running a mapper. Given input parameters, it should run the
@@ -240,6 +342,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
 
 
     log('Running assembly using %s.' % (ASSEMBLER_NAME), fp_log);
+    current_memtime_id = 0;
 
     if (MODULE_BASICDEFINES == True):
         command = 'sudo %s/cgmemtime/cgmemtime --setup -g %s --perm 775' % (basicdefines.TOOLS_ROOT, getpass.getuser());
@@ -292,16 +395,22 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
     commands.append('%s ln -s celera-assembly/9-terminator/asm.scf.fasta draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))));
 
     # preprocess the fasta file for nanopolish
+    current_memtime_id += 1;
     commands.append('%s nanopolish/consensus-preprocess.pl %s > %s.np.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_path, raw_reads_basename));
     # index the draft assembly for bwa
+    current_memtime_id += 1;
     commands.append('%s bwa index draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))));
     # index the draft assembly for faidx
+    current_memtime_id += 1;
     commands.append('%s samtools faidx draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))));
     # align reads to draft assembly
+    current_memtime_id += 1;
     commands.append('%s bwa mem -t $THREADS -x ont2d draft_genome.fasta %s.np.fasta | samtools view -Sb - | samtools sort -f - reads_to_draft.sorted.bam' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename));
     # index the bam file
+    current_memtime_id += 1;
     commands.append('%s samtools index reads_to_draft.sorted.bam' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))));
     # run nanopolish
+    current_memtime_id += 1;
     commands.append('python nanopolish/nanopolish_makerange.py draft_genome.fasta | parallel --progress -P $NP_PROCESS nanopolish/nanopolish consensus -o nanopolish.{1}.fa -r %s.np.fasta -b reads_to_draft.sorted.bam -g draft_genome.fasta -w {1} -t $THREADS python nanopolish/nanopolish_merge.py draft_genome.fasta nanopolish.scf*.fa > polished_genome.fasta' % (raw_reads_basename));
 
     commands.append('cp %s/polished_genome.fasta %s/benchmark-final_assembly.fasta' % (output_path, output_path));
@@ -310,6 +419,9 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
     execute_command(command, None, dry_run=DRY_RUN);
 
 
+
+    all_memtimes = ['%s-%s.memtime' % (memtime_files_prefix, current_memtime_id) for value in xrange(current_memtime_id)];
+    parse_memtime_files_and_accumulate(all_memtimes, memtime_file);
 
     # Atm, quast is run in the main program
 
