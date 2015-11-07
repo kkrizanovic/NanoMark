@@ -165,14 +165,14 @@ def convert_to_fasta(fastq_path, out_fasta_path):
 #    machine_name        A symbolic name to specify a set of parameters for a specific sequencing platform.
 #    output_path            Folder to which the output will be placed to. Filename will be automatically generated according to the name of the mapper being run.
 #    output_suffix        A custom suffix that can be added to the output filename.
-def run(reads_file, reference_file, machine_name, output_path, output_suffix=''):
+def run(reads_files, reference_file, machine_name, output_path, output_suffix=''):
     ### make -f full-pipeline.make CORES=64 polished_genome.fasta
     # num_threads = multiprocessing.cpu_count() / 2;
     # num_cores = 2;
     num_cores = 16;
     num_threads = 4;
 
-    reads_file = os.path.abspath(reads_file);
+    # reads_file = os.path.abspath(reads_file);
     reference_file = os.path.abspath(reference_file);
     output_path = os.path.abspath(output_path);
     reads_folder = os.path.dirname(reads_file);
@@ -180,6 +180,22 @@ def run(reads_file, reference_file, machine_name, output_path, output_suffix='')
     raw_reads_path = '%s/raw.reads.fasta' % (output_path);
     raw_reads_filename = os.path.basename(raw_reads_path);
     raw_reads_basename = os.path.splitext(os.path.basename(raw_reads_path))[0];
+
+
+    reads_file = os.path.abspath('%s/joint_reads.fasta' % (output_path));
+    try:
+        fp = open(reads_file, 'w');
+        fp.close();
+    except:
+        log('ERROR: Could not open file "%s" for writing!\n' % (reads_file));
+        return;
+
+    i = 0;
+    for single_reads_file in reads_files:
+        i += 1;
+        single_reads_file = os.path.abspath(single_reads_file);
+        execute_command('cat %s > %s' % (single_reads_file, reads_file), fp_log, dry_run=DRY_RUN);
+        log('\t(%d) %s -> %s' % (i, single_reads_file, reads_file), fp_log);
 
     ### Backup old assembly results, and create the new output folder.
     if (os.path.exists(output_path)):
