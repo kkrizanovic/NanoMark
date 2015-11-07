@@ -308,7 +308,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
 
 
     ### If more than one file given, they will be joined into this file (reads_file).
-    reads_file = os.path.abspath('%s/joint_reads.fast' % (output_path));
+    reads_file = os.path.abspath('%s/joint_reads' % (output_path));
     try:
         fp = open(reads_file, 'w');
         fp.close();
@@ -346,6 +346,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
 
     if (MODULE_BASICDEFINES == True):
         command = 'sudo %s/cgmemtime/cgmemtime --setup -g %s --perm 775' % (basicdefines.TOOLS_ROOT, getpass.getuser());
+        sys.stderr.write('[] %s\n' % (command));
         execute_command(command, fp_log, dry_run=DRY_RUN);
     memtime_file = '%s/%s.memtime' % (output_path, ASSEMBLER_NAME);
     # memtime_files_prefis = 
@@ -417,7 +418,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
 
     commands.append('cp %s/polished_genome.fasta %s/benchmark-final_assembly.fasta' % (output_path, output_path));
 
-    command = '; '.join(command);
+    command = '; '.join(commands);
     execute_command(command, None, dry_run=DRY_RUN);
 
 
