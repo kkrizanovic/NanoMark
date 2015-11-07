@@ -315,13 +315,13 @@ def download_and_install():
 
         setup_commands = [];
         # The programs we will install must be on the PATH');
-        # Install the BioPerl dependency.
+        # Install the BioPerl dependency, as well as other dependencies.
         setup_commands.append('cd %s' % (ASSEMBLER_PATH));
         setup_commands.append('sudo apt-get install bioperl');
         setup_commands.append('sudo apt-get install parallel');
-	setup_commands.append('sudo apt-get install ncurses-dev');
-	setup_commands.append('sudo apt-get install libhdf5-dev');
-	setup_commands.append('sudo apt-get install r-base');
+        setup_commands.append('sudo apt-get install ncurses-dev');
+        setup_commands.append('sudo apt-get install libhdf5-dev');
+        setup_commands.append('sudo apt-get install r-base');
         setup_commands.append('sudo pip install virtualenv');
         # Install Python dependencies.
         setup_commands.append('LS_ENV=%s/ls_env' % (ASSEMBLER_PATH));
@@ -329,8 +329,8 @@ def download_and_install():
         # Activate the virtual environment.
         setup_commands.append('. $LS_ENV/bin/activate');
         # Install the required Python packages in the virtual environment.
-	setup_commands.append('pip install rpy2');
-	setup_commands.append('pip install --upgrade setuptools');
+        setup_commands.append('pip install rpy2');
+        setup_commands.append('pip install --upgrade setuptools');
         setup_commands.append('pip install pysam > pythonlibs.version');
         setup_commands.append('pip install cython >> pythonlibs.version');
         setup_commands.append('pip install numpy==1.8.1 >> pythonlibs.version');
@@ -339,6 +339,7 @@ def download_and_install():
         setup_commands.append('pip install poretools >> pythonlibs.version');
         setup_commands.append('pip install biopython >> pythonlibs.version');
         setup_commands.append('pip freeze >> pythonlibs.version');
+
         # Install samtools
         setup_commands.append('git clone --recursive https://github.com/samtools/htslib.git');
         setup_commands.append('cd htslib; make; cd ..');
@@ -349,12 +350,15 @@ def download_and_install():
         # Install nanocorrect & dependencies
         setup_commands.append('git clone https://github.com/jts/nanocorrect.git');
         setup_commands.append('ln -s nanocorrect/poa-blosum80.mat');
-        setup_commands.append('cd nanocorrect; git checkout 47dcd7f147c; git log | head -1 > ../nanocorrect.version');
+        # setup_commands.append('cd nanocorrect; git checkout 47dcd7f147c; git log | head -1 > ../nanocorrect.version'); ### This commit was used in the LQS paper.
+        setup_commands.append('cd nanocorrect; git checkout 0cc9da028156a14892ed592163f647822fe21792; git log | head -1 > ../nanocorrect.version'); ### Commit from Date:   Thu Nov 5 09:15:04 2015 -0500 .
+
         setup_commands.append('cd ..');
         # Install nanopolish, automatically downloading libhdf5
         setup_commands.append('git clone --recursive https://github.com/jts/nanopolish.git');
-        # setup_commands.append('cd nanopolish; git checkout 6440bfbfcf4fa; make libhdf5.install nanopolish; cd ..');
-        setup_commands.append('cd nanopolish; make libhdf5.install nanopolish; cd ..');
+        # setup_commands.append('cd nanopolish; git checkout 6440bfbfcf4fa; make libhdf5.install nanopolish; cd ..'); ### This commit was used in the LQS paper.
+        setup_commands.append('cd nanopolish; git checkout b1808594f67066256f4c5712995d51f72b8efa9f; make libhdf5.install nanopolish; cd ..'); ### Commit from Date:   Wed Nov 4 11:15:14 2015 -0500 .
+        # setup_commands.append('cd nanopolish; make libhdf5.install nanopolish; cd ..');
         setup_commands.append('cd nanopolish; git log | head -1 > ../nanopolish.version');
         setup_commands.append('cd ..');
         # Install bwa
