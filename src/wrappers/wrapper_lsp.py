@@ -187,7 +187,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
             reads_folder = os.path.dirname(single_reads_file);
             reads_folders.append(reads_folder);
             reads_basename = os.path.basename(single_reads_file);
-        if (os.path.dirname(single_reads_file != reads_folder)):
+        if (os.path.dirname(single_reads_file) != reads_folder):
             sys.stderr.write('ERROR: Files containing reads are not located in the same folder!\n');
             return;
     if (reads_folder == None):
