@@ -382,6 +382,12 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
 
     current_memtime_id = 0;
 
+    ### Create symlinks to folders with reads and their parent folders.    
+    reads_folders = sorted(set(reads_folders))
+    for folder in reads_folders:
+        command.append('ln -s %s' % (folder));
+
+    ### Run error correction.
     if (machine_name == 'nanopore' or machine_name == 'correction'):
         # Error correction, the first step.
         current_memtime_id += 1;
@@ -404,6 +410,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         commands.append('%s bash -c "cat %s.corrected.*.corrected.fasta | python lengthsort.py > %s.corrected.corrected.fasta"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename, raw_reads_basename));
         # commands.append('rm raw.reads.corrected.*.corrected.fasta');
 
+    if (machine_name == 'nanopore' or machine_name == 'celera'):
         reads_error_corrected = 'raw.reads.corrected.corrected.fasta';
         reads_assembly_input = 'assembly.input.fastq';
         current_memtime_id += 1;
