@@ -36,6 +36,8 @@ ASSEMBLER_RESULTS = 'contig-100.fa'
 CREATE_OUTPUT_FOLDER = True
 NANOCORRECT_PATH = '%s/nanocorrect/' % (ASSEMBLER_PATH);
 NANOPOLISH_PATH = '%s/nanopolish/' % (ASSEMBLER_PATH);
+BWAMEM_PATH =  '%s/bwa/' % (ASSEMBLER_PATH);
+SAMTOOLS_PATH =  '%s/samtools/' % (ASSEMBLER_PATH);
 
 # FASTQ to FASTA converter supplied by IDBA
 FQ2FA_BIN = os.path.join(ASSEMBLER_PATH, 'bin/fq2fa')
@@ -353,7 +355,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
     log('Running assembly using %s.' % (ASSEMBLER_NAME), fp_log);
 
     if (MODULE_BASICDEFINES == True):
-        execute_command('sudo %s/cgmemtime/cgmemtime -o %s/test.memtime' % (basicdefines.TOOLS_ROOT, output_path), fp_log, dry_run=DRY_RUN);
+        execute_command('sudo %s/cgmemtime/cgmemtime -o %s/test.memtime ls -lhrt' % (basicdefines.TOOLS_ROOT, output_path), fp_log, dry_run=DRY_RUN);
         if (not os.path.exists('%s/test.memtime' % (output_path))):
             command = 'sudo %s/cgmemtime/cgmemtime --setup -g %s --perm 775' % (basicdefines.TOOLS_ROOT, getpass.getuser());
             sys.stderr.write('[] %s\n' % (command));
@@ -414,19 +416,19 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
     if (machine_name == 'nanopore' or machine_name == 'polish'):
         # preprocess the fasta file for nanopolish
         current_memtime_id += 1;
-        commands.append('%s nanopolish/consensus-preprocess.pl %s > %s.np.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_path, raw_reads_basename));
+        commands.append('%s %s/nanopolish/scripts/consensus-preprocess.pl %s > %s.np.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), NANOPOLISH_PATH, raw_reads_path, raw_reads_basename));
         # index the draft assembly for bwa
         current_memtime_id += 1;
-        commands.append('%s bwa index draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))));
+        commands.append('%s %s/bwa index draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))), BWAMEM_PATH);
         # index the draft assembly for faidx
         current_memtime_id += 1;
-        commands.append('%s samtools faidx draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))));
+        commands.append('%s %s/samtools faidx draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))), SAMTOOLS_PATH);
         # align reads to draft assembly
         current_memtime_id += 1;
-        commands.append('%s bash -c "bwa mem -t $THREADS -x ont2d draft_genome.fasta %s.np.fasta | samtools view -Sb - | samtools sort -f - reads_to_draft.sorted.bam"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename));
+        commands.append('%s bash -c "%s/bwa mem -t $THREADS -x ont2d draft_genome.fasta %s.np.fasta | samtools view -Sb - | samtools sort -f - reads_to_draft.sorted.bam"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), BWAMEM_PATH, raw_reads_basename));
         # index the bam file
         current_memtime_id += 1;
-        commands.append('%s samtools index reads_to_draft.sorted.bam' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))));
+        commands.append('%s %s/samtools index reads_to_draft.sorted.bam' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))), SAMTOOLS_PATH);
         # run nanopolish
         current_memtime_id += 1;
         commands.append('bash -c "python %s/scripts/nanopolish_makerange.py draft_genome.fasta | parallel --progress -P $NP_PROCESS %s/nanopolish consensus -o nanopolish.{1}.fa -r %s.np.fasta -b reads_to_draft.sorted.bam -g draft_genome.fasta -w {1} -t $THREADS python %s/nanopolish_merge.py draft_genome.fasta nanopolish.scf*.fa > polished_genome.fasta"' % (NANOPOLISH_PATH, raw_reads_basename, raw_reads_basename, raw_reads_basename));
