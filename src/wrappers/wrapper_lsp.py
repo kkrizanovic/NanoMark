@@ -291,9 +291,13 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
             reads_folder = os.path.dirname(single_reads_file);
             reads_folders.append(reads_folder);
             reads_basename = os.path.basename(single_reads_file);
-        if (os.path.dirname(single_reads_file) != reads_folder):
-            sys.stderr.write('ERROR: Files containing reads are not located in the same folder!\n');
-            return;
+
+            folder_one_level_up = '/'.join(reads_folder.split('/')[0:-1]);
+            reads_folders.append(folder_one_level_up);
+
+        # if (os.path.dirname(single_reads_file) != reads_folder):
+        #     sys.stderr.write('ERROR: Files containing reads are not located in the same folder!\n');
+        #     return;
     if (reads_folder == None):
         sys.stderr.write('ERROR: reads_folder is None!\n');
         return;
@@ -354,7 +358,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
             command = 'sudo %s/cgmemtime/cgmemtime --setup -g %s --perm 775' % (basicdefines.TOOLS_ROOT, getpass.getuser());
             sys.stderr.write('[] %s\n' % (command));
             execute_command(command, fp_log, dry_run=DRY_RUN);
-    
+
     memtime_file = '%s/%s.memtime' % (output_path, ASSEMBLER_NAME);
     # memtime_files_prefis = 
     memtime_files_prefix =  '%s/%s' % (output_path, ASSEMBLER_NAME);
