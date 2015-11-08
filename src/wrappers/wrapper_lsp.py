@@ -155,6 +155,26 @@ def convert_to_fasta(fastq_path, out_fasta_path):
     fp_in.close();
     fp_out.close();
 
+# Finds all files with a given filename pattern starting from the given path, recursivelly.
+def find_files(start_path, file_pattern, max_depth=-1):
+    matches = []
+    for root, dirnames, filenames in os.walk(start_path):
+        for filename in fnmatch.filter(filenames, file_pattern):
+            depth = len(root.split('/'))
+            if (max_depth < 0 or (max_depth >= 0 and depth <= max_depth)):
+                matches.append(os.path.join(root, filename))
+
+    matches.sort()
+    return matches
+
+# Simply lists all subfolders, recursivelly. Parameter 'depth' can be used to specify the minimum depth of the subfolders.
+def find_folders(start_path, depth=0):
+    matches = []
+    for x in os.walk(start_path):
+        if (len(x[0].split('/')) >= depth):
+            matches.append(x[0])
+    return matches
+
 ##############################################################
 ##############################################################
 ##############################################################
@@ -288,6 +308,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
     ### Collect all reads paths.
     reads_folder = None;
     reads_folders = [];
+    folders_one_level_up = [];
     for single_reads_file in reads_files:
         if (reads_folder == None):
             reads_folder = os.path.dirname(single_reads_file);
@@ -295,9 +316,9 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
             reads_basename = os.path.basename(single_reads_file);
 
             folder_one_level_up = '/'.join(reads_folder.split('/')[0:-1]);
-            if (folder_one_level_up[-1] == '/'):
-                folder_one_level_up = folder_one_level_up[0:-1];
+            folders_one_level_up.append(folder_one_level_up);
             reads_folders.append(folder_one_level_up);
+
 
         # if (os.path.dirname(single_reads_file) != reads_folder):
         #     sys.stderr.write('ERROR: Files containing reads are not located in the same folder!\n');
@@ -382,10 +403,13 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
 
     current_memtime_id = 0;
 
-    ### Create symlinks to folders with reads and their parent folders.    
-    reads_folders = sorted(set(reads_folders))
+    ### Create symlinks to folders with reads, their parent folders, and subfolders of those folders.
+    reads_folders = sorted(set(reads_folders));
+    # reads_folders2 = find_folders(folders_one_level_up)
     for folder in reads_folders:
-        commands.append('ln -s %s' % (folder));
+        temp_folders = find_folders(folder, depth=1);
+        for temp_folder in temp_folders:
+            commands.append('ln -s %s' % (temp_folder));
 
     ### Run error correction.
     if (machine_name == 'nanopore' or machine_name == 'correction'):
