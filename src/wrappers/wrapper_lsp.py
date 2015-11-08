@@ -385,7 +385,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
     ### Create symlinks to folders with reads and their parent folders.    
     reads_folders = sorted(set(reads_folders))
     for folder in reads_folders:
-        command.append('ln -s %s' % (folder));
+        commands.append('ln -s %s' % (folder));
 
     ### Run error correction.
     if (machine_name == 'nanopore' or machine_name == 'correction'):
