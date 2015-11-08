@@ -319,7 +319,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         try:
             fp = open(reads_file, 'w');
             fp.close();
-        except:GraphMap
+        except:
             log('ERROR: Could not open file "%s" for writing!\n' % (reads_file));
             return;
 
