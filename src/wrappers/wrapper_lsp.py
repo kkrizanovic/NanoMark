@@ -415,25 +415,26 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
 
     if (machine_name == 'nanopore' or machine_name == 'polish'):
         commands.append('pwd');
-        commands.append('%s ln -s celera-assembly/9-terminator/asm.scf.fasta draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))));
+#        commands.append('%s ln -s celera-assembly/9-terminator/asm.scf.fasta draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))));
         # preprocess the fasta file for nanopolish
         current_memtime_id += 1;
-        commands.append('%s %s/scripts/consensus-preprocess.pl %s > %s.np.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), NANOPOLISH_PATH, raw_reads_path, raw_reads_basename));
+#        commands.append('%s %s/scripts/consensus-preprocess.pl %s > %s.np.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), NANOPOLISH_PATH, raw_reads_path, raw_reads_basename));
         # index the draft assembly for bwa
         current_memtime_id += 1;
-        commands.append('%s %s/bwa index draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), BWAMEM_PATH));
+#        commands.append('%s %s/bwa index draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), BWAMEM_PATH));
         # index the draft assembly for faidx
         current_memtime_id += 1;
-        commands.append('%s %s/samtools faidx draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), SAMTOOLS_PATH));
+#        commands.append('%s %s/samtools faidx draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), SAMTOOLS_PATH));
         # align reads to draft assembly
         current_memtime_id += 1;
-        commands.append('%s bash -c "%s/bwa mem -t $THREADS -x ont2d draft_genome.fasta %s.np.fasta | samtools view -Sb - | samtools sort -f - reads_to_draft.sorted.bam"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), BWAMEM_PATH, raw_reads_basename));
+#        commands.append('%s bash -c "%s/bwa mem -t $THREADS -x ont2d draft_genome.fasta %s.np.fasta | samtools view -Sb - | samtools sort -f - reads_to_draft.sorted.bam"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), BWAMEM_PATH, raw_reads_basename));
         # index the bam file
         current_memtime_id += 1;
-        commands.append('%s %s/samtools index reads_to_draft.sorted.bam' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), SAMTOOLS_PATH));
+#        commands.append('%s %s/samtools index reads_to_draft.sorted.bam' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), SAMTOOLS_PATH));
         # run nanopolish
         current_memtime_id += 1;
-        commands.append('bash -c "python %s/scripts/nanopolish_makerange.py draft_genome.fasta | parallel --progress -P $NP_PROCESS %s/nanopolish consensus -o nanopolish.{1}.fa -r %s.np.fasta -b reads_to_draft.sorted.bam -g draft_genome.fasta -w {1} -t $THREADS python %s/nanopolish_merge.py draft_genome.fasta nanopolish.scf*.fa > polished_genome.fasta"' % (NANOPOLISH_PATH, raw_reads_basename, raw_reads_basename, raw_reads_basename));
+        commands.append('bash -c "python %s/scripts/nanopolish_makerange.py %s/draft_genome.fasta | parallel --progress -P $NP_PROCESS %s/nanopolish consensus -o %s/nanopolish.{1}.fa -r %s/%s.np.fasta -b %s/reads_to_draft.sorted.bam -g %s/draft_genome.fasta -w {1} -t $THREADS python %s/scripts/nanopolish_merge.py %s/draft_genome.fasta %s/nanopolish.scf*.fa > polished_genome.fasta"' %
+                        (NANOPOLISH_PATH, output_path, NANOPOLISH_PATH, output_path, output_path, raw_reads_basename, output_path, output_path, NANOPOLISH_PATH, output_path, output_path));
 
         commands.append('cp %s/polished_genome.fasta %s/benchmark-final_assembly.fasta' % (output_path, output_path));
 
@@ -523,7 +524,7 @@ def download_and_install():
         # Install nanopolish, automatically downloading libhdf5
         setup_commands.append('git clone --recursive https://github.com/jts/nanopolish.git');
         # setup_commands.append('cd nanopolish; git checkout 6440bfbfcf4fa; make libhdf5.install nanopolish; cd ..'); ### This commit was used in the LQS paper.
-        setup_commands.append('cd nanopolish; git checkout b1808594f67066256f4c5712995d51f72b8efa9f; make libhdf5.install nanopolish; cd ..'); ### Commit from Date:   Wed Nov 4 11:15:14 2015 -0500 .
+        setup_commands.append('cd nanopolish; git checkout b1808594f67066256f4c5712995d51f72b8efa9f; make; cd ..'); ### Commit from Date:   Wed Nov 4 11:15:14 2015 -0500 .
         # setup_commands.append('cd nanopolish; make libhdf5.install nanopolish; cd ..');
         setup_commands.append('cd nanopolish; git log | head -1 > ../nanopolish.version');
         setup_commands.append('cd ..');
