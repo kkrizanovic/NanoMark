@@ -433,8 +433,14 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
 #        commands.append('%s %s/samtools index reads_to_draft.sorted.bam' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), SAMTOOLS_PATH));
         # run nanopolish
         current_memtime_id += 1;
-        commands.append('bash -c "python %s/scripts/nanopolish_makerange.py %s/draft_genome.fasta | parallel --progress -P $NP_PROCESS %s/nanopolish consensus -o %s/nanopolish.{1}.fa -r %s/%s.np.fasta -b %s/reads_to_draft.sorted.bam -g %s/draft_genome.fasta -w {1} -t $THREADS python %s/scripts/nanopolish_merge.py %s/draft_genome.fasta %s/nanopolish.scf*.fa > polished_genome.fasta"' %
-                        (NANOPOLISH_PATH, output_path, NANOPOLISH_PATH, output_path, output_path, raw_reads_basename, output_path, output_path, NANOPOLISH_PATH, output_path, output_path));
+        # commands.append('bash -c "python %s/scripts/nanopolish_makerange.py %s/draft_genome.fasta | parallel --progress -P $NP_PROCESS %s/nanopolish consensus -o %s/nanopolish.{1}.fa -r %s/%s.np.fasta -b %s/reads_to_draft.sorted.bam -g %s/draft_genome.fasta -w {1} -t $THREADS python %s/scripts/nanopolish_merge.py %s/draft_genome.fasta %s/nanopolish.scf*.fa > polished_genome.fasta"' %
+        #                 (NANOPOLISH_PATH, output_path, NANOPOLISH_PATH, output_path, output_path, raw_reads_basename, output_path, output_path, NANOPOLISH_PATH, output_path, output_path));
+        commands.append('%s bash -c "python %s/scripts/nanopolish_makerange.py %s/draft_genome.fasta | parallel --progress -P $NP_PROCESS %s/nanopolish consensus -o %s/nanopolish.{1}.fa -r %s/%s.np.fasta -b %s/reads_to_draft.sorted.bam -g %s/draft_genome.fasta -w {1} -t $THREADS"' %
+                        (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), NANOPOLISH_PATH, output_path, NANOPOLISH_PATH, output_path, output_path, raw_reads_basename, output_path, output_path));
+        
+        current_memtime_id += 1;
+        commands.append('%s python %s/scripts/nanopolish_merge.py %s/draft_genome.fasta %s/nanopolish.scf*.fa > polished_genome.fasta"' %
+                        (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), NANOPOLISH_PATH, output_path, output_path));
 
         commands.append('cp %s/polished_genome.fasta %s/benchmark-final_assembly.fasta' % (output_path, output_path));
 
