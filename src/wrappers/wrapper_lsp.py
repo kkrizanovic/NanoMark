@@ -300,23 +300,24 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
     # reads_folder = os.path.dirname(reads_file);
     # reads_basename = os.path.basename(reads_file);
 
-    ### Backup old assembly results, and create the new output folder.
-    if (os.path.exists(output_path)):
-        timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
-        os.rename(output_path, '%s.bak_%s' % (output_path, timestamp));
-    if (not os.path.exists(output_path)):
-        log('Creating a directory on path "%s".' % (output_path), None);
-        os.makedirs(output_path);
+    ### In case only polishing needs to be run, don't move the output folder to a different location.
+    if (machine_name == 'nanopore' or machine_name == 'correct'):
+        ### Backup old assembly results, and create the new output folder.
+        if (os.path.exists(output_path)):
+            timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
+            os.rename(output_path, '%s.bak_%s' % (output_path, timestamp));
+        if (not os.path.exists(output_path)):
+            log('Creating a directory on path "%s".' % (output_path), None);
+            os.makedirs(output_path);
 
-
-    ### If more than one file given, they will be joined into this file (reads_file).
-    reads_file = os.path.abspath('%s/joint_reads' % (output_path));
-    try:
-        fp = open(reads_file, 'w');
-        fp.close();
-    except:GraphMap
-        log('ERROR: Could not open file "%s" for writing!\n' % (reads_file));
-        return;
+        ### If more than one file given, they will be joined into this file (reads_file).
+        reads_file = os.path.abspath('%s/joint_reads' % (output_path));
+        try:
+            fp = open(reads_file, 'w');
+            fp.close();
+        except:GraphMap
+            log('ERROR: Could not open file "%s" for writing!\n' % (reads_file));
+            return;
 
     ### Set-up the logging file.
     log_file = '%s/wrapper_log.txt' % (output_path);
@@ -327,28 +328,33 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         # sys.stderr.write(str(e) + '\n');
         fp_log = None;
 
-    ### Concatenating the reads into a single file.
-    log('Preparing raw reads.', fp_log);
-    i = 0;
-    for single_reads_file in reads_files:
-        i += 1;
-        single_reads_file = os.path.abspath(single_reads_file);
-        execute_command('cat %s >> %s' % (single_reads_file, reads_file), fp_log, dry_run=DRY_RUN);
-        log('\t(%d) %s -> %s' % (i, single_reads_file, reads_file), fp_log);
+    ### In case only polishing needs to be run, don't move the output folder to a different location.
+    if (machine_name == 'nanopore' or machine_name == 'correct'):
+        ### Concatenating the reads into a single file.
+        log('Preparing raw reads.', fp_log);
+        i = 0;
+        for single_reads_file in reads_files:
+            i += 1;
+            single_reads_file = os.path.abspath(single_reads_file);
+            execute_command('cat %s >> %s' % (single_reads_file, reads_file), fp_log, dry_run=DRY_RUN);
+            log('\t(%d) %s -> %s' % (i, single_reads_file, reads_file), fp_log);
 
-    if (os.path.exists(raw_reads_path) == True):
-        os.rename(raw_reads_path, raw_reads_path + '.bak');
-    ### Generate a raw reads file in the output folder, which will be used for assembly.
-    convert_to_fasta(reads_file, raw_reads_path);
+        if (os.path.exists(raw_reads_path) == True):
+            os.rename(raw_reads_path, raw_reads_path + '.bak');
+        ### Generate a raw reads file in the output folder, which will be used for assembly.
+        convert_to_fasta(reads_file, raw_reads_path);
 
 
 
     log('Running assembly using %s.' % (ASSEMBLER_NAME), fp_log);
 
     if (MODULE_BASICDEFINES == True):
-        command = 'sudo %s/cgmemtime/cgmemtime --setup -g %s --perm 775' % (basicdefines.TOOLS_ROOT, getpass.getuser());
-        sys.stderr.write('[] %s\n' % (command));
-        execute_command(command, fp_log, dry_run=DRY_RUN);
+        execute_command('sudo %s/cgmemtime/cgmemtime -o %s/test.memtime' % (basicdefines.TOOLS_ROOT, output_path), fp_log, dry_run=DRY_RUN);
+        if (not os.path.exists('%s/test.memtime') % (output_path)):
+            command = 'sudo %s/cgmemtime/cgmemtime --setup -g %s --perm 775' % (basicdefines.TOOLS_ROOT, getpass.getuser());
+            sys.stderr.write('[] %s\n' % (command));
+            execute_command(command, fp_log, dry_run=DRY_RUN);
+    
     memtime_file = '%s/%s.memtime' % (output_path, ASSEMBLER_NAME);
     # memtime_files_prefis = 
     memtime_files_prefix =  '%s/%s' % (output_path, ASSEMBLER_NAME);
