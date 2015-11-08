@@ -295,6 +295,8 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
             reads_basename = os.path.basename(single_reads_file);
 
             folder_one_level_up = '/'.join(reads_folder.split('/')[0:-1]);
+            if (folder_one_level_up[-1] == '/'):
+                folder_one_level_up = folder_one_level_up[0:-1];
             reads_folders.append(folder_one_level_up);
 
         # if (os.path.dirname(single_reads_file) != reads_folder):
@@ -436,7 +438,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         # commands.append('bash -c "python %s/scripts/nanopolish_makerange.py %s/draft_genome.fasta | parallel --progress -P $NP_PROCESS %s/nanopolish consensus -o %s/nanopolish.{1}.fa -r %s/%s.np.fasta -b %s/reads_to_draft.sorted.bam -g %s/draft_genome.fasta -w {1} -t $THREADS python %s/scripts/nanopolish_merge.py %s/draft_genome.fasta %s/nanopolish.scf*.fa > polished_genome.fasta"' %
         #                 (NANOPOLISH_PATH, output_path, NANOPOLISH_PATH, output_path, output_path, raw_reads_basename, output_path, output_path, NANOPOLISH_PATH, output_path, output_path));
 
-        commands.append('ls -lhrt ERX708231.fast5/LomanLabz_PC_K12_0.4SPRI_Histag_2004_1_ch433_file81_strand.fast5');
+        commands.append('ls -lhrt ERX708231.fast5/LomanLabz_PC_K12_0.4SPRI_Histag_2004_1_ch433_file81_strand.fast5; echo $PATH');
         # commands.append('%s bash -c "python %s/scripts/nanopolish_makerange.py %s/draft_genome.fasta | parallel --progress -P $NP_PROCESS %s/nanopolish consensus -o %s/nanopolish.{1}.fa -r %s/%s.np.fasta -b %s/reads_to_draft.sorted.bam -g %s/draft_genome.fasta -w {1} -t $THREADS"' %
         #                 (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), NANOPOLISH_PATH, output_path, NANOPOLISH_PATH, output_path, output_path, raw_reads_basename, output_path, output_path));
         # current_memtime_id += 1;
