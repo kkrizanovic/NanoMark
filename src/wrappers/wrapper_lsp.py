@@ -419,16 +419,16 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         commands.append('%s %s/nanopolish/scripts/consensus-preprocess.pl %s > %s.np.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), NANOPOLISH_PATH, raw_reads_path, raw_reads_basename));
         # index the draft assembly for bwa
         current_memtime_id += 1;
-        commands.append('%s %s/bwa index draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))), BWAMEM_PATH);
+        commands.append('%s %s/bwa index draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), BWAMEM_PATH));
         # index the draft assembly for faidx
         current_memtime_id += 1;
-        commands.append('%s %s/samtools faidx draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))), SAMTOOLS_PATH);
+        commands.append('%s %s/samtools faidx draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), SAMTOOLS_PATH));
         # align reads to draft assembly
         current_memtime_id += 1;
         commands.append('%s bash -c "%s/bwa mem -t $THREADS -x ont2d draft_genome.fasta %s.np.fasta | samtools view -Sb - | samtools sort -f - reads_to_draft.sorted.bam"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), BWAMEM_PATH, raw_reads_basename));
         # index the bam file
         current_memtime_id += 1;
-        commands.append('%s %s/samtools index reads_to_draft.sorted.bam' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))), SAMTOOLS_PATH);
+        commands.append('%s %s/samtools index reads_to_draft.sorted.bam' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), SAMTOOLS_PATH));
         # run nanopolish
         current_memtime_id += 1;
         commands.append('bash -c "python %s/scripts/nanopolish_makerange.py draft_genome.fasta | parallel --progress -P $NP_PROCESS %s/nanopolish consensus -o nanopolish.{1}.fa -r %s.np.fasta -b reads_to_draft.sorted.bam -g draft_genome.fasta -w {1} -t $THREADS python %s/nanopolish_merge.py draft_genome.fasta nanopolish.scf*.fa > polished_genome.fasta"' % (NANOPOLISH_PATH, raw_reads_basename, raw_reads_basename, raw_reads_basename));
