@@ -330,23 +330,23 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
     # reads_basename = os.path.basename(reads_file);
 
     ### In case only polishing needs to be run, don't move the output folder to a different location.
-    if (machine_name == 'nanopore' or machine_name == 'correct'):
-        ### Backup old assembly results, and create the new output folder.
-        if (os.path.exists(output_path)):
-            timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
-            os.rename(output_path, '%s.bak_%s' % (output_path, timestamp));
-        if (not os.path.exists(output_path)):
-            log('Creating a directory on path "%s".' % (output_path), None);
-            os.makedirs(output_path);
+    # if (machine_name == 'nanopore' or machine_name == 'correct'):
+    #     ### Backup old assembly results, and create the new output folder.
+    #     if (os.path.exists(output_path)):
+    #         timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
+    #         os.rename(output_path, '%s.bak_%s' % (output_path, timestamp));
+    #     if (not os.path.exists(output_path)):
+    #         log('Creating a directory on path "%s".' % (output_path), None);
+    #         os.makedirs(output_path);
 
-        ### If more than one file given, they will be joined into this file (reads_file).
-        reads_file = os.path.abspath('%s/joint_reads' % (output_path));
-        try:
-            fp = open(reads_file, 'w');
-            fp.close();
-        except:
-            log('ERROR: Could not open file "%s" for writing!\n' % (reads_file));
-            return;
+    #     ### If more than one file given, they will be joined into this file (reads_file).
+    #     reads_file = os.path.abspath('%s/joint_reads' % (output_path));
+    #     try:
+    #         fp = open(reads_file, 'w');
+    #         fp.close();
+    #     except:
+    #         log('ERROR: Could not open file "%s" for writing!\n' % (reads_file));
+    #         return;
 
     ### Set-up the logging file.
     log_file = '%s/wrapper_log.txt' % (output_path);
@@ -357,7 +357,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         # sys.stderr.write(str(e) + '\n');
         fp_log = None;
 
-    ### In case only polishing needs to be run, don't move the output folder to a different location.
+    ### Concatenate all reads files into one file.
     # if (machine_name == 'nanopore' or machine_name == 'correct'):
     #     ### Concatenating the reads into a single file.
     #     log('Preparing raw reads.', fp_log);
