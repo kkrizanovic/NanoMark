@@ -46,7 +46,7 @@ FQ2FA_BIN = os.path.join(ASSEMBLER_PATH, 'bin/fq2fa')
 DRY_RUN = False;
 
 ### Logs messages to STDERR and an output log file if provided (opened elsewhere).
-def log(message, fp_log):
+def log(message, fp_log=None):
     timestamp = strftime("%Y/%m/%d %H:%M:%S", gmtime());
 
     sys.stderr.write('[%s wrapper %s] %s\n' % (ASSEMBLER_NAME, timestamp, message))
@@ -305,48 +305,64 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
     raw_reads_filename = os.path.basename(raw_reads_path);
     raw_reads_basename = os.path.splitext(os.path.basename(raw_reads_path))[0];
 
-    ### Collect all reads paths.
-    reads_folder = None;
+    # reads_folder = None;
+
+    ### Collect all reads paths, including the folders one level up (because of the design of this benchmarking framework, raw FAST5 files will be located in a folder one level up).
     reads_folders = [];
     folders_one_level_up = [];
     for single_reads_file in reads_files:
-        if (reads_folder == None):
-            reads_folder = os.path.dirname(single_reads_file);
-            reads_folders.append(reads_folder);
-            reads_basename = os.path.basename(single_reads_file);
+        # if (reads_folder == None):
+        reads_folder = os.path.dirname(single_reads_file);
+        reads_folders.append(reads_folder);
+        reads_basename = os.path.basename(single_reads_file);
 
-            folder_one_level_up = '/'.join(reads_folder.split('/')[0:-1]);
-            folders_one_level_up.append(folder_one_level_up);
-            reads_folders.append(folder_one_level_up);
-
+        folder_one_level_up = '/'.join(reads_folder.split('/')[0:-1]);
+        folders_one_level_up.append(folder_one_level_up);
+        reads_folders.append(folder_one_level_up);
 
         # if (os.path.dirname(single_reads_file) != reads_folder):
         #     sys.stderr.write('ERROR: Files containing reads are not located in the same folder!\n');
         #     return;
-    if (reads_folder == None):
-        sys.stderr.write('ERROR: reads_folder is None!\n');
-        return;
+    # if (reads_folder == None):
+    #     sys.stderr.write('ERROR: reads_folder is None!\n');
+    #     return;
     # reads_folder = os.path.dirname(reads_file);
     # reads_basename = os.path.basename(reads_file);
 
     ### In case only polishing needs to be run, don't move the output folder to a different location.
-    # if (machine_name == 'nanopore' or machine_name == 'correct'):
-    #     ### Backup old assembly results, and create the new output folder.
-    #     if (os.path.exists(output_path)):
-    #         timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
-    #         os.rename(output_path, '%s.bak_%s' % (output_path, timestamp));
-    #     if (not os.path.exists(output_path)):
-    #         log('Creating a directory on path "%s".' % (output_path), None);
-    #         os.makedirs(output_path);
+    if (machine_name == 'nanopore' or machine_name == 'correct1'):
+        ### Backup old assembly results, and create the new output folder.
+        if (os.path.exists(output_path)):
+            timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
+            os.rename(output_path, '%s.bak_%s' % (output_path, timestamp));
+        if (not os.path.exists(output_path)):
+            log('Creating a directory on path "%s".' % (output_path), None);
+            os.makedirs(output_path);
 
-    #     ### If more than one file given, they will be joined into this file (reads_file).
-    #     reads_file = os.path.abspath('%s/joint_reads' % (output_path));
-    #     try:
-    #         fp = open(reads_file, 'w');
-    #         fp.close();
-    #     except:
-    #         log('ERROR: Could not open file "%s" for writing!\n' % (reads_file));
-    #         return;
+        ### If more than one file given, they will be joined into this file (reads_file).
+        ### Making sure that the file can be opened for writing, and emptying it in the process.
+        reads_file = os.path.abspath('%s/joint_reads' % (output_path));
+        try:
+            fp = open(reads_file, 'w');
+            fp.close();
+        except:
+            log('ERROR: Could not open file "%s" for writing!\n' % (reads_file), None);
+            return;
+        ### Concatenating the reads into a single file.
+        log('Preparing raw reads.', None);
+        i = 0;
+        for single_reads_file in reads_files:
+            i += 1;
+            single_reads_file = os.path.abspath(single_reads_file);
+            execute_command('cat %s >> %s' % (single_reads_file, reads_file), fp_log, dry_run=DRY_RUN);
+            log('\t(%d) %s -> %s' % (i, single_reads_file, reads_file), None);
+
+        ### Backup the old file if it existed.
+        if (os.path.exists(raw_reads_path) == True):
+            os.rename(raw_reads_path, raw_reads_path + '.bak');
+        ### Convert the reads file to FASTA format.
+        ### Generate a raw reads file in the output folder, which will be used for assembly.
+        convert_to_fasta(reads_file, raw_reads_path);
 
     ### Set-up the logging file.
     log_file = '%s/wrapper_log.txt' % (output_path);
@@ -356,23 +372,6 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         log('ERROR: Could not open file "%s" for writing! Using only STDERR for logging.' % (log_file), None);
         # sys.stderr.write(str(e) + '\n');
         fp_log = None;
-
-    ### Concatenate all reads files into one file.
-    # if (machine_name == 'nanopore' or machine_name == 'correct'):
-    #     ### Concatenating the reads into a single file.
-    #     log('Preparing raw reads.', fp_log);
-    #     i = 0;
-    #     for single_reads_file in reads_files:
-    #         i += 1;
-    #         single_reads_file = os.path.abspath(single_reads_file);
-    #         execute_command('cat %s >> %s' % (single_reads_file, reads_file), fp_log, dry_run=DRY_RUN);
-    #         log('\t(%d) %s -> %s' % (i, single_reads_file, reads_file), fp_log);
-
-    #     if (os.path.exists(raw_reads_path) == True):
-    #         os.rename(raw_reads_path, raw_reads_path + '.bak');
-    #     ### Generate a raw reads file in the output folder, which will be used for assembly.
-    #     convert_to_fasta(reads_file, raw_reads_path);
-
 
 
     log('Running assembly using %s.' % (ASSEMBLER_NAME), fp_log);
@@ -412,18 +411,24 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
             commands.append('ln -s %s' % (temp_folder));
 
     ### Run error correction.
-    if (machine_name == 'nanopore' or machine_name == 'correction'):
+    if (machine_name == 'nanopore' or machine_name == 'correct1'):
         # Error correction, the first step.
+        current_memtime_id = 0;
+
         current_memtime_id += 1;
-        # commands.append('%s make -f %s/nanocorrect-overlap.make INPUT=%s NAME=%s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), NANOCORRECT_PATH, raw_reads_path, raw_reads_basename));
+        commands.append('%s make -f %s/nanocorrect-overlap.make INPUT=%s NAME=%s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), NANOCORRECT_PATH, raw_reads_path, raw_reads_basename));
         current_memtime_id += 1;
-        # commands.append('%s samtools faidx %s.pp.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename));
+        commands.append('%s samtools faidx %s.pp.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename));
         current_memtime_id += 1;
-        # commands.append('%s bash -c "python %s/makerange.py %s | parallel -v --eta -P $NC_PROCESS \'python %s/nanocorrect.py %s {} > %s.{}.corrected.fasta\'"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), NANOCORRECT_PATH, raw_reads_path, NANOCORRECT_PATH, raw_reads_basename, raw_reads_basename));
+        commands.append('%s bash -c "python %s/makerange.py %s | parallel -v --eta -P $NC_PROCESS \'python %s/nanocorrect.py %s {} > %s.{}.corrected.fasta\'"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), NANOCORRECT_PATH, raw_reads_path, NANOCORRECT_PATH, raw_reads_basename, raw_reads_basename));
         current_memtime_id += 1;
         commands.append('%s bash -c "cat %s.*.corrected.fasta | python %s/lengthsort.py > %s.corrected.fasta"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename, ASSEMBLER_PATH, raw_reads_basename));
+
+    if (machine_name == 'nanopore' or machine_name == 'correct2'):
         #rm raw.reads.*.corrected.fasta
         # Error correction, the second step.
+        current_memtime_id = 4;
+
         current_memtime_id += 1;
         commands.append('%s make -f %s/nanocorrect-overlap.make INPUT=%s.corrected.fasta NAME=%s.corrected' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), NANOCORRECT_PATH, raw_reads_basename, raw_reads_basename));
         current_memtime_id += 1;
@@ -435,6 +440,8 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         # commands.append('rm raw.reads.corrected.*.corrected.fasta');
 
     if (machine_name == 'nanopore' or machine_name == 'celera'):
+        current_memtime_id = 8;
+
         reads_error_corrected = 'raw.reads.corrected.corrected.fasta';
         reads_assembly_input = 'assembly.input.fastq';
         current_memtime_id += 1;
@@ -447,29 +454,31 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         commands.append('%s ln -s celera-assembly/9-terminator/asm.scf.fasta draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))));
 
     if (machine_name == 'nanopore' or machine_name == 'polish'):
+        current_memtime_id = 12;
+
         commands.append('pwd');
-#        commands.append('%s ln -s celera-assembly/9-terminator/asm.scf.fasta draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))));
+        commands.append('%s ln -s celera-assembly/9-terminator/asm.scf.fasta draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))));
         # preprocess the fasta file for nanopolish
         current_memtime_id += 1;
-#        commands.append('%s %s/scripts/consensus-preprocess.pl %s > %s.np.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), NANOPOLISH_PATH, raw_reads_path, raw_reads_basename));
+        commands.append('%s %s/scripts/consensus-preprocess.pl %s > %s.np.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), NANOPOLISH_PATH, raw_reads_path, raw_reads_basename));
         # index the draft assembly for bwa
         current_memtime_id += 1;
-#        commands.append('%s %s/bwa index draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), BWAMEM_PATH));
+        commands.append('%s %s/bwa index draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), BWAMEM_PATH));
         # index the draft assembly for faidx
         current_memtime_id += 1;
-#        commands.append('%s %s/samtools faidx draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), SAMTOOLS_PATH));
+        commands.append('%s %s/samtools faidx draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), SAMTOOLS_PATH));
         # align reads to draft assembly
         current_memtime_id += 1;
-#        commands.append('%s bash -c "%s/bwa mem -t $THREADS -x ont2d draft_genome.fasta %s.np.fasta | samtools view -Sb - | samtools sort -f - reads_to_draft.sorted.bam"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), BWAMEM_PATH, raw_reads_basename));
+        commands.append('%s bash -c "%s/bwa mem -t $THREADS -x ont2d draft_genome.fasta %s.np.fasta | samtools view -Sb - | samtools sort -f - reads_to_draft.sorted.bam"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), BWAMEM_PATH, raw_reads_basename));
         # index the bam file
         current_memtime_id += 1;
-#        commands.append('%s %s/samtools index reads_to_draft.sorted.bam' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), SAMTOOLS_PATH));
+        commands.append('%s %s/samtools index reads_to_draft.sorted.bam' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), SAMTOOLS_PATH));
         # run nanopolish
         current_memtime_id += 1;
         # commands.append('bash -c "python %s/scripts/nanopolish_makerange.py %s/draft_genome.fasta | parallel --progress -P $NP_PROCESS %s/nanopolish consensus -o %s/nanopolish.{1}.fa -r %s/%s.np.fasta -b %s/reads_to_draft.sorted.bam -g %s/draft_genome.fasta -w {1} -t $THREADS python %s/scripts/nanopolish_merge.py %s/draft_genome.fasta %s/nanopolish.scf*.fa > polished_genome.fasta"' %
         #                 (NANOPOLISH_PATH, output_path, NANOPOLISH_PATH, output_path, output_path, raw_reads_basename, output_path, output_path, NANOPOLISH_PATH, output_path, output_path));
 
-        commands.append('ls -lhrt ERX708231.fast5/LomanLabz_PC_K12_0.4SPRI_Histag_2004_1_ch433_file81_strand.fast5; echo $PATH');
+        # commands.append('ls -lhrt ERX708231.fast5/LomanLabz_PC_K12_0.4SPRI_Histag_2004_1_ch433_file81_strand.fast5; echo $PATH');
         commands.append('%s bash -c "python %s/scripts/nanopolish_makerange.py %s/draft_genome.fasta | parallel --progress -P $NP_PROCESS %s/nanopolish consensus -o %s/nanopolish.{1}.fa -r %s/%s.np.fasta -b %s/reads_to_draft.sorted.bam -g %s/draft_genome.fasta -w {1} -t $THREADS"' %
                         (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), NANOPOLISH_PATH, output_path, NANOPOLISH_PATH, output_path, output_path, raw_reads_basename, output_path, output_path));
         current_memtime_id += 1;
