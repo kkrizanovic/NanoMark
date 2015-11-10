@@ -358,20 +358,20 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         fp_log = None;
 
     ### In case only polishing needs to be run, don't move the output folder to a different location.
-    if (machine_name == 'nanopore' or machine_name == 'correct'):
-        ### Concatenating the reads into a single file.
-        log('Preparing raw reads.', fp_log);
-        i = 0;
-        for single_reads_file in reads_files:
-            i += 1;
-            single_reads_file = os.path.abspath(single_reads_file);
-            execute_command('cat %s >> %s' % (single_reads_file, reads_file), fp_log, dry_run=DRY_RUN);
-            log('\t(%d) %s -> %s' % (i, single_reads_file, reads_file), fp_log);
+    # if (machine_name == 'nanopore' or machine_name == 'correct'):
+    #     ### Concatenating the reads into a single file.
+    #     log('Preparing raw reads.', fp_log);
+    #     i = 0;
+    #     for single_reads_file in reads_files:
+    #         i += 1;
+    #         single_reads_file = os.path.abspath(single_reads_file);
+    #         execute_command('cat %s >> %s' % (single_reads_file, reads_file), fp_log, dry_run=DRY_RUN);
+    #         log('\t(%d) %s -> %s' % (i, single_reads_file, reads_file), fp_log);
 
-        if (os.path.exists(raw_reads_path) == True):
-            os.rename(raw_reads_path, raw_reads_path + '.bak');
-        ### Generate a raw reads file in the output folder, which will be used for assembly.
-        convert_to_fasta(reads_file, raw_reads_path);
+    #     if (os.path.exists(raw_reads_path) == True):
+    #         os.rename(raw_reads_path, raw_reads_path + '.bak');
+    #     ### Generate a raw reads file in the output folder, which will be used for assembly.
+    #     convert_to_fasta(reads_file, raw_reads_path);
 
 
 
@@ -407,7 +407,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
     reads_folders = sorted(set(reads_folders));
     # reads_folders2 = find_folders(folders_one_level_up)
     for folder in reads_folders:
-        temp_folders = find_folders(folder, depth=1);
+        temp_folders = find_folders(folder, depth=0);
         for temp_folder in temp_folders:
             commands.append('ln -s %s' % (temp_folder));
 
@@ -415,13 +415,13 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
     if (machine_name == 'nanopore' or machine_name == 'correction'):
         # Error correction, the first step.
         current_memtime_id += 1;
-        commands.append('%s make -f %s/nanocorrect-overlap.make INPUT=%s NAME=%s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), NANOCORRECT_PATH, raw_reads_path, raw_reads_basename));
+        # commands.append('%s make -f %s/nanocorrect-overlap.make INPUT=%s NAME=%s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), NANOCORRECT_PATH, raw_reads_path, raw_reads_basename));
         current_memtime_id += 1;
-        commands.append('%s samtools faidx %s.pp.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename));
+        # commands.append('%s samtools faidx %s.pp.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename));
         current_memtime_id += 1;
-        commands.append('%s bash -c "python %s/makerange.py %s | parallel -v --eta -P $NC_PROCESS \'python %s/nanocorrect.py %s {} > %s.{}.corrected.fasta\'"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), NANOCORRECT_PATH, raw_reads_path, NANOCORRECT_PATH, raw_reads_basename, raw_reads_basename));
+        # commands.append('%s bash -c "python %s/makerange.py %s | parallel -v --eta -P $NC_PROCESS \'python %s/nanocorrect.py %s {} > %s.{}.corrected.fasta\'"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), NANOCORRECT_PATH, raw_reads_path, NANOCORRECT_PATH, raw_reads_basename, raw_reads_basename));
         current_memtime_id += 1;
-        commands.append('%s bash -c "cat %s.*.corrected.fasta | python lengthsort.py > %s.corrected.fasta"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename, raw_reads_basename));
+        commands.append('%s bash -c "cat %s.*.corrected.fasta | python %s/lengthsort.py > %s.corrected.fasta"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename, ASSEMBLER_PATH, raw_reads_basename));
         #rm raw.reads.*.corrected.fasta
         # Error correction, the second step.
         current_memtime_id += 1;
@@ -431,7 +431,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         current_memtime_id += 1;
         commands.append('%s bash -c "python %s/makerange.py %s.corrected.fasta | parallel -v --eta -P $NC_PROCESS \'python %s/nanocorrect.py %s.corrected {} > %s.corrected.{}.corrected.fasta\'"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), NANOCORRECT_PATH, raw_reads_basename, NANOCORRECT_PATH, raw_reads_basename, raw_reads_basename));
         current_memtime_id += 1;
-        commands.append('%s bash -c "cat %s.corrected.*.corrected.fasta | python lengthsort.py > %s.corrected.corrected.fasta"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename, raw_reads_basename));
+        commands.append('%s bash -c "cat %s.corrected.*.corrected.fasta | python %s/lengthsort.py > %s.corrected.corrected.fasta"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename, ASSEMBLER_PATH, raw_reads_basename));
         # commands.append('rm raw.reads.corrected.*.corrected.fasta');
 
     if (machine_name == 'nanopore' or machine_name == 'celera'):
