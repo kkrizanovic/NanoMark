@@ -63,8 +63,8 @@ Each wrapper must also define two functions:
 - download_and_install() : installs the assembler and makes it ready to run
 - run(reads_file, reference_file, machine_name, output_path, output_suffix='') : runs the assembler on given reads and reference files, results are stored in a given folder: output_folder. Attributes machine_name and output_suffix are currently not used, but must be included in function header for compatibility.
 
-Included wrappers are good examples of wrapper implementation.
+Included wrappers are good examples of wrapper implementation.  
+  
 
-
-
-
+# Acknowledgement  
+This work has been supported in part by Croatian Science Fundation under the project UIP-11-2013-7353.  
