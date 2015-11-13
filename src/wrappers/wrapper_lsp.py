@@ -450,7 +450,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         current_memtime_id += 1;
         commands.append('%s fastqToCA -technology sanger -libraryname assembly -reads %s > assembly.frg' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), reads_assembly_input));
         current_memtime_id += 1;
-        commands.append('%s runCA -d celera-assembly -p asm -s %s/revised_ovlErrorRate0.04.spec assembly.frg' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), output_path));
+        commands.append('%s runCA -d celera-assembly -p asm -s %s/revised_ovlErrorRate0.04.spec assembly.frg' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), ASSEMBLER_PATH));
         current_memtime_id += 1;
         commands.append('%s ln -s celera-assembly/9-terminator/asm.scf.fasta draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))));
 
