@@ -38,6 +38,7 @@ NANOCORRECT_PATH = '%s/nanocorrect/' % (ASSEMBLER_PATH);
 NANOPOLISH_PATH = '%s/nanopolish/' % (ASSEMBLER_PATH);
 BWAMEM_PATH =  '%s/bwa/' % (ASSEMBLER_PATH);
 SAMTOOLS_PATH =  '%s/samtools/' % (ASSEMBLER_PATH);
+CELERA_PATH = '%s/wgs-8.2/Linux-amd64/bin/' % (ASSEMBLER_PATH);
 
 # FASTQ to FASTA converter supplied by IDBA
 FQ2FA_BIN = os.path.join(ASSEMBLER_PATH, 'bin/fq2fa')
@@ -445,7 +446,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         reads_error_corrected = 'raw.reads.corrected.corrected.fasta';
         reads_assembly_input = 'assembly.input.fastq';
         current_memtime_id += 1;
-        commands.append('%s java -Xmx1024M -jar ./wgs-8.2/Linux-amd64/bin/convertFastaAndQualToFastq.jar %s > %s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), reads_error_corrected, reads_assembly_input));
+        commands.append('%s java -Xmx1024M -jar %s/convertFastaAndQualToFastq.jar %s > %s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), CELERA_PATH, reads_error_corrected, reads_assembly_input));
         current_memtime_id += 1;
         commands.append('%s fastqToCA -technology sanger -libraryname assembly -reads %s > assembly.frg' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), reads_assembly_input));
         current_memtime_id += 1;
