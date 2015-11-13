@@ -470,7 +470,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         commands.append('%s %s/samtools faidx draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), SAMTOOLS_PATH));
         # align reads to draft assembly
         current_memtime_id += 1;
-        commands.append('%s bash -c "%s/bwa mem -t $THREADS -x ont2d draft_genome.fasta %s.np.fasta | samtools view -Sb - | samtools sort -f - reads_to_draft.sorted.bam"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), BWAMEM_PATH, raw_reads_basename));
+        commands.append('%s bash -c "%s/bwa mem -t $THREADS -x ont2d draft_genome.fasta %s.np.fasta | %s/samtools view -Sb - | %s/samtools sort -f - reads_to_draft.sorted.bam"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), BWAMEM_PATH, raw_reads_basename, SAMTOOLS_PATH, SAMTOOLS_PATH));
         # index the bam file
         current_memtime_id += 1;
         commands.append('%s %s/samtools index reads_to_draft.sorted.bam' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), SAMTOOLS_PATH));
