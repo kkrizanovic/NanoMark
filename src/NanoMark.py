@@ -7,7 +7,7 @@ import shutil
 import datetime
 import subprocess
 
-import setup_DNAssMark
+import setup_NanoMark
 import basicdefines
 
 # To generate random number for each run, so that multiple runs don't clash
