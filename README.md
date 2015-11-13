@@ -1,5 +1,5 @@
-## DNAssMark
-DNA Assembly Benchmark
+## NanoMark
+DNA Assembly Benchmark for Nanopore long reads
 
 A system for benchmarking DNA assembly tools, based on 3rd generation sequencers.
 
