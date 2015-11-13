@@ -409,6 +409,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
     for folder in reads_folders:
         temp_folders = find_folders(folder, depth=0);
         for temp_folder in temp_folders:
+            commands.append('unlink %s' % (os.path.basename(temp_folder)));
             commands.append('ln -s %s' % (temp_folder));
 
     ### Run error correction.
@@ -556,6 +557,7 @@ def download_and_install():
         setup_commands.append('pip install poretools >> pythonlibs.version');
         setup_commands.append('pip install biopython >> pythonlibs.version');
         setup_commands.append('pip freeze >> pythonlibs.version');
+        setup_commands.append('pip install biopython --upgrade');
 
         # Install samtools
         setup_commands.append('git clone --recursive https://github.com/samtools/htslib.git');
