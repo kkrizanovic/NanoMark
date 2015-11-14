@@ -355,7 +355,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         for single_reads_file in reads_files:
             i += 1;
             single_reads_file = os.path.abspath(single_reads_file);
-            execute_command('cat %s >> %s' % (single_reads_file, reads_file), fp_log, dry_run=DRY_RUN);
+            execute_command('cat %s >> %s' % (single_reads_file, reads_file), None, dry_run=DRY_RUN);
             log('\t(%d) %s -> %s' % (i, single_reads_file, reads_file), None);
 
         ### Backup the old file if it existed.
