@@ -345,6 +345,10 @@ def run(datasets, output_path):
     num_memtimes = 0;
 
     data_dir = '%s/data_test' % (output_path);
+    if (not os.path.exists(data_dir)):
+        log('Creating a directory on path "%s".' % (data_dir), None);
+        os.makedirs(data_dir);
+    
     command = '%s %s/bin/PrepareAllPathsInputs.pl DATA_DIR=%s PLOIDY=1 IN_GROUPS_CSV=%s IN_LIBS_CSV=%s PICARD_TOOLS_DIR=%s OVERWRITE=True | tee %s' % \
                 (measure_command('%s-%d.memtime' % (ASSEMBLER_NAME, num_memtimes)), ASSEMBLER_PATH, data_dir, in_groups_csv_path, in_libs_csv_path, PICARDTOOLS_PATH, 'prepare.out');
     execute_command(command, fp_log, dry_run=DRY_RUN);
