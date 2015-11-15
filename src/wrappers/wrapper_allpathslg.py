@@ -345,12 +345,12 @@ def run(datasets, output_path):
     num_memtimes = 0;
 
     data_dir = '%s/data_test' % (output_path);
-    command = '%s %s/bin/PrepareAllPathsInputs.pl DATA_DIR=%s PLOIDY=1 IN_GROUPS_CSV=%s IN_LIBS_CSV=%s PICARD_TOOLS_DIR=%s OVERWRITE=True > %s' % \
+    command = '%s %s/bin/PrepareAllPathsInputs.pl DATA_DIR=%s PLOIDY=1 IN_GROUPS_CSV=%s IN_LIBS_CSV=%s PICARD_TOOLS_DIR=%s OVERWRITE=True | tee %s' % \
                 (measure_command('%s-%d.memtime' % (ASSEMBLER_NAME, num_memtimes)), ASSEMBLER_PATH, data_dir, in_groups_csv_path, in_libs_csv_path, PICARDTOOLS_PATH, 'prepare.out');
     execute_command(command, fp_log, dry_run=DRY_RUN);
 
     num_memtimes = 0;
-    command = '%s %s PRE=%s REFERENCE_NAME=benchmark RUN=run TARGETS=standard OVERWRITE=Trua | tee -a %s/assemble_test.out' % (measure_command('%s-%d.memtime' % (ASSEMBLER_NAME, num_memtimes)), ASSEMBLER_BIN, output_path, output_path);
+    command = '%s %s PRE=%s REFERENCE_NAME=benchmark RUN=run TARGETS=standard OVERWRITE=True | tee -a %s/assemble_test.out' % (measure_command('%s-%d.memtime' % (ASSEMBLER_NAME, num_memtimes)), ASSEMBLER_BIN, output_path, output_path);
     execute_command(command, fp_log, dry_run=DRY_RUN);
 
 
@@ -361,6 +361,10 @@ def run(datasets, output_path):
     memtime_file = '%s/%s.memtime' % (output_path, ASSEMBLER_NAME);
     all_memtimes = ['%s-%d.memtime' % (ASSEMBLER_NAME, value) for value in xrange(1, num_memtimes)];
     parse_memtime_files_and_accumulate(all_memtimes, memtime_file);
+
+# src/wrappers/wrapper_allpathslg.py run results/dataset1/ALLPATHS-LG datasets/dataset0_illumina/frag_reads.Solexa-25396.\*.fasta,paired,180,10 datasets/dataset0_illumina/jump_reads.Solexa-42866.\*.fasta,mate,3000,500 datasets/dataset0_illumina/jump_reads.Solexa-44956.\*.fasta,mate,3000,500 datasets/dataset1_20x2d/reads.fasta,nanopore
+
+
 
 # RunAllPathsLG \
 #  PRE=$PWD\
