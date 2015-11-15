@@ -25,7 +25,7 @@ except:
 
 ASSEMBLER_URL = 'http://www.cellprofiler.org/ftp/pub/crd/nightly/allpathslg/allpathslg-52488.tar.gz'
 ASSEMBLER_PATH = os.path.join(ASSEMBLERS_PATH_ROOT_ABS, 'allpathslg-52488')
-ASSEMBLER_BIN = os.path.join(ASSEMBLER_PATH, 'src/allpaths-lg')
+ASSEMBLER_BIN = os.path.join(ASSEMBLER_PATH, 'bin/RunAllPathsLG')
 ASSEMBLER_NAME = 'ALLPATHS-LG'
 # ASSEMBLER_RESULTS = 'contig-100.fa'
 CREATE_OUTPUT_FOLDER = True
@@ -67,6 +67,27 @@ def peek(fp, num_chars):
         return '';
     fp.seek(num_chars * -1, 1);
     return data;
+
+class Dataset:
+    def __init__(self, line=''):
+        if (line == ''):
+            self.reads_path = '';
+            self.type = '';         ### nanopore/pacbio/single/paired/mate
+            self.frag_len = 0;     ### Length of the fragment for paired end reads, insert size for mate pair libraries.
+            self.frag_stddev = 0;   ### Standard deviation of the above length.
+        else:
+            split_line = line.split(',');
+            if (len(split_line) < 2):
+                sys.stderr.write('ERROR: At least two arguments need to be specified for a dataset definition: path,type');
+                return;
+            self.reads_path = os.path.abspath(split_line[0]);
+            self.type = split_line[1];
+            if (len(split_line) > 2):
+                self.frag_len = int(split_line[2]);
+            if (len(split_line) > 3):
+                self.frag_stddev = int(split_line[3]);
+
+
 
 # Returns a single read from the given FASTA/FASTQ file.
 # Parameter header contains only the header of the read.
@@ -117,6 +138,113 @@ def get_single_read(fp):
 ##############################################################
 ##############################################################
 ##############################################################
+def parse_memtime(memtime_path):
+    cmdline = '';
+    realtime = 0;
+    cputime = 0;
+    usertime = 0;
+    systemtime = 0;
+    maxrss = 0;
+    rsscache = 0;
+    time_unit = '';
+    mem_unit = '';
+
+    try:
+        fp = open(memtime_path, 'r');
+        lines = [line.strip() for line in fp.readlines() if (len(line.strip()) > 0)];
+        fp.close();
+    except Exception, e:
+        sys.stderr.write('Could not find memory and time statistics in file "%s".\n' % (memtime_path));
+        return [cmdline, realtime, cputime, usertime, systemtime, maxrss, time_unit, mem_unit];
+
+    for line in lines:
+        if (line.startswith('Command line:')):
+            cmdline = line.split(':')[1].strip();
+        elif (line.startswith('Real time:')):
+            split_line = line.split(':')[1].strip().split(' ');
+            realtime = float(split_line[0].strip());
+            time_unit = split_line[1].strip();
+        elif (line.startswith('CPU time:')):
+            split_line = line.split(':')[1].strip().split(' ');
+            cputime = float(split_line[0].strip());
+            time_unit = split_line[1].strip();
+        elif (line.startswith('User time:')):
+            split_line = line.split(':')[1].strip().split(' ');
+            usertime = float(split_line[0].strip());
+            time_unit = split_line[1].strip();
+        elif (line.startswith('System time:')):
+            split_line = line.split(':')[1].strip().split(' ');
+            systemtime = float(split_line[0].strip());
+            time_unit = split_line[1].strip();
+        elif (line.startswith('Maximum RSS:')):
+            split_line = line.split(':')[1].strip().split(' ');
+            maxrss = float(split_line[0].strip());
+            mem_unit = split_line[1].strip();
+        # elif (line.startswith('')):
+        #   split_line = line.split(':')[1].strip().split(' ');
+        #   rsscache = float(split_line[0].strip());
+        #   mem_unit = split_line[1].strip();
+
+    return [cmdline, realtime, cputime, usertime, systemtime, maxrss, time_unit, mem_unit];
+
+def parse_memtime_files_and_accumulate(memtime_files, final_memtime_file):
+    final_command_line = '';
+    final_real_time = 0.0;
+    final_cpu_time = 0.0;
+    final_user_time = 0.0;
+    final_system_time = 0.0;
+    final_time_unit = '';
+    final_max_rss = 0;
+    final_mem_unit = '';
+
+    i = 0;
+    for memtime_file in memtime_files:
+        i += 1;
+        sys.stderr.write('Parsing memtime file "%s"...\n' % (memtime_file));
+
+        [cmdline, realtime, cputime, usertime, systemtime, maxrss, time_unit, mem_unit] = parse_memtime(memtime_file);
+        if (i == 1):
+            final_command_line = cmdline;
+            final_real_time = realtime;
+            final_cpu_time = cputime;
+            final_user_time = usertime;
+            final_system_time = systemtime;
+            final_max_rss += maxrss;
+            final_time_unit = time_unit;
+            final_mem_unit = mem_unit;
+        else:
+            if (time_unit == final_time_unit and mem_unit == final_mem_unit):
+                final_command_line += '; ' + cmdline;
+                final_real_time += realtime;
+                final_cpu_time += cputime;
+                final_user_time += usertime;
+                final_system_time += systemtime;
+                final_max_rss += maxrss;
+            else:
+                sys.stderr.write('Memory or time units not the same in all files! Instead of handling this, we decided to be lazy and just give up.\n');
+                break;
+
+    try:
+        fp = open(final_memtime_file, 'w');
+    except Exception, e:
+        sys.stderr.write('ERROR: Could not open file "%s" for writing!\n' % (final_memtime_file));
+        return;
+
+    if (final_cpu_time <= 0.0):
+        final_cpu_time = final_user_time + final_system_time;
+
+    fp.write('Command line: %s\n' % (final_command_line));
+    fp.write('Real time: %f %s\n' % (final_real_time, final_time_unit));
+    fp.write('CPU time: %f %s\n' % (final_cpu_time, final_time_unit));
+    fp.write('User time: %f %s\n' % (final_user_time, final_time_unit));
+    fp.write('System time: %f %s\n' % (final_system_time, final_time_unit));
+    fp.write('Maximum RSS: %f %s\n' % (final_max_rss, final_mem_unit));
+
+    fp.close();
+
+##############################################################
+##############################################################
+##############################################################
 
 # Function 'run' should provide a standard interface for running a mapper. Given input parameters, it should run the
 # alignment process, and convert any custom output results to the SAM format. Function should return a string with the
@@ -126,12 +254,12 @@ def get_single_read(fp):
 #    machine_name        A symbolic name to specify a set of parameters for a specific sequencing platform.
 #    output_path            Folder to which the output will be placed to. Filename will be automatically generated according to the name of the mapper being run.
 #    output_suffix        A custom suffix that can be added to the output filename.
-def run(reads_files, reference_file, machine_name, output_path, output_suffix=''):
+# def run(reads_files, reference_file, machine_name, output_path, output_suffix=''):
+def run(datasets, output_path):
     ### Reference for running a local job instead of using an SGE cluster:
     ### http://seqanswers.com/forums/showthread.php?t=50937
     num_threads = multiprocessing.cpu_count() / 2;
 
-    reference_file = os.path.abspath(reference_file);
     output_path = os.path.abspath(output_path);
 
     ##################################################################################
@@ -158,21 +286,111 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
     ### Check if permissions are given for Cgmemtime.
     ##################################################################################
     if (MODULE_BASICDEFINES == True):
-        execute_command('%s/cgmemtime/cgmemtime -o %s/test.memtime ls -lhrt' % (basicdefines.TOOLS_ROOT, output_path), fp_log, dry_run=DRY_RUN);
+        execute_command('%s ls -lhrt' % (measure_command('%s/test.memtime' % output_path)), fp_log, dry_run=DRY_RUN);
         if (not os.path.exists('%s/test.memtime' % (output_path))):
             command = 'sudo %s/cgmemtime/cgmemtime --setup -g %s --perm 775' % (basicdefines.TOOLS_ROOT, getpass.getuser());
             sys.stderr.write('[] %s\n' % (command));
             execute_command(command, fp_log, dry_run=DRY_RUN);
 
     ##################################################################################
+    ### Preparing the input datasets.
+    ##################################################################################
+    log('Preparing the input datasets.\n', fp_log);
+
+    ### 'type' parameter is only informative (according to the ALLPATHS-LG documentation).
+    in_libs = 'library_name, project_name, organism_name, type, paired, frag_size, frag_stddev, insert_size, insert_stddev, read_orientation, genomic_start, genomic_end\n';
+    in_groups = 'group_name, library_name, file_name\n';
+    num_libs = 0;
+    for dataset in datasets:
+        num_libs += 1;
+        library_name = '%s-%d' % (os.path.splitext(os.path.basename(dataset.reads_path))[0], num_libs);
+        group_name = 'group-%d' % (num_libs);
+
+        in_groups += '%s, %s, %s\n' % (group_name, library_name, dataset.reads_path);
+
+        if (dataset.type == 'single'):
+            in_libs += '%s, benchmark, benchmark, fragment, 0, , , , , inward, 0, 0\n' % (library_name);
+
+        elif (dataset.type == 'paired'):
+            in_libs += '%s, benchmark, benchmark, fragment, 1, %d, %d, , , inward, 0, 0\n' % (library_name, dataset.frag_len, dataset.frag_stddev);
+
+        elif (dataset.type == 'mate'):
+            in_libs += '%s, benchmark, benchmark, jumping, 1, , , %d, %d, outward, 0, 0\n' % (library_name, dataset.frag_len, dataset.frag_stddev);
+
+        elif (dataset.type == 'pacbio'):
+            in_libs += '%s, benchmark, benchmark, pacbio, 0, , , , , inward, 0, 0\n' % (library_name);
+
+        elif (dataset.type == 'nanopore'):
+            in_libs += '%s, benchmark, benchmark, nanopore, 0, , , , , inward, 0, 0\n' % (library_name);
+
+    log(in_groups, fp_log);
+    log(in_libs, fp_log);
+
+    in_groups_csv_path = '%s/in_groups.csv' % (output_path);
+    in_libs_csv_path = '%s/in_libs.csv' % (output_path);
+
+    fp_groups = open(in_groups_csv_path, 'w');
+    fp_groups.write(in_groups);
+    fp_groups.close();
+
+    fp_libs = open(in_libs_csv_path, 'w');
+    fp_libs.write(in_libs);
+    fp_libs.close();
+
+    ##################################################################################
     ### Start the important work.
     ##################################################################################
     log('Running assembly using %s.' % (ASSEMBLER_NAME), fp_log);
 
+    num_memtimes = 0;
+
+    data_dir = '%s/data_test' % (output_path);
+    command = '%s %s/bin/PrepareAllPathsInputs.pl DATA_DIR=%s PLOIDY=1 IN_GROUPS_CSV=%s IN_LIBS_CSV=%s PICARD_TOOLS_DIR=%s OVERWRITE=True > %s' % \
+                (measure_command('%s-%d.memtime' % (ASSEMBLER_NAME, num_memtimes)), ASSEMBLER_PATH, data_dir, in_groups_csv_path, in_libs_csv_path, PICARDTOOLS_PATH, 'prepare.out');
+    execute_command(command, fp_log, dry_run=DRY_RUN);
+
+    num_memtimes = 0;
+    command = '%s %s PRE=%s REFERENCE_NAME=benchmark RUN=run TARGETS=standard OVERWRITE=Trua | tee -a %s/assemble_test.out' % (measure_command('%s-%d.memtime' % (ASSEMBLER_NAME, num_memtimes)), ASSEMBLER_BIN, output_path, output_path);
+    execute_command(command, fp_log, dry_run=DRY_RUN);
+
+
+
+    ##################################################################################
+    ### Accumulate the memtime stats.
+    ##################################################################################
+    memtime_file = '%s/%s.memtime' % (output_path, ASSEMBLER_NAME);
+    all_memtimes = ['%s-%d.memtime' % (ASSEMBLER_NAME, value) for value in xrange(1, num_memtimes)];
+    parse_memtime_files_and_accumulate(all_memtimes, memtime_file);
+
+# RunAllPathsLG \
+#  PRE=$PWD\
+#  REFERENCE_NAME=benchmark\
+#  DATA_SUBDIR=data_test\
+#  RUN=run\
+#  TARGETS=standard\
+#  OVERWRITE=True\
+#  | tee -a assemble_test.out
+
+
+
+# cd; cd benchmark/results/datasets/dataset1_20x2d/allpaths
+# PrepareAllPathsInputs.pl\
+#  DATA_DIR=$PWD/benchmark/data_test\
+#  PLOIDY=1\
+#  IN_GROUPS_CSV=in_groups.csv\
+#  IN_LIBS_CSV=in_libs.csv\
+#  GENOME_SIZE=4650000\
+#  PICARD_TOOLS_DIR=/home/kresimir/build/picard-tools-1.140\
+#  OVERWRITE=True\
+#  | tee prepare.out
+
+
+
+# isovic@assembly:/mnt/share1_DrOc/genomes/OxfordNanopore/Benchmark/results$ less ./dataset4_40x2d/Allpaths-LG/in_libs.csv
+# library_name, project_name, organism_name,     type, paired, frag_size, frag_stddev, insert_size, insert_stddev, read_orientation, genomic_start, genomic_end
+#     dataset4,    benchmark,         ecoli,      ont,      0,          ,            ,            ,              ,           inward,             0,           0
+
     ### Create a config file for the assembly.
-    if (machine_name == 'pacbio'):
-        pass;
-    elif (machine_name == 'nanopore'):
 # ## Prepare data for allpaths, dataset1
 # # Prepare nanopore reads file
 # # Edit in_groups.csv and in_libs.csv files, they should contain one entery for a one fastq file
@@ -198,12 +416,21 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
 # ./dataset4_2_40x2d/Allpaths-LG/in_libs.csv
 #                                                      file_name, library_name, group_name
 # /home/kresimir/benchmark/datasets/dataset4_2_40x2d/reads.fastq,     dataset4,   dataset4
-         pass;
 
-    memtime_file = '%s/%s.memtime' % (output_path, ASSEMBLER_NAME);
-    run_commands = [];
-    command = '; '.join(run_commands);
-    execute_command(command, fp_log, dry_run=DRY_RUN);
+
+# isovic@assembly:/mnt/share1_DrOc/genomes/OxfordNanopore/Benchmark$ cat ./alpaths_temp/results/dataset0_reference5/in_libs.csv
+# library_name, project_name, organism_name,     type, paired, frag_size, frag_stddev, insert_size, insert_stddev, read_orientation, genomic_start, genomic_end
+# Solexa-25396,    benchmark,     benchmark, fragment,      1,       180,          10,            ,              ,           inward,             0,           0
+# Solexa-42866,    benchmark,     benchmark,  jumping,      1,          ,            ,        3000,           500,          outward,             0,           0
+# Solexa-44956,    benchmark,     benchmark,  jumping,      1,          ,            ,        3000,           500,          outward,             0,           0
+
+### reads_path,nanopore/pacbio/single/paired/mate,size,stddev
+### Size and stddev can be omitted for nanopore and pacbio options.
+
+    # memtime_file = '%s/%s.memtime' % (output_path, ASSEMBLER_NAME);
+    # run_commands = [];
+    # command = '; '.join(run_commands);
+    # execute_command(command, fp_log, dry_run=DRY_RUN);
 
     if (fp_log != None):
         fp_log.close();
@@ -250,9 +477,11 @@ def download_and_install():
 
 def verbose_usage_and_exit():
     sys.stderr.write('Usage:\n')
-    sys.stderr.write('\t%s mode [<reads_file1>,<reads_file2>,...,<reads_fileN> <machine_name> <output_path>]\n' % sys.argv[0])
+    # sys.stderr.write('\t%s mode [<reads_file1>,<reads_file2>,...,<reads_fileN> <machine_name> <output_path>]\n' % sys.argv[0])
+    sys.stderr.write('\t%s mode [<output_path> dataset1 [dataset2 ...]]\n' % sys.argv[0])
     sys.stderr.write('\n')
-    sys.stderr.write('\t- mode - either "run" or "install". Is "install" other parameters can be ommitted.\n')
+    sys.stderr.write('\t- mode - either "run" or "install". If "install" other parameters can be omitted.\n')
+    sys.stderr.write('\t- dataset - specification of a dataset in the form: <reads_path>,reads_type[,frag_len,frag_stddev] . Reads_type can be nanopore/pacbio/single/paired/mate. If reads_type == "paired" or "mate", last two parameters can be omitted".\n');
     # sys.stderr.write('\n');
     # sys.stderr.write('\tMultiple reads file can')
 
@@ -267,16 +496,16 @@ if __name__ == "__main__":
         exit(0)
 
     elif (sys.argv[1] == 'run'):
-        if (len(sys.argv) < 5 or len(sys.argv) > 6):
+        if (len(sys.argv) < 4):
             verbose_usage_and_exit()
 
-        reads_files = sys.argv[2].split(',')         ### Enable specifying multiple FASTQ files for input.
-        machine_name = sys.argv[3]
-        output_path = sys.argv[4]
-        reference_file = '';
-        output_suffix = ''
-        
-        run(reads_files, reference_file, machine_name, output_path, output_suffix)
+        output_path = sys.argv[2]
+        datasets = [];
+        for arg in sys.argv[3:]:
+            dataset = Dataset(arg);
+            datasets.append(dataset);
+
+        run(datasets, output_path);
 
     else:
         verbose_usage_and_exit()
