@@ -378,7 +378,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
     log('Running assembly using %s.' % (ASSEMBLER_NAME), fp_log);
 
     if (MODULE_BASICDEFINES == True):
-        execute_command('sudo %s/cgmemtime/cgmemtime -o %s/test.memtime ls -lhrt' % (basicdefines.TOOLS_ROOT, output_path), fp_log, dry_run=DRY_RUN);
+        execute_command('%s/cgmemtime/cgmemtime -o %s/test.memtime ls -lhrt' % (basicdefines.TOOLS_ROOT, output_path), fp_log, dry_run=DRY_RUN);
         if (not os.path.exists('%s/test.memtime' % (output_path))):
             command = 'sudo %s/cgmemtime/cgmemtime --setup -g %s --perm 775' % (basicdefines.TOOLS_ROOT, getpass.getuser());
             sys.stderr.write('[] %s\n' % (command));
