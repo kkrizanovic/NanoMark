@@ -79,7 +79,7 @@ class Dataset:
             self.reads_path_b = '';
         else:
             split_line = line.split(',');
-            
+
             self.type = split_line[0];
             if (self.type == 'nanopore' or self.type == 'pacbio' or self.type == 'single'):
                 if (len(split_line) < 2):
@@ -323,13 +323,13 @@ def run(datasets, output_path):
             in_libs += '%s, dataset, dataset, fragment, 0, , , , , inward, 0, 0\n' % (library_name);
 
         elif (dataset.type == 'paired'):
-            in_groups += '%s, %s, %s\n' % (group_name, library_name, dataset.reads_path_a);
-            in_groups += '%s, %s, %s\n' % (group_name, library_name, dataset.reads_path_b);
+            in_groups += '%s-a, %s, %s\n' % (group_name, library_name, dataset.reads_path_a);
+            in_groups += '%s-b, %s, %s\n' % (group_name, library_name, dataset.reads_path_b);
             in_libs += '%s, dataset, dataset, fragment, 1, %d, %d, , , inward, 0, 0\n' % (library_name, dataset.frag_len, dataset.frag_stddev);
 
         elif (dataset.type == 'mate'):
-            in_groups += '%s, %s, %s\n' % (group_name, library_name, dataset.reads_path_a);
-            in_groups += '%s, %s, %s\n' % (group_name, library_name, dataset.reads_path_b);
+            in_groups += '%s-a, %s, %s\n' % (group_name, library_name, dataset.reads_path_a);
+            in_groups += '%s-b, %s, %s\n' % (group_name, library_name, dataset.reads_path_b);
             in_libs += '%s, dataset, dataset, jumping, 1, , , %d, %d, outward, 0, 0\n' % (library_name, dataset.frag_len, dataset.frag_stddev);
 
         elif (dataset.type == 'pacbio'):
