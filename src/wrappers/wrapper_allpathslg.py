@@ -303,7 +303,8 @@ def run(datasets, output_path):
     num_libs = 0;
     for dataset in datasets:
         num_libs += 1;
-        library_name = '%s-%d' % (os.path.splitext(os.path.basename(dataset.reads_path))[0], num_libs);
+        # library_name = '%s-%d' % (os.path.splitext(os.path.basename(dataset.reads_path))[0], num_libs);
+        library_name = 'lib-%d' % (num_libs);
         group_name = 'group-%d' % (num_libs);
 
         in_groups += '%s, %s, %s\n' % (group_name, library_name, dataset.reads_path);

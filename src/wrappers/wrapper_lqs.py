@@ -27,7 +27,7 @@ except:
 # https://github.com/jts/nanopore-paper-analysis/blob/master/full-pipeline.make
 
 ASSEMBLER_URL = 'https://github.com/jts/nanopore-paper-analysis.git'
-ASSEMBLER_PATH = os.path.join(basicdefines.ASSEMBLERS_PATH_ROOT_ABS, 'LSP')
+ASSEMBLER_PATH = os.path.join(basicdefines.ASSEMBLERS_PATH_ROOT_ABS, 'LQS')
 # ZIP_FILE = 'wgs-8.3rc2-Linux_amd64.tar.bz2'
 # ZIP_PATH = os.path.join(basicdefines.ASSEMBLERS_PATH_ROOT_ABS, ZIP_FILE)
 ASSEMBLER_BIN = os.path.join(ASSEMBLER_PATH, 'full-pipeline.make')
