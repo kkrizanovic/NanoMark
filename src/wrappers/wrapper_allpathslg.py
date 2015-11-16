@@ -78,6 +78,8 @@ class Dataset:
             self.reads_path_a = '';
             self.reads_path_b = '';
         else:
+            split_line = line.split(',');
+            
             self.type = split_line[0];
             if (self.type == 'nanopore' or self.type == 'pacbio' or self.type == 'single'):
                 if (len(split_line) < 2):
