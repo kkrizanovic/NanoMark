@@ -309,19 +309,19 @@ def run(datasets, output_path):
         in_groups += '%s, %s, %s\n' % (group_name, library_name, dataset.reads_path);
 
         if (dataset.type == 'single'):
-            in_libs += '%s, benchmark, benchmark, fragment, 0, , , , , inward, 0, 0\n' % (library_name);
+            in_libs += '%s, dataset, dataset, fragment, 0, , , , , inward, 0, 0\n' % (library_name);
 
         elif (dataset.type == 'paired'):
-            in_libs += '%s, benchmark, benchmark, fragment, 1, %d, %d, , , inward, 0, 0\n' % (library_name, dataset.frag_len, dataset.frag_stddev);
+            in_libs += '%s, dataset, dataset, fragment, 1, %d, %d, , , inward, 0, 0\n' % (library_name, dataset.frag_len, dataset.frag_stddev);
 
         elif (dataset.type == 'mate'):
-            in_libs += '%s, benchmark, benchmark, jumping, 1, , , %d, %d, outward, 0, 0\n' % (library_name, dataset.frag_len, dataset.frag_stddev);
+            in_libs += '%s, dataset, dataset, jumping, 1, , , %d, %d, outward, 0, 0\n' % (library_name, dataset.frag_len, dataset.frag_stddev);
 
         elif (dataset.type == 'pacbio'):
-            in_libs += '%s, benchmark, benchmark, pacbio, 0, , , , , inward, 0, 0\n' % (library_name);
+            in_libs += '%s, dataset, dataset, pacbio, 0, , , , , inward, 0, 0\n' % (library_name);
 
         elif (dataset.type == 'nanopore'):
-            in_libs += '%s, benchmark, benchmark, nanopore, 0, , , , , inward, 0, 0\n' % (library_name);
+            in_libs += '%s, dataset, dataset, nanopore, 0, , , , , inward, 0, 0\n' % (library_name);
 
     log(in_groups, fp_log);
     log(in_libs, fp_log);
@@ -493,8 +493,11 @@ def verbose_usage_and_exit():
     sys.stderr.write('\n')
     sys.stderr.write('\t- mode - either "run" or "install". If "install" other parameters can be omitted.\n')
     sys.stderr.write('\t- dataset - specification of a dataset in the form: <reads_path>,reads_type[,frag_len,frag_stddev] . Reads_type can be nanopore/pacbio/single/paired/mate. If reads_type == "paired" or "mate", last two parameters can be omitted".\n');
-    # sys.stderr.write('\n');
-    # sys.stderr.write('\tMultiple reads file can')
+    sys.stderr.write('\n');
+
+    sys.stderr.write('Example:\n');
+    sys.stderr.write('\twrapper_allpathslg.py run results/%s datasets/frag_reads.Solexa-25396.\*.fastq,paired,180,10 datasets/jump_reads.Solexa-42866.\*.fastq,mate,3000,500 datasets/jump_reads.Solexa-44956.\*.fastq,mate,3000,500 datasets/reads.fastq,nanopore\n' % (ASSEMBLER_NAME));
+    sys.stderr.write('\n');
 
     exit(0)
 
