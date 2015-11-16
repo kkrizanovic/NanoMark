@@ -68,6 +68,24 @@ def peek(fp, num_chars):
     fp.seek(num_chars * -1, 1);
     return data;
 
+
+
+def edit_distance(s1, s2):
+    if (len(s1) < len(s2)):
+        return edit_distance(s2, s1);
+    if (len(s2) == 0):
+        return len(s1);
+    previous_row = range(len(s2) + 1);
+    for i, c1 in enumerate(s1):
+        current_row = [i + 1];
+        for j, c2 in enumerate(s2):
+            insertions = previous_row[j + 1] + 1;
+            deletions = current_row[j] + 1;
+            substitutions = previous_row[j] + (c1 != c2);
+            current_row.append(min(insertions, deletions, substitutions));
+        previous_row = current_row;
+    return previous_row[-1];
+
 class Dataset:
     def __init__(self, line=''):
         if (line == ''):
@@ -94,6 +112,24 @@ class Dataset:
                 self.reads_path_b = os.path.abspath(split_line[2]);
                 self.frag_len = int(split_line[3]);
                 self.frag_stddev = int(split_line[4]);
+
+                if (edit_distance(self.reads_path_a, self.reads_path_b) > 1):
+                    sys.stderr.write('ERROR: Paths to paired-end/mate-pair libraries should differ only in 1 character! Exiting.\n');
+                    exit(1);
+                # print 'self.reads_path_a = %s' % (self.reads_path_a);
+                wildcard_path = list(self.reads_path_a);
+                # print wildcard_path;
+                # print '';
+                d = zip(self.reads_path_a, self.reads_path_b);
+                # print d;
+
+                current_char = 0;
+                for i,j in d:
+                    if (i != j):
+                        wildcard_path[current_char] = '?';
+                    current_char += 1;
+                self.reads_path = ''.join(wildcard_path);
+
             else:
                 sys.stderr.write('ERROR: Unknown type of reads specified as parameter: "%s"!\n' % (line));
                 return;
@@ -318,26 +354,23 @@ def run(datasets, output_path):
         library_name = 'lib-%d' % (num_libs);
         group_name = 'group-%d' % (num_libs);
 
+        in_groups += '%s, %s, %s\n' % (group_name, library_name, dataset.reads_path);
+
         if (dataset.type == 'single'):
-            in_groups += '%s, %s, %s\n' % (group_name, library_name, dataset.reads_path);
             in_libs += '%s, dataset, dataset, fragment, 0, , , , , inward, 0, 0\n' % (library_name);
 
         elif (dataset.type == 'paired'):
-            in_groups += '%s-a, %s, %s\n' % (group_name, library_name, dataset.reads_path_a);
-            in_groups += '%s-b, %s, %s\n' % (group_name, library_name, dataset.reads_path_b);
+            # in_groups += '%s-a, %s, %s\n' % (group_name, library_name, dataset.reads_path_a);
+            # in_groups += '%s-b, %s, %s\n' % (group_name, library_name, dataset.reads_path_b);
             in_libs += '%s, dataset, dataset, fragment, 1, %d, %d, , , inward, 0, 0\n' % (library_name, dataset.frag_len, dataset.frag_stddev);
 
         elif (dataset.type == 'mate'):
-            in_groups += '%s-a, %s, %s\n' % (group_name, library_name, dataset.reads_path_a);
-            in_groups += '%s-b, %s, %s\n' % (group_name, library_name, dataset.reads_path_b);
             in_libs += '%s, dataset, dataset, jumping, 1, , , %d, %d, outward, 0, 0\n' % (library_name, dataset.frag_len, dataset.frag_stddev);
 
         elif (dataset.type == 'pacbio'):
-            in_groups += '%s, %s, %s\n' % (group_name, library_name, dataset.reads_path);
             in_libs += '%s, dataset, dataset, pacbio, 0, , , , , inward, 0, 0\n' % (library_name);
 
         elif (dataset.type == 'nanopore'):
-            in_groups += '%s, %s, %s\n' % (group_name, library_name, dataset.reads_path);
             in_libs += '%s, dataset, dataset, nanopore, 0, , , , , inward, 0, 0\n' % (library_name);
 
     log(in_groups, fp_log);
@@ -536,7 +569,6 @@ if __name__ == "__main__":
         for arg in sys.argv[3:]:
             dataset = Dataset(arg);
             datasets.append(dataset);
-
         run(datasets, output_path);
 
     else:
