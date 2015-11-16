@@ -265,12 +265,12 @@ def run(datasets, output_path):
     ##################################################################################
     ### Backup old assembly results, and create the new output folder.
     ##################################################################################
-    if (os.path.exists(output_path)):
-        timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
-        os.rename(output_path, '%s.bak_%s' % (output_path, timestamp));
-    if (not os.path.exists(output_path)):
-        log('Creating a directory on path "%s".' % (output_path), None);
-        os.makedirs(output_path);
+    # if (os.path.exists(output_path)):
+    #     timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
+    #     os.rename(output_path, '%s.bak_%s' % (output_path, timestamp));
+    # if (not os.path.exists(output_path)):
+    #     log('Creating a directory on path "%s".' % (output_path), None);
+    #     os.makedirs(output_path);
 
     ##################################################################################
     ### Prepare a log file.
@@ -351,14 +351,14 @@ def run(datasets, output_path):
         os.makedirs(data_dir);
 
     ### ALLPATHS-LG crashes when it cannot parse a double value from a string, e.g. "101.0" would cause a crash if the locale is not set to US. Set correct decimal separator!! export LC_NUMERIC='en_US.utf8'
-    command = 'export LC_NUMERIC=\'en_US.utf8\'; %s %s/bin/PrepareAllPathsInputs.pl DATA_DIR=%s PLOIDY=1 IN_GROUPS_CSV=%s IN_LIBS_CSV=%s PICARD_TOOLS_DIR=%s OVERWRITE=True | tee %s' % \
-                (measure_command('%s-%d.memtime' % (ASSEMBLER_NAME, num_memtimes)), ASSEMBLER_PATH, data_dir, in_groups_csv_path, in_libs_csv_path, PICARDTOOLS_PATH, 'prepare.out');
-    execute_command(command, fp_log, dry_run=DRY_RUN);
+    command = 'export LC_NUMERIC=\'en_US.utf8\'; export PATH=$PATH:%s/bin; %s %s/bin/PrepareAllPathsInputs.pl DATA_DIR=%s PLOIDY=1 IN_GROUPS_CSV=%s IN_LIBS_CSV=%s PICARD_TOOLS_DIR=%s OVERWRITE=True | tee %s' % \
+                (ASSEMBLER_PATH, measure_command('%s-%d.memtime' % (ASSEMBLER_NAME, num_memtimes)), ASSEMBLER_PATH, data_dir, in_groups_csv_path, in_libs_csv_path, PICARDTOOLS_PATH, 'prepare.out');
+    # execute_command(command, fp_log, dry_run=DRY_RUN);
 
     num_memtimes += 1;
     ### ALLPATHS-LG crashes when it cannot parse a double value from a string, e.g. "101.0" would cause a crash if the locale is not set to US. Set correct decimal separator!! export LC_NUMERIC='en_US.utf8'
-    command = 'export LC_NUMERIC=\'en_US.utf8\'; %s %s PRE=%s DATA_SUBDIR=data_test REFERENCE_NAME=data THREADS=%d RUN=run TARGETS=standard OVERWRITE=True | tee -a %s/assemble_test.out' % \
-                (measure_command('%s-%d.memtime' % (ASSEMBLER_NAME, num_memtimes)), ASSEMBLER_BIN, output_path, num_threads, output_path);
+    command = 'export LC_NUMERIC=\'en_US.utf8\'; export PATH=$PATH:%s/bin; %s %s PRE=%s DATA_SUBDIR=data_test REFERENCE_NAME=data THREADS=%d RUN=run TARGETS=standard OVERWRITE=True | tee -a %s/assemble_test.out' % \
+                (ASSEMBLER_PATH, measure_command('%s-%d.memtime' % (ASSEMBLER_NAME, num_memtimes)), ASSEMBLER_BIN, output_path, num_threads, output_path);
     execute_command(command, fp_log, dry_run=DRY_RUN);
 
 
