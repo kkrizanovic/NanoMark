@@ -75,17 +75,26 @@ class Dataset:
             self.type = '';         ### nanopore/pacbio/single/paired/mate
             self.frag_len = 0;     ### Length of the fragment for paired end reads, insert size for mate pair libraries.
             self.frag_stddev = 0;   ### Standard deviation of the above length.
+            self.reads_path_a = '';
+            self.reads_path_b = '';
         else:
-            split_line = line.split(',');
-            if (len(split_line) < 2):
-                sys.stderr.write('ERROR: At least two arguments need to be specified for a dataset definition: path,type');
+            self.type = split_line[0];
+            if (self.type == 'nanopore' or self.type == 'pacbio' or self.type == 'single'):
+                if (len(split_line) < 2):
+                    sys.stderr.write('ERROR: Two arguments need to be specified: "reads_type,reads_path"!\n');
+                    return;
+                self.reads_path = os.path.abspath(split_line[1]);
+            elif (self.type == 'paired' or self.type == 'mate'):
+                if (len(split_line) < 5):
+                    sys.stderr.write('ERROR: Five arguments need to be specified: "reads_type,reads_path_a,reads_path_b,frag_len,frag_stddev"!\n');
+                    return;
+                self.reads_path_a = os.path.abspath(split_line[1]);
+                self.reads_path_b = os.path.abspath(split_line[2]);
+                self.frag_len = int(split_line[3]);
+                self.frag_stddev = int(split_line[4]);
+            else:
+                sys.stderr.write('ERROR: Unknown type of reads specified as parameter: "%s"!\n' % (line));
                 return;
-            self.reads_path = os.path.abspath(split_line[0]);
-            self.type = split_line[1];
-            if (len(split_line) > 2):
-                self.frag_len = int(split_line[2]);
-            if (len(split_line) > 3):
-                self.frag_stddev = int(split_line[3]);
 
 
 
@@ -265,12 +274,12 @@ def run(datasets, output_path):
     ##################################################################################
     ### Backup old assembly results, and create the new output folder.
     ##################################################################################
-    # if (os.path.exists(output_path)):
-    #     timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
-    #     os.rename(output_path, '%s.bak_%s' % (output_path, timestamp));
-    # if (not os.path.exists(output_path)):
-    #     log('Creating a directory on path "%s".' % (output_path), None);
-    #     os.makedirs(output_path);
+    if (os.path.exists(output_path)):
+        timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
+        os.rename(output_path, '%s.bak_%s' % (output_path, timestamp));
+    if (not os.path.exists(output_path)):
+        log('Creating a directory on path "%s".' % (output_path), None);
+        os.makedirs(output_path);
 
     ##################################################################################
     ### Prepare a log file.
@@ -307,21 +316,26 @@ def run(datasets, output_path):
         library_name = 'lib-%d' % (num_libs);
         group_name = 'group-%d' % (num_libs);
 
-        in_groups += '%s, %s, %s\n' % (group_name, library_name, dataset.reads_path);
-
         if (dataset.type == 'single'):
+            in_groups += '%s, %s, %s\n' % (group_name, library_name, dataset.reads_path);
             in_libs += '%s, dataset, dataset, fragment, 0, , , , , inward, 0, 0\n' % (library_name);
 
         elif (dataset.type == 'paired'):
+            in_groups += '%s, %s, %s\n' % (group_name, library_name, dataset.reads_path_a);
+            in_groups += '%s, %s, %s\n' % (group_name, library_name, dataset.reads_path_b);
             in_libs += '%s, dataset, dataset, fragment, 1, %d, %d, , , inward, 0, 0\n' % (library_name, dataset.frag_len, dataset.frag_stddev);
 
         elif (dataset.type == 'mate'):
+            in_groups += '%s, %s, %s\n' % (group_name, library_name, dataset.reads_path_a);
+            in_groups += '%s, %s, %s\n' % (group_name, library_name, dataset.reads_path_b);
             in_libs += '%s, dataset, dataset, jumping, 1, , , %d, %d, outward, 0, 0\n' % (library_name, dataset.frag_len, dataset.frag_stddev);
 
         elif (dataset.type == 'pacbio'):
+            in_groups += '%s, %s, %s\n' % (group_name, library_name, dataset.reads_path);
             in_libs += '%s, dataset, dataset, pacbio, 0, , , , , inward, 0, 0\n' % (library_name);
 
         elif (dataset.type == 'nanopore'):
+            in_groups += '%s, %s, %s\n' % (group_name, library_name, dataset.reads_path);
             in_libs += '%s, dataset, dataset, nanopore, 0, , , , , inward, 0, 0\n' % (library_name);
 
     log(in_groups, fp_log);
@@ -353,13 +367,13 @@ def run(datasets, output_path):
     ### ALLPATHS-LG crashes when it cannot parse a double value from a string, e.g. "101.0" would cause a crash if the locale is not set to US. Set correct decimal separator!! export LC_NUMERIC='en_US.utf8'
     command = 'export LC_NUMERIC=\'en_US.utf8\'; export PATH=$PATH:%s/bin; %s %s/bin/PrepareAllPathsInputs.pl DATA_DIR=%s PLOIDY=1 IN_GROUPS_CSV=%s IN_LIBS_CSV=%s PICARD_TOOLS_DIR=%s OVERWRITE=True | tee %s' % \
                 (ASSEMBLER_PATH, measure_command('%s-%d.memtime' % (ASSEMBLER_NAME, num_memtimes)), ASSEMBLER_PATH, data_dir, in_groups_csv_path, in_libs_csv_path, PICARDTOOLS_PATH, 'prepare.out');
-    # execute_command(command, fp_log, dry_run=DRY_RUN);
+    execute_command(command, fp_log, dry_run=DRY_RUN);
 
     num_memtimes += 1;
     ### ALLPATHS-LG crashes when it cannot parse a double value from a string, e.g. "101.0" would cause a crash if the locale is not set to US. Set correct decimal separator!! export LC_NUMERIC='en_US.utf8'
     command = 'export LC_NUMERIC=\'en_US.utf8\'; export PATH=$PATH:%s/bin; %s %s PRE=%s DATA_SUBDIR=data_test REFERENCE_NAME=data THREADS=%d RUN=run TARGETS=standard OVERWRITE=True | tee -a %s/assemble_test.out' % \
                 (ASSEMBLER_PATH, measure_command('%s-%d.memtime' % (ASSEMBLER_NAME, num_memtimes)), ASSEMBLER_BIN, output_path, num_threads, output_path);
-    execute_command(command, fp_log, dry_run=DRY_RUN);
+    # execute_command(command, fp_log, dry_run=DRY_RUN);
 
 
 
@@ -497,7 +511,8 @@ def verbose_usage_and_exit():
     sys.stderr.write('\n');
 
     sys.stderr.write('Example:\n');
-    sys.stderr.write('\twrapper_allpathslg.py run results/%s datasets/frag_reads.Solexa-25396.\*.fastq,paired,180,10 datasets/jump_reads.Solexa-42866.\*.fastq,mate,3000,500 datasets/jump_reads.Solexa-44956.\*.fastq,mate,3000,500 datasets/reads.fastq,nanopore\n' % (ASSEMBLER_NAME));
+    # sys.stderr.write('\twrapper_allpathslg.py run results/%s datasets/frag_reads.Solexa-25396.\*.fastq,paired,180,10 datasets/jump_reads.Solexa-42866.\*.fastq,mate,3000,500 datasets/jump_reads.Solexa-44956.\*.fastq,mate,3000,500 datasets/reads.fastq,nanopore\n' % (ASSEMBLER_NAME));
+    sys.stderr.write('\twrapper_allpathslg.py run results/%s paired,datasets/frag_reads.Solexa-25396.A.fastq,datasets/frag_reads.Solexa-25396.B.fastq,180,10 mate,datasets/jump_reads.Solexa-42866.A.fastq,datasets/jump_reads.Solexa-42866.B.fastq,3000,500 mate,datasets/jump_reads.Solexa-44956.A.fastq,datasets/jump_reads.Solexa-44956.B.fastq,3000,500 nanopore,datasets/reads.fastq\n' % (ASSEMBLER_NAME));
     sys.stderr.write('\n');
 
     exit(0)
