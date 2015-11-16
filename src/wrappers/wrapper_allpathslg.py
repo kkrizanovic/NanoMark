@@ -375,7 +375,7 @@ def run(datasets, output_path):
     ### ALLPATHS-LG crashes when it cannot parse a double value from a string, e.g. "101.0" would cause a crash if the locale is not set to US. Set correct decimal separator!! export LC_NUMERIC='en_US.utf8'
     command = 'export LC_NUMERIC=\'en_US.utf8\'; export PATH=$PATH:%s/bin; %s %s PRE=%s DATA_SUBDIR=data_test REFERENCE_NAME=data THREADS=%d RUN=run TARGETS=standard OVERWRITE=True | tee -a %s/assemble_test.out' % \
                 (ASSEMBLER_PATH, measure_command('%s-%d.memtime' % (ASSEMBLER_NAME, num_memtimes)), ASSEMBLER_BIN, output_path, num_threads, output_path);
-    # execute_command(command, fp_log, dry_run=DRY_RUN);
+    execute_command(command, fp_log, dry_run=DRY_RUN);
 
 
 
