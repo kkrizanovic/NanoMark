@@ -201,12 +201,58 @@ def run(datasets, output_path):
 
     spec_file = ''
     if machine_name == 'pacbio':
-        spec_file = PACBIO_SPEC
-        command = 'cd %s; %s %s -pbCNS -length 500 -partitions 200 -l %s -s %s -fastq %s ' % (output_path, measure_command(memtime_path), used_bin, ASSEMBLER_NAME, spec_file, reads_file)
+        spec_lines = [];
+        spec_lines.append('# limit to 32GB. By default the pipeline will auto-detect memory and try to use maximum. This allow limiting it');
+        spec_lines.append('ovlMemory = 32');
+        spec_lines.append('ovlStoreMemory= 32000');
+        spec_lines.append('merylMemory = 32000');
+        spec = '\n'.join(spec_lines);
+        
+        spec_file_path = '%s/pacbio.spec';
+        try:
+            fp_spec = open(spec_file_path, 'w');
+            fp_spec.write(spec + '\n');
+            fp_spec.close();
+        except IOError, e:
+            log('ERROR: Could not generate spec file in path: "%s"! Exiting.\n' % (spec_file_path), fp_log);
+            log(str(e), fp_log);
+
+        # spec_file = PACBIO_SPEC
+        command = 'cd %s; %s %s -pbCNS -length 500 -partitions 200 -l %s -s %s -fastq %s ' % (output_path, measure_command(memtime_path), used_bin, ASSEMBLER_NAME, spec_file_path, reads_file)
         execute_command(command, fp_log, dry_run=DRY_RUN);
+
     elif machine_name == 'nanopore':
-        spec_file = OXFORD_SPEC
-        command = 'cd %s; %s %s -length 500 -partitions 200 -l %s -s %s -fastq %s ' % (output_path, measure_command(memtime_path), used_bin, ASSEMBLER_NAME, spec_file, reads_file)
+        spec_lines = [];
+        spec_lines.append('# decrease mer size');
+        spec_lines.append('merSize=14');
+        spec_lines.append('');
+        spec_lines.append('# use falcon_sense consensus with adjusted parameters for lower quality reads');
+        spec_lines.append('falconForce=1');
+        spec_lines.append('falconOptions=--max_n_read 200 --min_idt 0.50 --output_multi --local_match_count_threshold 0');
+        spec_lines.append('');
+        spec_lines.append('# adjust assembly parameters to overlap at high error rate since the corrected reads are not 99% like pacbio');
+        spec_lines.append('asmOvlErrorRate = 0.3');
+        spec_lines.append('asmUtgErrorRate = 0.3');
+        spec_lines.append('asmCgwErrorRate = 0.3');
+        spec_lines.append('asmCnsErrorRate = 0.3');
+        spec_lines.append('asmOBT=0');
+        spec_lines.append('batOptions=-RS -CS');
+        spec_lines.append('utgGraphErrorRate = 0.3');
+        spec_lines.append('utgMergeErrorRate = 0.3');
+        spec_lines.append('');
+        spec = '\n'.join(spec_lines);
+
+        spec_file_path = '%s/oxford.spec';
+        try:
+            fp_spec = open(spec_file_path, 'w');
+            fp_spec.write(spec + '\n');
+            fp_spec.close();
+        except IOError, e:
+            log('ERROR: Could not generate spec file in path: "%s"! Exiting.\n' % (spec_file_path), fp_log);
+            log(str(e), fp_log);
+
+        # spec_file = OXFORD_SPEC
+        command = 'cd %s; %s %s -length 500 -partitions 200 -l %s -s %s -fastq %s ' % (output_path, measure_command(memtime_path), used_bin, ASSEMBLER_NAME, spec_file_path, reads_file)
         execute_command(command, fp_log, dry_run=DRY_RUN);
     elif machine_name == 'illumina':
         log('\nMachine name "%s" not implemented for %s.\n' % (machine_name, ASSEMBLER_NAME));
@@ -253,44 +299,6 @@ def download_and_install():
         command = 'cd %s; tar -xvjf %s' % (basicdefines.ASSEMBLERS_PATH_ROOT_ABS, ZIP_FILE)
         sys.stderr.write('[%s wrapper] %s\n' % (ASSEMBLER_NAME, command))
         subprocess.call(command, shell='True')
-
-        # make
-        # WGS/Celera comes as precompiled binaries
-        # Doesn't require make
-
-
-# def verbose_usage_and_exit():
-#     sys.stderr.write('Usage:\n')
-#     sys.stderr.write('\t%s mode [<reads_file> <reference_file> <machine_name> <output_path> [<output_suffix>]]\n' % sys.argv[0])
-#     sys.stderr.write('\n')
-#     sys.stderr.write('\t- mode - either "run" or "install". Is "install" other parameters can be ommitted.\n')
-
-#     exit(0)
-
-# if __name__ == "__main__":
-#     if (len(sys.argv) < 2 or len(sys.argv) > 7):
-#         verbose_usage_and_exit()
-
-#     if (sys.argv[1] == 'install'):
-#         download_and_install()
-#         exit(0)
-
-#     elif (sys.argv[1] == 'run'):
-#         if (len(sys.argv) < 6):
-#             verbose_usage_and_exit()
-
-#         reads_file = sys.argv[2]
-#         reference_file = sys.argv[3]
-#         machine_name = sys.argv[4]
-#         output_path = sys.argv[5]
-#         output_suffix = ''
-
-#         if (len(sys.argv) == 7):
-#             output_suffix = sys.argv[6]
-#         run(reads_file, reference_file, machine_name, output_path, output_suffix)
-
-#     else:
-#         verbose_usage_and_exit()
 
 def verbose_usage_and_exit():
     sys.stderr.write('Usage:\n')
