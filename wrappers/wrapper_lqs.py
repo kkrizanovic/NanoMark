@@ -419,13 +419,6 @@ def run(datasets, output_path):
         log('Skipping ....\n', fp_log)
         return;
 
-    if (MODULE_BASICDEFINES == True):
-        execute_command('%s/cgmemtime/cgmemtime -o %s/test.memtime ls -lhrt' % (basicdefines.TOOLS_ROOT, output_path), fp_log, dry_run=DRY_RUN);
-        if (not os.path.exists('%s/test.memtime' % (output_path))):
-            command = 'sudo %s/cgmemtime/cgmemtime --setup -g %s --perm 775' % (basicdefines.TOOLS_ROOT, getpass.getuser());
-            sys.stderr.write('[] %s\n' % (command));
-            execute_command(command, fp_log, dry_run=DRY_RUN);
-
     memtime_file = '%s/%s.memtime' % (output_path, ASSEMBLER_NAME);
     # memtime_files_prefis = 
     memtime_files_prefix =  '%s/%s' % (output_path, ASSEMBLER_NAME);
