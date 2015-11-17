@@ -33,6 +33,13 @@ class Dataset:
                 if (len(split_line) < 5):
                     sys.stderr.write('ERROR: Five arguments need to be specified: "reads_type,reads_path_a,reads_path_b,frag_len,frag_stddev"!\n');
                     return;
+                if (os.path.basename(split_line[1]) == ''):
+                    sys.stderr.write('ERROR: Reads file path not correctly specified! Exiting.\n');
+                    exit(1);
+                if (os.path.basename(split_line[2]) == ''):
+                    sys.stderr.write('ERROR: Reads file path not correctly specified! Exiting.\n');
+                    exit(1);
+
                 self.reads_path_a = os.path.abspath(split_line[1]);
                 self.reads_path_b = os.path.abspath(split_line[2]);
                 self.frag_len = int(split_line[3]);
@@ -60,6 +67,9 @@ class Dataset:
                 if (len(split_line) < 2):
                     sys.stderr.write('ERROR: Two arguments need to be specified: "reads_type,reads_path"!\n');
                     return;
+                if (os.path.basename(split_line[1]) == ''):
+                    sys.stderr.write('ERROR: Reads file path not correctly specified! Exiting.\n');
+                    exit(1);
                 self.reads_path = os.path.abspath(split_line[1]);
 
             # else:

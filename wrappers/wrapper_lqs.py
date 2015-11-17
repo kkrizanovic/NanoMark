@@ -305,9 +305,6 @@ def run(datasets, output_path):
         if (machine_name != None and dataset.type != machine_name):
             sys.stderr.write('ERROR: %s is not a hybrid assembler, but datasets from disparate technologies are specified! Exiting.\n');
             exit(1);
-        if (os.path.basename(dataset.reads_path) == ''):
-            sys.stderr.write('ERROR: Reads file path not correctly specified! Exiting.\n');
-            exit(1);
         machine_name = dataset.type;
     if (machine_name == None):
         sys.stderr.write('ERROR: Input datasets not specified correctly! Exiting.\n');
