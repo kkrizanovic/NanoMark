@@ -49,7 +49,7 @@ def find_folders(start_path, depth=0):
 	return matches
 
 def measure_command(measure_file):
-        return (SCRIPT_PATH + r'/../tools/cgmemtime/cgmemtime -o ' + measure_file + ' ')
+        return (SCRIPT_PATH + r'/../tools/cgmemtime/cgmemtime -o ' + measure_file)
 
 
 if __name__ == '__main__':

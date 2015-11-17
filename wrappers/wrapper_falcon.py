@@ -238,6 +238,16 @@ def run(datasets, output_path):
     except Exception, e:
         log('ERROR: Could not open file "%s" for writing! Using only STDERR for logging.' % (log_file), None);
         fp_log = None;
+    
+    ##################################################################################
+    ### Check if permissions are given for Cgmemtime.
+    ##################################################################################
+    if (MODULE_BASICDEFINES == True):
+        execute_command('%s ls -lhrt' % (measure_command('%s/test.memtime' % output_path)), fp_log, dry_run=DRY_RUN);
+        if (not os.path.exists('%s/test.memtime' % (output_path))):
+            command = 'sudo %s/cgmemtime/cgmemtime --setup -g %s --perm 775' % (basicdefines.TOOLS_ROOT, getpass.getuser());
+            sys.stderr.write('[] %s\n' % (command));
+            execute_command(command, fp_log, dry_run=DRY_RUN);
 
     ##################################################################################
     ### Preparing the input datasets.
@@ -255,7 +265,7 @@ def run(datasets, output_path):
         i += 1;
         reads_file = dataset.reads_path;
         reads_file = os.path.abspath(reads_file);
-        out_reads_file = '%s.pbheader.fasta' % (os.path.splitext(reads_file)[0]);
+        out_reads_file = '%s/%s.pbheader.fasta' % (output_path, os.path.splitext(os.path.basename(reads_file))[0]);
         # sys.stderr.write('[%s wrapper] \t(%d) %s -> %s\n' % (ASSEMBLER_NAME, i, reads_file, out_reads_file))
         log('\t(%d) %s -> %s' % (i, reads_file, out_reads_file), fp_log);
         fofn_paths.append(out_reads_file);
@@ -402,9 +412,9 @@ def run(datasets, output_path):
     ##################################################################################
     ### Start the important work.
     ##################################################################################
-    if (MODULE_BASICDEFINES == True):
-        command = 'sudo %s/cgmemtime/cgmemtime --setup -g %s --perm 775' % (basicdefines.TOOLS_ROOT, getpass.getuser());
-        execute_command(command, fp_log, dry_run=DRY_RUN);
+    # if (MODULE_BASICDEFINES == True):
+    #     command = 'sudo %s/cgmemtime/cgmemtime --setup -g %s --perm 775' % (basicdefines.TOOLS_ROOT, getpass.getuser());
+    #     execute_command(command, fp_log, dry_run=DRY_RUN);
 
     memtime_file = '%s/%s.memtime' % (output_path, ASSEMBLER_NAME);
     FC_path = '%s/fc_env' % (ASSEMBLER_PATH);
