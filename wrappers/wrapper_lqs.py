@@ -443,10 +443,13 @@ def run(datasets, output_path):
     # reads_folders2 = find_folders(folders_one_level_up)
     for folder in reads_folders:
         temp_folders = find_folders(folder, depth=0);
+        print '\n'.join(temp_folders);
         for temp_folder in temp_folders:
             commands.append('unlink %s' % (os.path.basename(temp_folder)));
             commands.append('ln -s %s' % (temp_folder));
 
+    return;
+    
     ### Run error correction.
     if (machine_name == 'nanopore' or machine_name == 'correct1' or machine_name == 'nopolish'):
         # Error correction, the first step.
