@@ -366,7 +366,7 @@ def run(datasets, output_path):
     folders_one_level_up = [];
 #    for single_reads_file in reads_files:
     for dataset in datasets:
-        single_reads_file = dataset.reads_file;
+        single_reads_file = dataset.reads_path;
         # if (reads_folder == None):
         reads_folder = os.path.dirname(single_reads_file);
         reads_folders.append(reads_folder);
@@ -392,7 +392,7 @@ def run(datasets, output_path):
         i = 0;
         # for single_reads_file in reads_files:
         for dataset in datasets:
-            single_reads_file = dataset.reads_file;
+            single_reads_file = dataset.reads_path;
             i += 1;
             single_reads_file = os.path.abspath(single_reads_file);
             execute_command('cat %s >> %s' % (single_reads_file, reads_file), None, dry_run=DRY_RUN);
