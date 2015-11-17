@@ -305,6 +305,9 @@ def run(datasets, output_path):
         if (machine_name != None and dataset.type != machine_name):
             sys.stderr.write('ERROR: %s is not a hybrid assembler, but datasets from disparate technologies are specified! Exiting.\n');
             exit(1);
+        if (os.path.basename(dataset.reads_path) == ''):
+            sys.stderr.write('ERROR: Reads file path not correctly specified! Exiting.\n');
+            exit(1);
         machine_name = dataset.type;
     if (machine_name == None):
         sys.stderr.write('ERROR: Input datasets not specified correctly! Exiting.\n');
@@ -443,13 +446,10 @@ def run(datasets, output_path):
     # reads_folders2 = find_folders(folders_one_level_up)
     for folder in reads_folders:
         temp_folders = find_folders(folder, depth=0);
-        print '\n'.join(temp_folders);
         for temp_folder in temp_folders:
             commands.append('unlink %s' % (os.path.basename(temp_folder)));
             commands.append('ln -s %s' % (temp_folder));
 
-    return;
-    
     ### Run error correction.
     if (machine_name == 'nanopore' or machine_name == 'correct1' or machine_name == 'nopolish'):
         # Error correction, the first step.
