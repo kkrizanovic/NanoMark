@@ -207,8 +207,8 @@ def run(datasets, output_path):
         spec_lines.append('ovlStoreMemory= 32000');
         spec_lines.append('merylMemory = 32000');
         spec = '\n'.join(spec_lines);
-        
-        spec_file_path = '%s/pacbio.spec';
+
+        spec_file_path = '%s/pacbio.spec' % (output_path);
         try:
             fp_spec = open(spec_file_path, 'w');
             fp_spec.write(spec + '\n');
@@ -242,7 +242,7 @@ def run(datasets, output_path):
         spec_lines.append('');
         spec = '\n'.join(spec_lines);
 
-        spec_file_path = '%s/oxford.spec';
+        spec_file_path = '%s/oxford.spec' % (output_path);
         try:
             fp_spec = open(spec_file_path, 'w');
             fp_spec.write(spec + '\n');
