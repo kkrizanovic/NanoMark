@@ -334,7 +334,7 @@ def run(datasets, output_path):
     ### Check if permissions are given for Cgmemtime.
     ##################################################################################
     if (MODULE_BASICDEFINES == True):
-        execute_command('%s ls -lhrt' % (measure_command('%s/test.memtime' % output_path)), fp_log, dry_run=DRY_RUN);
+        execute_command('%s date' % (measure_command('%s/test.memtime' % output_path)), fp_log, dry_run=DRY_RUN);
         if (not os.path.exists('%s/test.memtime' % (output_path))):
             command = 'sudo %s/cgmemtime/cgmemtime --setup -g %s --perm 775' % (basicdefines.TOOLS_ROOT, getpass.getuser());
             sys.stderr.write('[] %s\n' % (command));
