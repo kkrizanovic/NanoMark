@@ -238,12 +238,12 @@ def run(datasets, output_path):
     except Exception, e:
         log('ERROR: Could not open file "%s" for writing! Using only STDERR for logging.' % (log_file), None);
         fp_log = None;
-    
+
     ##################################################################################
     ### Check if permissions are given for Cgmemtime.
     ##################################################################################
     if (MODULE_BASICDEFINES == True):
-        execute_command('%s ls -lhrt' % (measure_command('%s/test.memtime' % output_path)), fp_log, dry_run=DRY_RUN);
+        execute_command('%s date' % (measure_command('%s/test.memtime' % output_path)), fp_log, dry_run=DRY_RUN);
         if (not os.path.exists('%s/test.memtime' % (output_path))):
             command = 'sudo %s/cgmemtime/cgmemtime --setup -g %s --perm 775' % (basicdefines.TOOLS_ROOT, getpass.getuser());
             sys.stderr.write('[] %s\n' % (command));
@@ -421,7 +421,7 @@ def run(datasets, output_path):
     run_commands = [];
     run_commands.append('. %s/bin/activate' % (FC_path));
     run_commands.append('cd %s' % (output_path));
-    run_commands.append('%s fc_run.py %s' % (measure_command(memtime_file), cfg_file));
+    run_commands.append('%s %s/bin/fc_run.py %s' % (measure_command(memtime_file), FC_path, cfg_file));
     run_commands.append('cp %s/2-asm-falcon/p_ctg.fa %s/benchmark-final_assembly.fasta' % (output_path, output_path));
     command = '; '.join(run_commands);
     execute_command(command, fp_log, dry_run=DRY_RUN);
