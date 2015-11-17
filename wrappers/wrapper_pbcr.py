@@ -196,7 +196,7 @@ def run(datasets, output_path):
         execute_command(command, fp_log, dry_run=DRY_RUN);
     elif machine_name == 'nanopore':
         spec_file = OXFORD_SPEC
-        command = 'cd %s; %s %s -length 500 -partitions 200 -l %s -s %s -fastq %s ' % (output_path, easure_command(memtime_path), used_bin, ASSEMBLER_NAME, spec_file, reads_file)
+        command = 'cd %s; %s %s -length 500 -partitions 200 -l %s -s %s -fastq %s ' % (output_path, measure_command(memtime_path), used_bin, ASSEMBLER_NAME, spec_file, reads_file)
         execute_command(command, fp_log, dry_run=DRY_RUN);
     elif machine_name == 'illumina':
         log('\nMachine name "%s" not implemented for %s.\n' % (machine_name, ASSEMBLER_NAME));
