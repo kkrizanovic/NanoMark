@@ -364,7 +364,9 @@ def run(datasets, output_path):
     ### Collect all reads paths, including the folders one level up (because of the design of this benchmarking framework, raw FAST5 files will be located in a folder one level up).
     reads_folders = [];
     folders_one_level_up = [];
-    for single_reads_file in reads_files:
+#    for single_reads_file in reads_files:
+    for dataset in datasets:
+        single_reads_file = dataset.reads_file;
         # if (reads_folder == None):
         reads_folder = os.path.dirname(single_reads_file);
         reads_folders.append(reads_folder);
@@ -388,7 +390,9 @@ def run(datasets, output_path):
         ### Concatenating the reads into a single file.
         log('Preparing raw reads.', None);
         i = 0;
-        for single_reads_file in reads_files:
+        # for single_reads_file in reads_files:
+        for dataset in datasets:
+            single_reads_file = dataset.reads_file;
             i += 1;
             single_reads_file = os.path.abspath(single_reads_file);
             execute_command('cat %s >> %s' % (single_reads_file, reads_file), None, dry_run=DRY_RUN);
