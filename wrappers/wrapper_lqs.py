@@ -4,7 +4,7 @@ import os
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
 import sys
-sys.path.append(SCRIPT_PATH + '/../')
+sys.path.append(SCRIPT_PATH + '/../src/')
 
 import re;
 
@@ -12,6 +12,7 @@ import subprocess
 import multiprocessing
 import getpass
 from time import gmtime, strftime
+from dataspec import *
 
 try:
     import basicdefines
@@ -292,21 +293,73 @@ def parse_memtime_files_and_accumulate(memtime_files, final_memtime_file):
 #    machine_name        A symbolic name to specify a set of parameters for a specific sequencing platform.
 #    output_path            Folder to which the output will be placed to. Filename will be automatically generated according to the name of the mapper being run.
 #    output_suffix        A custom suffix that can be added to the output filename.
-def run(reads_files, reference_file, machine_name, output_path, output_suffix=''):
+# def run(reads_files, reference_file, machine_name, output_path, output_suffix=''):
+def run(datasets, output_path):
     ### make -f full-pipeline.make CORES=64 polished_genome.fasta
-    # num_threads = multiprocessing.cpu_count() / 2;
-    # num_cores = 2;
+
+    ##################################################################################
+    ### Sanity check for input datasets.
+    ##################################################################################    
+    machine_name = None
+    for dataset in datasets:
+        if (machine_name != None and dataset.type != machine_name):
+            sys.stderr.write('ERROR: %s is not a hybrid assembler, but datasets from disparate technologies are specified! Exiting.\n');
+            exit(1);
+        machine_name = dataset.type;
+    if (machine_name == None):
+        sys.stderr.write('ERROR: Input datasets not specified correctly! Exiting.\n');
+        exit(1);
+
+    ##################################################################################
+    ### Simple variable definitions.
+    ##################################################################################        
     num_cores = 16;
     num_threads = 4;
-
-    # reads_file = os.path.abspath(reads_file);
-    reference_file = os.path.abspath(reference_file);
     output_path = os.path.abspath(output_path);
     raw_reads_path = '%s/raw.reads.fasta' % (output_path);
     raw_reads_filename = os.path.basename(raw_reads_path);
     raw_reads_basename = os.path.splitext(os.path.basename(raw_reads_path))[0];
 
-    # reads_folder = None;
+    ##################################################################################
+    ### Prepare a log file.
+    ##################################################################################
+    log_file = '%s/wrapper_log.txt' % (output_path);
+    try:
+        fp_log = open(log_file, 'a');
+    except Exception, e:
+        log('ERROR: Could not open file "%s" for writing! Using only STDERR for logging.' % (log_file), None);
+        fp_log = None;
+
+    ##################################################################################
+    ### Check if permissions are given for Cgmemtime.
+    ##################################################################################
+    if (MODULE_BASICDEFINES == True):
+        execute_command('%s ls -lhrt' % (measure_command('%s/test.memtime' % output_path)), fp_log, dry_run=DRY_RUN);
+        if (not os.path.exists('%s/test.memtime' % (output_path))):
+            command = 'sudo %s/cgmemtime/cgmemtime --setup -g %s --perm 775' % (basicdefines.TOOLS_ROOT, getpass.getuser());
+            sys.stderr.write('[] %s\n' % (command));
+            execute_command(command, fp_log, dry_run=DRY_RUN);
+
+    ##################################################################################
+    ### Backup old assembly results, and create the new output folder.
+    ##################################################################################
+    ### This part is a little bit different than for other wrappers, basically just because
+    ### this pipeline takes a long time to run, and sometimes the user might wish to run
+    ### only a part of the pipeline. In this case, the output folder should not be moved.
+    ### In case only polishing needs to be run, don't move the output folder to a different location.
+    if (machine_name == 'nanopore' or machine_name == 'correct1'):
+        ### Backup old assembly results, and create the new output folder.
+        if (os.path.exists(output_path)):
+            timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
+            os.rename(output_path, '%s.bak_%s' % (output_path, timestamp));
+        if (not os.path.exists(output_path)):
+            log('Creating a directory on path "%s".' % (output_path), None);
+            os.makedirs(output_path);
+
+    ##################################################################################
+    ### Preparing the input datasets.
+    ##################################################################################
+    log('Preparing the input datasets.\n', fp_log);
 
     ### Collect all reads paths, including the folders one level up (because of the design of this benchmarking framework, raw FAST5 files will be located in a folder one level up).
     reads_folders = [];
@@ -321,25 +374,8 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         folders_one_level_up.append(folder_one_level_up);
         reads_folders.append(folder_one_level_up);
 
-        # if (os.path.dirname(single_reads_file) != reads_folder):
-        #     sys.stderr.write('ERROR: Files containing reads are not located in the same folder!\n');
-        #     return;
-    # if (reads_folder == None):
-    #     sys.stderr.write('ERROR: reads_folder is None!\n');
-    #     return;
-    # reads_folder = os.path.dirname(reads_file);
-    # reads_basename = os.path.basename(reads_file);
-
-    ### In case only polishing needs to be run, don't move the output folder to a different location.
+    ### In case only polishing needs to be run, don't create the joined FASTA file again, but leave the one which was generated before.
     if (machine_name == 'nanopore' or machine_name == 'correct1'):
-        ### Backup old assembly results, and create the new output folder.
-        if (os.path.exists(output_path)):
-            timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
-            os.rename(output_path, '%s.bak_%s' % (output_path, timestamp));
-        if (not os.path.exists(output_path)):
-            log('Creating a directory on path "%s".' % (output_path), None);
-            os.makedirs(output_path);
-
         ### If more than one file given, they will be joined into this file (reads_file).
         ### Making sure that the file can be opened for writing, and emptying it in the process.
         reads_file = os.path.abspath('%s/joint_reads' % (output_path));
@@ -365,17 +401,19 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         ### Generate a raw reads file in the output folder, which will be used for assembly.
         convert_to_fasta(reads_file, raw_reads_path);
 
-    ### Set-up the logging file.
-    log_file = '%s/wrapper_log.txt' % (output_path);
-    try:
-        fp_log = open(log_file, 'a');
-    except Exception, e:
-        log('ERROR: Could not open file "%s" for writing! Using only STDERR for logging.' % (log_file), None);
-        # sys.stderr.write(str(e) + '\n');
-        fp_log = None;
-
-
+    ##################################################################################
+    ### Start the important work.
+    ##################################################################################
     log('Running assembly using %s.' % (ASSEMBLER_NAME), fp_log);
+
+    if (machine_name == 'illumina'):
+        log('\nMachine name "%s" not implemented for %s.\n' % (machine_name, ASSEMBLER_NAME));
+        log('Skipping ....\n', fp_log)
+        return;
+    elif (machine_name == 'pacbio'):
+        log('\nMachine name "%s" not implemented for %s.\n' % (machine_name, ASSEMBLER_NAME));
+        log('Skipping ....\n', fp_log)
+        return;
 
     if (MODULE_BASICDEFINES == True):
         execute_command('%s/cgmemtime/cgmemtime -o %s/test.memtime ls -lhrt' % (basicdefines.TOOLS_ROOT, output_path), fp_log, dry_run=DRY_RUN);
@@ -413,7 +451,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
             commands.append('ln -s %s' % (temp_folder));
 
     ### Run error correction.
-    if (machine_name == 'nanopore' or machine_name == 'correct1'):
+    if (machine_name == 'nanopore' or machine_name == 'correct1' or machine_name == 'nopolish'):
         # Error correction, the first step.
         current_memtime_id = 0;
 
@@ -426,7 +464,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         current_memtime_id += 1;
         commands.append('%s bash -c "cat %s.*.corrected.fasta | python %s/lengthsort.py > %s.corrected.fasta"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename, ASSEMBLER_PATH, raw_reads_basename));
 
-    if (machine_name == 'nanopore' or machine_name == 'correct2'):
+    if (machine_name == 'nanopore' or machine_name == 'correct2' or machine_name == 'nopolish'):
         #rm raw.reads.*.corrected.fasta
         # Error correction, the second step.
         current_memtime_id = 4;
@@ -441,7 +479,7 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         commands.append('%s bash -c "cat %s.corrected.*.corrected.fasta | python %s/lengthsort.py > %s.corrected.corrected.fasta"' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), raw_reads_basename, ASSEMBLER_PATH, raw_reads_basename));
         # commands.append('rm raw.reads.corrected.*.corrected.fasta');
 
-    if (machine_name == 'nanopore' or machine_name == 'celera'):
+    if (machine_name == 'nanopore' or machine_name == 'celera' or machine_name == 'nopolish'):
         current_memtime_id = 8;
 
         reads_error_corrected = 'raw.reads.corrected.corrected.fasta';
@@ -492,10 +530,14 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
     command = '; '.join(commands);
     execute_command(command, None, dry_run=DRY_RUN);
 
-
-
+    ##################################################################################
+    ### Accumulate the memtime stats.
+    ##################################################################################
     all_memtimes = ['%s-%s.memtime' % (memtime_files_prefix, value) for value in xrange(1, current_memtime_id)];
     parse_memtime_files_and_accumulate(all_memtimes, memtime_file);
+
+    if (fp_log != None):
+        fp_log.close();
 
     # Atm, quast is run in the main program
 
@@ -617,11 +659,56 @@ def download_and_install():
 
 
 
+# def verbose_usage_and_exit():
+#     sys.stderr.write('Usage:\n')
+#     sys.stderr.write('\t%s mode [<reads_file1>,<reads_file2>,...,<reads_fileN> <machine_name> <output_path> <reference_file> [<output_suffix>]]\n' % sys.argv[0])
+#     sys.stderr.write('\n')
+#     sys.stderr.write('\t- mode - either "run" or "install". Is "install" other parameters can be ommitted.\n')
+
+#     exit(0)
+
+# if __name__ == "__main__":
+#     if (len(sys.argv) < 2 or len(sys.argv) > 7):
+#         verbose_usage_and_exit()
+
+#     if (sys.argv[1] == 'install'):
+#         download_and_install()
+#         exit(0)
+
+#     elif (sys.argv[1] == 'run'):
+#         if (len(sys.argv) < 5 or len(sys.argv) > 7):
+#             verbose_usage_and_exit()
+
+#         reads_files = sys.argv[2].split(',')         ### Enable specifying multiple FASTQ files for input.
+#         machine_name = sys.argv[3]
+#         output_path = sys.argv[4]
+#         reference_file = '';
+#         output_suffix = ''
+
+#         if (len(sys.argv) >= 6):
+#             reference_file = sys.argv[5]
+#         if (len(sys.argv) == 7):
+#             output_suffix = sys.argv[6]
+#         run(reads_files, reference_file, machine_name, output_path, output_suffix)
+
+#     else:
+#         verbose_usage_and_exit()
+
 def verbose_usage_and_exit():
     sys.stderr.write('Usage:\n')
-    sys.stderr.write('\t%s mode [<reads_file1>,<reads_file2>,...,<reads_fileN> <machine_name> <output_path> <reference_file> [<output_suffix>]]\n' % sys.argv[0])
+    # sys.stderr.write('\t%s mode [<reads_file1>,<reads_file2>,...,<reads_fileN> <machine_name> <output_path>]\n' % sys.argv[0])
+    sys.stderr.write('\t%s mode [<output_path> dataset1 [dataset2 ...]]\n' % sys.argv[0])
     sys.stderr.write('\n')
-    sys.stderr.write('\t- mode - either "run" or "install". Is "install" other parameters can be ommitted.\n')
+    sys.stderr.write('\t- mode - either "run" or "install". If "install" other parameters can be omitted.\n')
+    sys.stderr.write('\t- dataset - specification of a dataset in the form: reads_type,<reads_path>[<reads_path_b,frag_len,frag_stddev] .\n');
+    sys.stderr.write('\t            Reads_type can be nanopore/pacbio/single/paired/mate. If reads_type == "paired" or "mate", last three parameters can be omitted".\n');
+    sys.stderr.write('\t            If reads_type == "paired" or "mate", other end of the pair needs to be in another file provided by reads_path_b.\n');
+    sys.stderr.write('\n');
+    sys.stderr.write('Additional reads_type for LQS pipeline include: nanopore, correct1, correct2, nopolish, celera, polish.\n');
+
+    sys.stderr.write('Example:\n');
+    sys.stderr.write('\t%s run results/%s nanopore,datasets/reads.fastq\n' % (os.path.basename(sys.argv[0]), ASSEMBLER_NAME));
+    sys.stderr.write('\n');
 
     exit(0)
 
@@ -634,20 +721,15 @@ if __name__ == "__main__":
         exit(0)
 
     elif (sys.argv[1] == 'run'):
-        if (len(sys.argv) < 5 or len(sys.argv) > 7):
+        if (len(sys.argv) < 4):
             verbose_usage_and_exit()
 
-        reads_files = sys.argv[2].split(',')         ### Enable specifying multiple FASTQ files for input.
-        machine_name = sys.argv[3]
-        output_path = sys.argv[4]
-        reference_file = '';
-        output_suffix = ''
-
-        if (len(sys.argv) >= 6):
-            reference_file = sys.argv[5]
-        if (len(sys.argv) == 7):
-            output_suffix = sys.argv[6]
-        run(reads_files, reference_file, machine_name, output_path, output_suffix)
+        output_path = sys.argv[2]
+        datasets = [];
+        for arg in sys.argv[3:]:
+            dataset = Dataset(arg);
+            datasets.append(dataset);
+        run(datasets, output_path);
 
     else:
         verbose_usage_and_exit()

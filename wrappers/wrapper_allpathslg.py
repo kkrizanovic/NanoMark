@@ -12,6 +12,7 @@ import subprocess
 import multiprocessing
 import getpass
 from time import gmtime, strftime
+from dataspec import *
 
 try:
     import basicdefines
@@ -32,6 +33,7 @@ CREATE_OUTPUT_FOLDER = True
 
 PICARDTOOLS_URL = 'https://github.com/broadinstitute/picard/releases/download/1.140/picard-tools-1.140.zip';
 PICARDTOOLS_PATH = os.path.join(ASSEMBLER_PATH, 'picard-tools-1.140');
+
 # DRY_RUN = True;
 DRY_RUN = False;
 
@@ -67,72 +69,6 @@ def peek(fp, num_chars):
         return '';
     fp.seek(num_chars * -1, 1);
     return data;
-
-
-
-def edit_distance(s1, s2):
-    if (len(s1) < len(s2)):
-        return edit_distance(s2, s1);
-    if (len(s2) == 0):
-        return len(s1);
-    previous_row = range(len(s2) + 1);
-    for i, c1 in enumerate(s1):
-        current_row = [i + 1];
-        for j, c2 in enumerate(s2):
-            insertions = previous_row[j + 1] + 1;
-            deletions = current_row[j] + 1;
-            substitutions = previous_row[j] + (c1 != c2);
-            current_row.append(min(insertions, deletions, substitutions));
-        previous_row = current_row;
-    return previous_row[-1];
-
-class Dataset:
-    def __init__(self, line=''):
-        if (line == ''):
-            self.reads_path = '';
-            self.type = '';         ### nanopore/pacbio/single/paired/mate
-            self.frag_len = 0;     ### Length of the fragment for paired end reads, insert size for mate pair libraries.
-            self.frag_stddev = 0;   ### Standard deviation of the above length.
-            self.reads_path_a = '';
-            self.reads_path_b = '';
-        else:
-            split_line = line.split(',');
-
-            self.type = split_line[0];
-            if (self.type == 'nanopore' or self.type == 'pacbio' or self.type == 'single'):
-                if (len(split_line) < 2):
-                    sys.stderr.write('ERROR: Two arguments need to be specified: "reads_type,reads_path"!\n');
-                    return;
-                self.reads_path = os.path.abspath(split_line[1]);
-            elif (self.type == 'paired' or self.type == 'mate'):
-                if (len(split_line) < 5):
-                    sys.stderr.write('ERROR: Five arguments need to be specified: "reads_type,reads_path_a,reads_path_b,frag_len,frag_stddev"!\n');
-                    return;
-                self.reads_path_a = os.path.abspath(split_line[1]);
-                self.reads_path_b = os.path.abspath(split_line[2]);
-                self.frag_len = int(split_line[3]);
-                self.frag_stddev = int(split_line[4]);
-
-                if (edit_distance(self.reads_path_a, self.reads_path_b) > 1):
-                    sys.stderr.write('ERROR: Paths to paired-end/mate-pair libraries should differ only in 1 character! Exiting.\n');
-                    exit(1);
-                # print 'self.reads_path_a = %s' % (self.reads_path_a);
-                wildcard_path = list(self.reads_path_a);
-                # print wildcard_path;
-                # print '';
-                d = zip(self.reads_path_a, self.reads_path_b);
-                # print d;
-
-                current_char = 0;
-                for i,j in d:
-                    if (i != j):
-                        wildcard_path[current_char] = '?';
-                    current_char += 1;
-                self.reads_path = ''.join(wildcard_path);
-
-            else:
-                sys.stderr.write('ERROR: Unknown type of reads specified as parameter: "%s"!\n' % (line));
-                return;
 
 
 
@@ -303,10 +239,12 @@ def parse_memtime_files_and_accumulate(memtime_files, final_memtime_file):
 #    output_suffix        A custom suffix that can be added to the output filename.
 # def run(reads_files, reference_file, machine_name, output_path, output_suffix=''):
 def run(datasets, output_path):
+    ##################################################################################
+    ### Simple variable definitions.
+    ##################################################################################        
     ### Reference for running a local job instead of using an SGE cluster:
     ### http://seqanswers.com/forums/showthread.php?t=50937
     num_threads = multiprocessing.cpu_count() / 2;
-
     output_path = os.path.abspath(output_path);
 
     ##################################################################################
@@ -410,88 +348,12 @@ def run(datasets, output_path):
                 (ASSEMBLER_PATH, measure_command('%s/%s-%d.memtime' % (output_path, ASSEMBLER_NAME, num_memtimes)), ASSEMBLER_BIN, output_path, num_threads, output_path);
     execute_command(command, fp_log, dry_run=DRY_RUN);
 
-
-
     ##################################################################################
     ### Accumulate the memtime stats.
     ##################################################################################
     memtime_file = '%s/%s.memtime' % (output_path, ASSEMBLER_NAME);
     all_memtimes = ['%s-%d.memtime' % (ASSEMBLER_NAME, value) for value in xrange(1, num_memtimes)];
     parse_memtime_files_and_accumulate(all_memtimes, memtime_file);
-
-# src/wrappers/wrapper_allpathslg.py run results/dataset1/ALLPATHS-LG datasets/dataset0_illumina/frag_reads.Solexa-25396.\*.fasta,paired,180,10 datasets/dataset0_illumina/jump_reads.Solexa-42866.\*.fasta,mate,3000,500 datasets/dataset0_illumina/jump_reads.Solexa-44956.\*.fasta,mate,3000,500 datasets/dataset1_20x2d/reads.fasta,nanopore
-
-
-
-# RunAllPathsLG \
-#  PRE=$PWD\
-#  REFERENCE_NAME=benchmark\
-#  DATA_SUBDIR=data_test\
-#  RUN=run\
-#  TARGETS=standard\
-#  OVERWRITE=True\
-#  | tee -a assemble_test.out
-
-
-
-# cd; cd benchmark/results/datasets/dataset1_20x2d/allpaths
-# PrepareAllPathsInputs.pl\
-#  DATA_DIR=$PWD/benchmark/data_test\
-#  PLOIDY=1\
-#  IN_GROUPS_CSV=in_groups.csv\
-#  IN_LIBS_CSV=in_libs.csv\
-#  GENOME_SIZE=4650000\
-#  PICARD_TOOLS_DIR=/home/kresimir/build/picard-tools-1.140\
-#  OVERWRITE=True\
-#  | tee prepare.out
-
-
-
-# isovic@assembly:/mnt/share1_DrOc/genomes/OxfordNanopore/Benchmark/results$ less ./dataset4_40x2d/Allpaths-LG/in_libs.csv
-# library_name, project_name, organism_name,     type, paired, frag_size, frag_stddev, insert_size, insert_stddev, read_orientation, genomic_start, genomic_end
-#     dataset4,    benchmark,         ecoli,      ont,      0,          ,            ,            ,              ,           inward,             0,           0
-
-    ### Create a config file for the assembly.
-# ## Prepare data for allpaths, dataset1
-# # Prepare nanopore reads file
-# # Edit in_groups.csv and in_libs.csv files, they should contain one entery for a one fastq file
-# # create folder structure
-# cd; cd benchmark/results/dataset1_20x2d/allpaths
-# mkdir benchmark
-# cd benchmark; mkdir data
-# # Run PrepareAllPathsInputs.pl
-# cd; cd benchmark/results/datasets/dataset1_20x2d/allpaths
-
-# PrepareAllPathsInputs.pl DATA_DIR=$PWD/benchmark/data_test PLOIDY=1 IN_GROUPS_CSV=in_groups.csv IN_LIBS_CSV=in_libs.csv GENOME_SIZE=4650000 PICARD_TOOLS_DIR=/home/kresimir/build/picard-tools-1.140 OVERWRITE=True | tee prepare.out
-
-# # Prepare data with specific coverage
-# PrepareAllPathsInputs.pl DATA_DIR=$PWD/benchmark/data_20_30 PLOIDY=1 FRAG_COVERAGE=20 JUMP_COVERAGE=30 IN_GROUPS_CSV=in_groups.csv IN_LIBS_CSV=in_libs.csv GENOME_SIZE=4650000 PICARD_TOOLS_DIR=/home/kresimir/build/picard-tools-1.140 OVERWRITE=True | tee prepare_20_30.out
-
-# # Copy created files to data folder, copy jump and frag libraries to data folder
-# # Rename created files to "long_reads_orig" .fastb and .qualb
-
-# # Run allpaths on dataset1
-# RunAllPathsLG PRE=$PWD REFERENCE_NAME=benchmark DATA_SUBDIR=data_test RUN=run TARGETS=standard  OVERWRITE=True | tee -a assemble_test.out
-
-# ./dataset4_2_40x2d/Allpaths-LG/in_groups.csv
-# ./dataset4_2_40x2d/Allpaths-LG/in_libs.csv
-#                                                      file_name, library_name, group_name
-# /home/kresimir/benchmark/datasets/dataset4_2_40x2d/reads.fastq,     dataset4,   dataset4
-
-
-# isovic@assembly:/mnt/share1_DrOc/genomes/OxfordNanopore/Benchmark$ cat ./alpaths_temp/results/dataset0_reference5/in_libs.csv
-# library_name, project_name, organism_name,     type, paired, frag_size, frag_stddev, insert_size, insert_stddev, read_orientation, genomic_start, genomic_end
-# Solexa-25396,    benchmark,     benchmark, fragment,      1,       180,          10,            ,              ,           inward,             0,           0
-# Solexa-42866,    benchmark,     benchmark,  jumping,      1,          ,            ,        3000,           500,          outward,             0,           0
-# Solexa-44956,    benchmark,     benchmark,  jumping,      1,          ,            ,        3000,           500,          outward,             0,           0
-
-### reads_path,nanopore/pacbio/single/paired/mate,size,stddev
-### Size and stddev can be omitted for nanopore and pacbio options.
-
-    # memtime_file = '%s/%s.memtime' % (output_path, ASSEMBLER_NAME);
-    # run_commands = [];
-    # command = '; '.join(run_commands);
-    # execute_command(command, fp_log, dry_run=DRY_RUN);
 
     if (fp_log != None):
         fp_log.close();
@@ -542,12 +404,13 @@ def verbose_usage_and_exit():
     sys.stderr.write('\t%s mode [<output_path> dataset1 [dataset2 ...]]\n' % sys.argv[0])
     sys.stderr.write('\n')
     sys.stderr.write('\t- mode - either "run" or "install". If "install" other parameters can be omitted.\n')
-    sys.stderr.write('\t- dataset - specification of a dataset in the form: <reads_path>,reads_type[,frag_len,frag_stddev] . Reads_type can be nanopore/pacbio/single/paired/mate. If reads_type == "paired" or "mate", last two parameters can be omitted".\n');
+    sys.stderr.write('\t- dataset - specification of a dataset in the form: reads_type,<reads_path>[<reads_path_b,frag_len,frag_stddev] .\n');
+    sys.stderr.write('\t            Reads_type can be nanopore/pacbio/single/paired/mate. If reads_type == "paired" or "mate", last three parameters can be omitted".\n');
+    sys.stderr.write('\t            If reads_type == "paired" or "mate", other end of the pair needs to be in another file provided by reads_path_b.\n');
     sys.stderr.write('\n');
 
     sys.stderr.write('Example:\n');
-    # sys.stderr.write('\twrapper_allpathslg.py run results/%s datasets/frag_reads.Solexa-25396.\*.fastq,paired,180,10 datasets/jump_reads.Solexa-42866.\*.fastq,mate,3000,500 datasets/jump_reads.Solexa-44956.\*.fastq,mate,3000,500 datasets/reads.fastq,nanopore\n' % (ASSEMBLER_NAME));
-    sys.stderr.write('\twrapper_allpathslg.py run results/%s paired,datasets/frag_reads.Solexa-25396.A.fastq,datasets/frag_reads.Solexa-25396.B.fastq,180,10 mate,datasets/jump_reads.Solexa-42866.A.fastq,datasets/jump_reads.Solexa-42866.B.fastq,3000,500 mate,datasets/jump_reads.Solexa-44956.A.fastq,datasets/jump_reads.Solexa-44956.B.fastq,3000,500 nanopore,datasets/reads.fastq\n' % (ASSEMBLER_NAME));
+    sys.stderr.write('\t%s run results/%s paired,datasets/frag_reads.Solexa-25396.A.fastq,datasets/frag_reads.Solexa-25396.B.fastq,180,10 mate,datasets/jump_reads.Solexa-42866.A.fastq,datasets/jump_reads.Solexa-42866.B.fastq,3000,500 mate,datasets/jump_reads.Solexa-44956.A.fastq,datasets/jump_reads.Solexa-44956.B.fastq,3000,500 nanopore,datasets/reads.fastq\n' % (os.path.basename(sys.argv[0]), ASSEMBLER_NAME));
     sys.stderr.write('\n');
 
     exit(0)

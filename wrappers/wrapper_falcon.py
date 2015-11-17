@@ -12,6 +12,7 @@ import subprocess
 import multiprocessing
 import getpass
 from time import gmtime, strftime
+from dataspec import *
 
 try:
     import basicdefines
@@ -195,15 +196,32 @@ def convert_reads_to_pacbio_format(reads_file, out_reads_file, fp_log, read_coun
 #    machine_name        A symbolic name to specify a set of parameters for a specific sequencing platform.
 #    output_path            Folder to which the output will be placed to. Filename will be automatically generated according to the name of the mapper being run.
 #    output_suffix        A custom suffix that can be added to the output filename.
-def run(reads_files, reference_file, machine_name, output_path, output_suffix=''):
+# def run(reads_files, reference_file, machine_name, output_path, output_suffix=''):
+def run(datasets, output_path):
+    ##################################################################################
+    ### Sanity check for input datasets.
+    ##################################################################################    
+    machine_name = None
+    for dataset in datasets:
+        if (machine_name != None and dataset.type != machine_name):
+            sys.stderr.write('ERROR: %s is not a hybrid assembler, but datasets from disparate technologies are specified! Exiting.\n');
+            exit(1);
+        machine_name = dataset.type;
+    if (machine_name == None):
+        sys.stderr.write('ERROR: Input datasets not specified correctly! Exiting.\n');
+        exit(1);
+
+    ##################################################################################
+    ### Simple variable definitions.
+    ##################################################################################        
     ### Reference for running a local job instead of using an SGE cluster:
     ### http://seqanswers.com/forums/showthread.php?t=50937
     num_threads = multiprocessing.cpu_count() / 2;
-
-    reference_file = os.path.abspath(reference_file);
     output_path = os.path.abspath(output_path);
 
+    ##################################################################################
     ### Backup old assembly results, and create the new output folder.
+    ##################################################################################
     if (os.path.exists(output_path)):
         timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
         os.rename(output_path, '%s.bak_%s' % (output_path, timestamp));
@@ -211,17 +229,19 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         log('Creating a directory on path "%s".' % (output_path), None);
         os.makedirs(output_path);
 
+    ##################################################################################
+    ### Prepare a log file.
+    ##################################################################################
     log_file = '%s/wrapper_log.txt' % (output_path);
     try:
         fp_log = open(log_file, 'a');
     except Exception, e:
         log('ERROR: Could not open file "%s" for writing! Using only STDERR for logging.' % (log_file), None);
-        # sys.stderr.write(str(e) + '\n');
         fp_log = None;
 
-    # sys.stderr.write('[%s wrapper] Running assembly using %s.\n' % (ASSEMBLER_NAME, ASSEMBLER_NAME))
-    log('Running assembly using %s.' % (ASSEMBLER_NAME), fp_log);
-
+    ##################################################################################
+    ### Preparing the input datasets.
+    ##################################################################################
     ### Prepare a holder for all reads paths.
     fofn_paths = [];
 
@@ -231,8 +251,9 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
     last_read_offset = 0;
     all_header_conversion_hash = {};
     i = 0;
-    for reads_file in reads_files:
+    for dataset in datasets:
         i += 1;
+        reads_file = dataset.reads_path;
         reads_file = os.path.abspath(reads_file);
         out_reads_file = '%s.pbheader.fasta' % (os.path.splitext(reads_file)[0]);
         # sys.stderr.write('[%s wrapper] \t(%d) %s -> %s\n' % (ASSEMBLER_NAME, i, reads_file, out_reads_file))
@@ -250,12 +271,12 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         log('ERROR: Could not open file "%s" writing!\n' % (fofn_file), fp_log);
         return;
     fp_fofn.write('\n'.join(fofn_paths) + '\n');
-    # i = 0;
-    # for reads_file in reads_files:
-    #     i += 1;
-    #     fp_fofn.write(os.path.abspath(reads_file) + '\n');
-    #     sys.stderr.write('[%s wrapper] \t(%d) %s\n' % (ASSEMBLER_NAME, i, reads_file))
     fp_fofn.close();
+
+    ##################################################################################
+    ### Prepare the config file.
+    ##################################################################################
+    log('Running assembly using %s.' % (ASSEMBLER_NAME), fp_log);
 
     ### Create a config file for the assembly.
     if (machine_name == 'pacbio'):
@@ -349,10 +370,10 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
         cfg_lines += '\n';
         cfg_lines += 'pa_DBsplit_option = -x100 -s50\n';
         cfg_lines += 'ovlp_DBsplit_option = -x100 -s50\n';
-#        cfg_lines += 'falcon_sense_option = --output_multi --min_idt 0.70 --min_cov 4 --local_match_count_threshold 2 --max_n_read 200 --n_core 6\n';
-#        cfg_lines += 'overlap_filtering_setting = --max_diff 100 --max_cov 100 --min_cov 20 --bestn 10 --n_core 24\n';
+        #        cfg_lines += 'falcon_sense_option = --output_multi --min_idt 0.70 --min_cov 4 --local_match_count_threshold 2 --max_n_read 200 --n_core 6\n';
+        #        cfg_lines += 'overlap_filtering_setting = --max_diff 100 --max_cov 100 --min_cov 20 --bestn 10 --n_core 24\n';
 
-# --max_n_read put a cap on the number of reads used for error correction. In high repetitive genome, you will need to put smaller --max_n_read to make sure the consensus code does not waste time aligning repeats.
+        # --max_n_read put a cap on the number of reads used for error correction. In high repetitive genome, you will need to put smaller --max_n_read to make sure the consensus code does not waste time aligning repeats.
         cfg_lines += 'falcon_sense_option = --output_multi --min_idt 0.50 --local_match_count_threshold 0 --max_n_read 200 --n_core %d\n' % (num_threads);
 
         ### The --max_diff parameter can be used to filter out the reads where one ends has much more coverage than the other end.
@@ -378,6 +399,9 @@ def run(reads_files, reference_file, machine_name, output_path, output_suffix=''
 
     #####
 
+    ##################################################################################
+    ### Start the important work.
+    ##################################################################################
     if (MODULE_BASICDEFINES == True):
         command = 'sudo %s/cgmemtime/cgmemtime --setup -g %s --perm 775' % (basicdefines.TOOLS_ROOT, getpass.getuser());
         execute_command(command, fp_log, dry_run=DRY_RUN);
@@ -449,13 +473,56 @@ def download_and_install():
         command = '; '.join(setup_commands);
         execute_command(command, None, dry_run=DRY_RUN);
 
+# def verbose_usage_and_exit():
+#     sys.stderr.write('Usage:\n')
+#     sys.stderr.write('\t%s mode [<reads_file1>,<reads_file2>,...,<reads_fileN> <machine_name> <output_path>]\n' % sys.argv[0])
+#     sys.stderr.write('\n')
+#     sys.stderr.write('\t- mode - either "run" or "install". Is "install" other parameters can be ommitted.\n')
+#     # sys.stderr.write('\n');
+#     # sys.stderr.write('\tMultiple reads file can')
+
+#     exit(0)
+
+# if __name__ == "__main__":
+#     if (len(sys.argv) < 2 or len(sys.argv) > 7):
+#         verbose_usage_and_exit()
+
+#     if (sys.argv[1] == 'install'):
+#         download_and_install()
+#         exit(0)
+
+#     elif (sys.argv[1] == 'run'):
+#         if (len(sys.argv) < 5 or len(sys.argv) > 6):
+#             verbose_usage_and_exit()
+
+#         reads_files = sys.argv[2].split(',')         ### Enable specifying multiple FASTQ files for input.
+#         machine_name = sys.argv[3]
+#         output_path = sys.argv[4]
+#         reference_file = '';
+#         output_suffix = ''
+        
+#         run(reads_files, reference_file, machine_name, output_path, output_suffix)
+
+#     else:
+#         verbose_usage_and_exit()
+
+
+
 def verbose_usage_and_exit():
     sys.stderr.write('Usage:\n')
-    sys.stderr.write('\t%s mode [<reads_file1>,<reads_file2>,...,<reads_fileN> <machine_name> <output_path>]\n' % sys.argv[0])
+    # sys.stderr.write('\t%s mode [<reads_file1>,<reads_file2>,...,<reads_fileN> <machine_name> <output_path>]\n' % sys.argv[0])
+    sys.stderr.write('\t%s mode [<output_path> dataset1 [dataset2 ...]]\n' % sys.argv[0])
     sys.stderr.write('\n')
-    sys.stderr.write('\t- mode - either "run" or "install". Is "install" other parameters can be ommitted.\n')
-    # sys.stderr.write('\n');
-    # sys.stderr.write('\tMultiple reads file can')
+    sys.stderr.write('\t- mode - either "run" or "install". If "install" other parameters can be omitted.\n')
+    sys.stderr.write('\t- dataset - specification of a dataset in the form: reads_type,<reads_path>[<reads_path_b,frag_len,frag_stddev] .\n');
+    sys.stderr.write('\t            Reads_type can be nanopore/pacbio/single/paired/mate. If reads_type == "paired" or "mate", last three parameters can be omitted".\n');
+    sys.stderr.write('\t            If reads_type == "paired" or "mate", other end of the pair needs to be in another file provided by reads_path_b.\n');
+    sys.stderr.write('\n');
+
+    sys.stderr.write('Example:\n');
+    # sys.stderr.write('\twrapper_allpathslg.py run results/%s datasets/frag_reads.Solexa-25396.\*.fastq,paired,180,10 datasets/jump_reads.Solexa-42866.\*.fastq,mate,3000,500 datasets/jump_reads.Solexa-44956.\*.fastq,mate,3000,500 datasets/reads.fastq,nanopore\n' % (ASSEMBLER_NAME));
+    sys.stderr.write('\t%s run results/%s nanopore,datasets/reads.fastq\n' % (os.path.basename(sys.argv[0]), ASSEMBLER_NAME));
+    sys.stderr.write('\n');
 
     exit(0)
 
@@ -468,16 +535,15 @@ if __name__ == "__main__":
         exit(0)
 
     elif (sys.argv[1] == 'run'):
-        if (len(sys.argv) < 5 or len(sys.argv) > 6):
+        if (len(sys.argv) < 4):
             verbose_usage_and_exit()
 
-        reads_files = sys.argv[2].split(',')         ### Enable specifying multiple FASTQ files for input.
-        machine_name = sys.argv[3]
-        output_path = sys.argv[4]
-        reference_file = '';
-        output_suffix = ''
-        
-        run(reads_files, reference_file, machine_name, output_path, output_suffix)
+        output_path = sys.argv[2]
+        datasets = [];
+        for arg in sys.argv[3:]:
+            dataset = Dataset(arg);
+            datasets.append(dataset);
+        run(datasets, output_path);
 
     else:
         verbose_usage_and_exit()
