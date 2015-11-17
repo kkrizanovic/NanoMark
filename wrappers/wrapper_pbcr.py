@@ -13,10 +13,20 @@ from time import gmtime, strftime
 import basicdefines
 from dataspec import *
 
+try:
+    import basicdefines
+    MODULE_BASICDEFINES = True;
+    ASSEMBLERS_PATH_ROOT_ABS = basicdefines.ASSEMBLERS_PATH_ROOT_ABS;
+    TOOLS_ROOT = basicdefines.TOOLS_ROOT;
+except:
+    MODULE_BASICDEFINES = False;
+    ASSEMBLERS_PATH_ROOT_ABS = os.path.join(SCRIPT_PATH, 'assemblers/');
+    TOOLS_ROOT = '%s' % (SCRIPT_PATH);
+
 ASSEMBLER_URL = 'http://sourceforge.net/projects/wgs-assembler/files/wgs-assembler/wgs-8.3/wgs-8.3rc2-Linux_amd64.tar.bz2'
-ASSEMBLER_PATH = os.path.join(basicdefines.ASSEMBLERS_PATH_ROOT_ABS, 'wgs-8.3rc2')
+ASSEMBLER_PATH = os.path.join(ASSEMBLERS_PATH_ROOT_ABS, 'wgs-8.3rc2')
 ZIP_FILE = 'wgs-8.3rc2-Linux_amd64.tar.bz2'
-ZIP_PATH = os.path.join(basicdefines.ASSEMBLERS_PATH_ROOT_ABS, ZIP_FILE)
+ZIP_PATH = os.path.join(ASSEMBLERS_PATH_ROOT_ABS, ZIP_FILE)
 ASSEMBLER_BIN = os.path.join(ASSEMBLER_PATH,'Linux-amd64/bin/runCA')
 ASSEMBLER_ECBIN = os.path.join(ASSEMBLER_PATH,'Linux-amd64/bin/PBcR')
 ASSEMBLER_NAME = 'PBcR'
