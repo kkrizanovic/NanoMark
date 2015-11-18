@@ -20,6 +20,9 @@ SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(SCRIPT_PATH + '')
 sys.path.append(SCRIPT_PATH + '/../wrappers');
 
+from dataspec import *
+
+
 
 # def benchmark_cf(configfile):
 #     sys.stderr.write('Function %s not implemented yet!\n\n' % (sys._getframe().f_code.co_name))
