@@ -9,6 +9,12 @@ sys.path.append(SCRIPT_PATH + '/../src/')
 import subprocess
 import multiprocessing
 
+from time import gmtime, strftime
+
+from dataspec import *
+
+ASSEMBLER_TYPE = 'hybrid';   # hybrid or nonhybrid
+
 try:
     import basicdefines
     MODULE_BASICDEFINES = True;
@@ -18,10 +24,6 @@ except:
     MODULE_BASICDEFINES = False;
     ASSEMBLERS_PATH_ROOT_ABS = os.path.join(SCRIPT_PATH, 'assemblers/');
     TOOLS_ROOT = '%s' % (SCRIPT_PATH);
-
-from time import gmtime, strftime
-
-from dataspec import *
 
 ASSEMBLER_URL = 'http://spades.bioinf.spbau.ru/release3.6.1/SPAdes-3.6.1-Linux.tar.gz'
 ASSEMBLER_PATH = os.path.join(ASSEMBLERS_PATH_ROOT_ABS, 'SPAdes-3.6.1-Linux')

@@ -12,6 +12,8 @@ from time import gmtime, strftime
 
 from dataspec import *
 
+ASSEMBLER_TYPE = 'nonhybrid';   # hybrid or nonhybrid
+
 try:
     import basicdefines
     MODULE_BASICDEFINES = True;

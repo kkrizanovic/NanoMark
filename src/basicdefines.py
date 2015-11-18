@@ -6,7 +6,7 @@ SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 import fnmatch
 
 WRAPPERS_PATH = 'wrappers'
-WRAPPERS_PATH_ROOT_ABS = SCRIPT_PATH + '/../src/' + WRAPPERS_PATH
+WRAPPERS_PATH_ROOT_ABS = SCRIPT_PATH + '/../' + WRAPPERS_PATH
 
 TOOLS_ROOT = 'tools'
 TOOLS_ROOT_ABS = SCRIPT_PATH + '/../' + TOOLS_ROOT

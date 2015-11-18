@@ -7,7 +7,7 @@ import shutil
 import datetime
 import subprocess
 
-import setup_NanoMark
+import setup_nanomark
 import basicdefines
 
 # To generate random number for each run, so that multiple runs don't clash
@@ -16,33 +16,38 @@ import uuid
 # To be able to import wrappers more easily
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(SCRIPT_PATH + '')
-sys.path.append(SCRIPT_PATH + '/wrappers');
+sys.path.append(SCRIPT_PATH + '/../wrappers');
 
 
-def benchmark_cf(configfile):
-    sys.stderr.write('Function %s not implemented yet!\n\n' % (sys._getframe().f_code.co_name))
-    exit(1)
-    pass
+# def benchmark_cf(configfile):
+#     sys.stderr.write('Function %s not implemented yet!\n\n' % (sys._getframe().f_code.co_name))
+#     exit(1)
+#     pass
 
 
 # A helper function that return all available wrappers from 'src/wrappers' folder
 def get_allwrappers():
     wrappers = []
+    wrapper_basenames = [];
     for filename in os.listdir(basicdefines.WRAPPERS_PATH_ROOT_ABS):
         if filename.startswith('wrapper_') and filename.endswith('.py'):
             wrappername = filename[8:-3]
             wrappers.append(wrappername)
-
-    return wrappers
+            wrapper_basenames.append(os.path.splitext(os.path.basename(filename))[0]);
+    return [wrappers, wrapper_basenames];
 
 
 # Lists all available assemblers/wrappers
 # All wrappers are stored in a separate folder in python files starting with 'wrapper_'
 def list_wrappers():
     sys.stdout.write('\nAvailable wrappers:')
-    wrappers = get_allwrappers()
-    for wrapper in wrappers:
-        sys.stdout.write('\n\t- %s' % wrapper)
+    [wrappers, wrapper_basenames] = get_allwrappers()
+    for wrapper,wrapper_basenames in zip(wrappers, wrapper_basenames):
+        wrapper_path = os.path.join(basicdefines.WRAPPERS_PATH_ROOT_ABS, wrapper + '.py')
+        command = 'import %s; assembler_name = %s.ASSEMBLER_NAME; assembler_type = %s.ASSEMBLER_TYPE' % (wrapper_basenames, wrapper_basenames, wrapper_basenames)
+        exec(command)
+        padding = ' ' * (16 - len(assembler_name));
+        sys.stdout.write('\n\t- %s%s- %s' % (assembler_name, padding, assembler_type))
 
     sys.stdout.write('\n\n')
 
@@ -324,7 +329,7 @@ def summarize_results(results_folder):
             summaryfile.write(line + '\n')
 
 def verbose_usage_and_exit():
-    sys.stderr.write('DNAssMark - a DNA assembly benchmarking tool.\n')
+    sys.stderr.write('NanoMark - a DNA assembly benchmarking tool.\n')
     sys.stderr.write('\n')
     sys.stderr.write('Usage:\n')
     sys.stderr.write('\t%s [mode]\n' % sys.argv[0])
@@ -333,9 +338,9 @@ def verbose_usage_and_exit():
     sys.stderr.write('\t\tsetup\n')
     sys.stderr.write('\t\tbenchmark\n')
     sys.stderr.write('\t\tcontinue\n')
-    sys.stderr.write('\t\tbenchmark_cf\n')
-    sys.stderr.write('\t\tcontinue_cf\n')
-    sys.stderr.write('\t\trun_quast\n')
+    # sys.stderr.write('\t\tbenchmark_cf\n')
+    # sys.stderr.write('\t\tcontinue_cf\n')
+    # sys.stderr.write('\t\trun_quast\n')
     sys.stderr.write('\t\tsummarize_results\n')
     sys.stderr.write('\t\tlist\n')
     sys.stderr.write('\n')
@@ -354,7 +359,7 @@ def main():
             sys.stderr.write('\n')
             exit(1)
 
-        setup_NanoMark.setup_all()
+        setup_nanomark.setup_all()
 
     elif mode == 'benchmark':
         if (len(sys.argv) < 5 or len(sys.argv) > 7):
@@ -384,7 +389,7 @@ def main():
             verbose_usage_and_exit()
 
         used_assemblers = []
-        all_assemblers = get_allwrappers()
+        [all_assemblers, all_assemblers_basenames] = get_allwrappers()
 
         for i in range(5, len(sys.argv), 2):
             if sys.argv[i] == '-as':
@@ -420,45 +425,45 @@ def main():
         continueBenchmark(results_folder)
 
 
-    elif mode == 'benchmark_cf':
-        if (len(sys.argv) != 3):
-            sys.stderr.write('Runs a benchmark according to a given config file.\n')
-            sys.stderr.write('Config file contains a list of assemblers to be used, reads file and reference file.\n')
-            sys.stderr.write('\n')
-            sys.stderr.write('Usage:\n')
-            sys.stderr.write('\t%s %s <config_file>' % (sys.argv[0], sys.argv[1]))
-            sys.stderr.write('\n')
-            exit(1)
+    # elif mode == 'benchmark_cf':
+    #     if (len(sys.argv) != 3):
+    #         sys.stderr.write('Runs a benchmark according to a given config file.\n')
+    #         sys.stderr.write('Config file contains a list of assemblers to be used, reads file and reference file.\n')
+    #         sys.stderr.write('\n')
+    #         sys.stderr.write('Usage:\n')
+    #         sys.stderr.write('\t%s %s <config_file>' % (sys.argv[0], sys.argv[1]))
+    #         sys.stderr.write('\n')
+    #         exit(1)
 
 
-        configfile = sys.argv[2]
-        benchmark_cf(configfile)
+    #     configfile = sys.argv[2]
+    #     benchmark_cf(configfile)
 
-    elif mode == 'continue_cf':
-        if (len(sys.argv) != 3):
-            sys.stderr.write('Continues a benchmark according to a given config file.\n')
-            sys.stderr.write('Config file contains a list of assemblers to be used, reads file and reference file.\n')
-            sys.stderr.write('Reads a corresponding log file to see what is left to be done.\n')
-            sys.stderr.write('\n')
-            sys.stderr.write('Usage:\n')
-            sys.stderr.write('\t%s %s <results_folder>' % (sys.argv[0], sys.argv[1]))
-            sys.stderr.write('\n')
-            exit(1)
+    # elif mode == 'continue_cf':
+    #     if (len(sys.argv) != 3):
+    #         sys.stderr.write('Continues a benchmark according to a given config file.\n')
+    #         sys.stderr.write('Config file contains a list of assemblers to be used, reads file and reference file.\n')
+    #         sys.stderr.write('Reads a corresponding log file to see what is left to be done.\n')
+    #         sys.stderr.write('\n')
+    #         sys.stderr.write('Usage:\n')
+    #         sys.stderr.write('\t%s %s <results_folder>' % (sys.argv[0], sys.argv[1]))
+    #         sys.stderr.write('\n')
+    #         exit(1)
 
-        results_folder = sys.argv[2]
-        continueBenchmark_cf(reads_folder)
+    #     results_folder = sys.argv[2]
+    #     continueBenchmark_cf(reads_folder)
 
-    elif mode == 'run_quast':
-        if (len(sys.argv) != 3):
-            sys.stderr.write('Runs quast on a set of assembler results.\n')
-            sys.stderr.write('\n')
-            sys.stderr.write('Usage:\n')
-            sys.stderr.write('\t%s %s <results_folder>' % (sys.argv[0], sys.argv[1]))
-            sys.stderr.write('\n')
-            exit(1)
+    # elif mode == 'run_quast':
+    #     if (len(sys.argv) != 3):
+    #         sys.stderr.write('Runs quast on a set of assembler results.\n')
+    #         sys.stderr.write('\n')
+    #         sys.stderr.write('Usage:\n')
+    #         sys.stderr.write('\t%s %s <results_folder>' % (sys.argv[0], sys.argv[1]))
+    #         sys.stderr.write('\n')
+    #         exit(1)
 
-        results_folder = sys.argv[2]
-        run_quast(results_folder)
+    #     results_folder = sys.argv[2]
+    #     run_quast(results_folder)
 
     elif mode == 'summarize_results':
         if (len(sys.argv) != 3):
