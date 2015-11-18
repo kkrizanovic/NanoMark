@@ -354,7 +354,7 @@ def main():
             sys.stderr.write('\n')
             exit(1)
 
-        setup_DNAssMark.setup_all()
+        setup_NanoMark.setup_all()
 
     elif mode == 'benchmark':
         if (len(sys.argv) < 5 or len(sys.argv) > 7):
