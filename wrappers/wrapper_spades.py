@@ -350,7 +350,7 @@ def run(datasets, output_path):
     yaml_file_path = '%s/datasets.yaml' % (output_path);
     try:
         fp_yaml = open(yaml_file_path, 'w');
-        fp_yaml.write(spec + '\n');
+        fp_yaml.write(yaml + '\n');
         fp_yaml.close();
     except IOError, e:
         log('ERROR: Could not generate spec file in path: "%s"! Exiting.\n' % (yaml_file_path), fp_log);
