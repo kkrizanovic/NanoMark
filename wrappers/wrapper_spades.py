@@ -301,9 +301,9 @@ def run(datasets, output_path):
             yaml_lines.append('\t\t\t"%s"' % (dataset.reads_path_a));
             yaml_lines.append('\t\t]');
             if (current_dataset == len(datasets)):
-                yaml_lines.append('\t},');
-            else:
                 yaml_lines.append('\t}');
+            else:
+                yaml_lines.append('\t},');
 
         elif (dataset.type == 'mate'):
             yaml_lines.append('\t{');
@@ -316,9 +316,9 @@ def run(datasets, output_path):
             yaml_lines.append('\t\t\t"%s"' % (dataset.reads_path_a));
             yaml_lines.append('\t\t]');
             if (current_dataset == len(datasets)):
-                yaml_lines.append('\t},');
-            else:
                 yaml_lines.append('\t}');
+            else:
+                yaml_lines.append('\t},');
 
         elif (dataset.type == 'pacbio'):
             yaml_lines.append('\t{');
@@ -327,9 +327,9 @@ def run(datasets, output_path):
             yaml_lines.append('\t\t\t"%s"' % (dataset.reads_path));
             yaml_lines.append('\t\t]');
             if (current_dataset == len(datasets)):
-                yaml_lines.append('\t},');
-            else:
                 yaml_lines.append('\t}');
+            else:
+                yaml_lines.append('\t},');
 
         elif (dataset.type == 'nanopore'):
             yaml_lines.append('\t{');
@@ -338,9 +338,9 @@ def run(datasets, output_path):
             yaml_lines.append('\t\t\t"%s"' % (dataset.reads_path));
             yaml_lines.append('\t\t]');
             if (current_dataset == len(datasets)):
-                yaml_lines.append('\t},');
-            else:
                 yaml_lines.append('\t}');
+            else:
+                yaml_lines.append('\t},');
 
     yaml_lines.append(']');
 
