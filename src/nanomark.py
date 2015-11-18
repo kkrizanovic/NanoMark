@@ -59,7 +59,7 @@ def benchmark(reads_file, reference_file, technology, wrapper_list = []):
 
     # uuid_string = str(uuid.uuid4())            # Generate a random UUID so that multiple runs don't clash
     timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
-    uuid_string = timcreadspathestamp;
+    uuid_string = timestamp;
 
     output_folder = 'benchmark_' + uuid_string
     output_path = os.path.join(basicdefines.RESULTS_PATH_ROOT_ABS, output_folder)
