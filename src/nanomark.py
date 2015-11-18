@@ -12,6 +12,7 @@ import basicdefines
 
 # To generate random number for each run, so that multiple runs don't clash
 import uuid
+from time import gmtime, strftime
 
 # To be able to import wrappers more easily
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -55,9 +56,12 @@ def list_wrappers():
 
 def benchmark(reads_file, reference_file, technology, wrapper_list = []):
 
-    uuid_string = str(uuid.uuid4())            # Generate a random UUID so that multiple runs don't clash
+    # uuid_string = str(uuid.uuid4())            # Generate a random UUID so that multiple runs don't clash
+    timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
+    uuid_string = timestamp;
+
     output_folder = 'benchmark_' + uuid_string
-    output_path = os.path.join(basicdefines.INTERMEDIATE_PATH_ROOT_ABS, output_folder)
+    output_path = os.path.join(basicdefines.RESULTS_PATH_ROOT_ABS, output_folder)
     log_filename = os.path.join(output_path, 'log.txt')
     creffilename = 'REF_' + uuid_string + os.path.splitext(reference_file)[1]        # preserve extension
     crefpath = os.path.join(output_path, creffilename)
@@ -71,7 +75,7 @@ def benchmark(reads_file, reference_file, technology, wrapper_list = []):
 
     with open(log_filename, 'w') as logfile:
         cDateTime = str(datetime.datetime.now())
-        logfile.write('NanoMark benchmark UUID: %s\n' % uuid_string)
+        # logfile.write('NanoMark benchmark UUID: %s\n' % uuid_string)
         logfile.write('Date and time: %s\n' % cDateTime)
         sys.stderr.write('\n')
         sys.stderr.write('Running benchmark for one reads file!\n')
@@ -109,7 +113,7 @@ def benchmark(reads_file, reference_file, technology, wrapper_list = []):
 
         # Writting wrappers to be used to the log file
         # THis will anable an interrupted run to be continued
-        logfile.write('Wrappers used: %s' % ','.join(wrapper_list))
+        logfile.write('Wrappers used: %s\n' % ','.join(wrapper_list))
 
         for wrapper_basename in wrapper_list:
             assembler_name = ''
