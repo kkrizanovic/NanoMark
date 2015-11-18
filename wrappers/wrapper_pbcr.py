@@ -10,7 +10,6 @@ import subprocess
 import multiprocessing
 from time import gmtime, strftime
 
-import basicdefines
 from dataspec import *
 
 try:
@@ -33,8 +32,8 @@ ASSEMBLER_NAME = 'PBcR'
 ASSEMBLER_RESULTS = 'out/9-terminator/asm.ctg.fasta'
 CREATE_OUTPUT_FOLDER = True
 
-PACBIO_SPEC = os.path.join(ASSEMBLER_PATH, 'wgs_pacbio.spec')
-OXFORD_SPEC = os.path.join(ASSEMBLER_PATH, 'wgs_oxford.spec')
+# PACBIO_SPEC = os.path.join(ASSEMBLER_PATH, 'wgs_pacbio.spec')
+# OXFORD_SPEC = os.path.join(ASSEMBLER_PATH, 'wgs_oxford.spec')
 
 DO_ERROR_CORRECTION = True
 
@@ -252,7 +251,7 @@ def run(datasets, output_path):
             log(str(e), fp_log);
 
         # spec_file = OXFORD_SPEC
-        command = 'cd %s; %s %s -length 500 -partitions 200 -l %s -s %s -fastq %s ' % (output_path, measure_command(memtime_path), used_bin, ASSEMBLER_NAME, spec_file_path, reads_file)
+        command = 'cd %s; %s %s -length 500 -partitions 200 -l %s -s %s -fastq %s genomeSize=5000000' % (output_path, measure_command(memtime_path), used_bin, ASSEMBLER_NAME, spec_file_path, reads_file)
         execute_command(command, fp_log, dry_run=DRY_RUN);
     elif machine_name == 'illumina':
         log('\nMachine name "%s" not implemented for %s.\n' % (machine_name, ASSEMBLER_NAME));
@@ -291,12 +290,12 @@ def download_and_install():
 
         if not os.path.exists(ZIP_PATH):
             sys.stderr.write('[%s wrapper] Downloading tar.bz2...\n' % (ASSEMBLER_NAME))
-            command = 'cd %s; wget %s' % (basicdefines.ASSEMBLERS_PATH_ROOT_ABS, ASSEMBLER_URL)
+            command = 'cd %s; wget %s' % (ASSEMBLERS_PATH_ROOT_ABS, ASSEMBLER_URL)
             sys.stderr.write('[%s wrapper] %s\n' % (ASSEMBLER_NAME, command))
             subprocess.call(command, shell='True')
 
         # Decompress
-        command = 'cd %s; tar -xvjf %s' % (basicdefines.ASSEMBLERS_PATH_ROOT_ABS, ZIP_FILE)
+        command = 'cd %s; tar -xvjf %s' % (ASSEMBLERS_PATH_ROOT_ABS, ZIP_FILE)
         sys.stderr.write('[%s wrapper] %s\n' % (ASSEMBLER_NAME, command))
         subprocess.call(command, shell='True')
 

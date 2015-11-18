@@ -9,11 +9,21 @@ sys.path.append(SCRIPT_PATH + '/../src/')
 import subprocess
 import multiprocessing
 
-import basicdefines
+try:
+    import basicdefines
+    MODULE_BASICDEFINES = True;
+    ASSEMBLERS_PATH_ROOT_ABS = basicdefines.ASSEMBLERS_PATH_ROOT_ABS;
+    TOOLS_ROOT = basicdefines.TOOLS_ROOT;
+except:
+    MODULE_BASICDEFINES = False;
+    ASSEMBLERS_PATH_ROOT_ABS = os.path.join(SCRIPT_PATH, 'assemblers/');
+    TOOLS_ROOT = '%s' % (SCRIPT_PATH);
+
 from dataspec import *
 
-ASSEMBLER_URL = ''
-ASSEMBLER_PATH = os.path.join(basicdefines.ASSEMBLERS_PATH_ROOT_ABS, 'SPAdes-3.5.0-Linux')
+ASSEMBLER_URL = 'http://spades.bioinf.spbau.ru/release3.6.1/SPAdes-3.6.1-Linux.tar.gz'
+ASSEMBLER_PATH = os.path.join(ASSEMBLERS_PATH_ROOT_ABS, 'SPAdes-3.6.1-Linux')
+ZIP_FILE = os.path.join(ASSEMBLERS_PATH_ROOT_ABS, os.path.basename(ASSEMBLER_URL));
 ASSEMBLER_BIN = os.path.join(ASSEMBLER_PATH,'bin/spades.py')
 ASSEMBLER_NAME = 'SPADES'
 ASSEMBLER_RESULTS = 'contigs.fasta'
@@ -271,15 +281,108 @@ def run(datasets, output_path):
     log('Running assembly using %s.' % (ASSEMBLER_NAME), fp_log);
 
     memtime_path = os.path.join(output_path, ASSEMBLER_NAME + '.memtime')
-    if reads_file[-3:] == '.fq' or reads_file[-6:] == '.fastq':
-        command = '%s %s -t %d --s1 %s -o %s' % (measure_command(memtime_path), ASSEMBLER_BIN, num_threads, reads_file, output_path)
-        subprocess.call(command, shell='True')
-    # If reads file is fasta (spades cannot perform error correction)
-    elif reads_file[-3:] == '.fa' or reads_file[-6:] == '.fasta':
-        command = '%s %s --only-assembler -t %d --s1 %s -o %s' % (measure_command(memtime_path), ASSEMBLER_BIN, num_threads, reads_file, output_path)
-        subprocess.call(command, shell='True')
-    else:
-        sys.stderr.write('\n[%s wrapper] Unsupported file format (%s)!\n' % (ASSEMBLER_NAME, reads_file))
+
+
+    yaml_lines = [];
+    yaml_lines.append('[');
+    current_dataset = 0;
+    for dataset in datasets:
+        current_dataset += 1;
+        if (dataset.type == 'single'):
+            pass;
+
+        elif (dataset.type == 'paired'):
+            yaml_lines.append('\t{');
+            yaml_lines.append('\t\torientation: "fr",');
+            yaml_lines.append('\t\ttype: "paired-end",');
+            yaml_lines.append('\t\tright reads: [');
+            yaml_lines.append('\t\t\t"%s"' % (dataset.reads_path_b));
+            yaml_lines.append('\t\t],');
+            yaml_lines.append('\t\tleft reads: [');
+            yaml_lines.append('\t\t\t"%s"' % (dataset.reads_path_a));
+            yaml_lines.append('\t\t]');
+            if (current_dataset == len(datasets)):
+                yaml_lines.append('\t},');
+            else:
+                yaml_lines.append('\t}');
+
+        elif (dataset.type == 'mate'):
+            yaml_lines.append('\t{');
+            yaml_lines.append('\t\torientation: "rf",');
+            yaml_lines.append('\t\ttype: "mate-pairs",');
+            yaml_lines.append('\t\tright reads: [');
+            yaml_lines.append('\t\t\t"%s"' % (dataset.reads_path_b));
+            yaml_lines.append('\t\t],');
+            yaml_lines.append('\t\tleft reads: [');
+            yaml_lines.append('\t\t\t"%s"' % (dataset.reads_path_a));
+            yaml_lines.append('\t\t]');
+            if (current_dataset == len(datasets)):
+                yaml_lines.append('\t},');
+            else:
+                yaml_lines.append('\t}');
+
+        elif (dataset.type == 'pacbio'):
+            yaml_lines.append('\t{');
+            yaml_lines.append('\t\ttype: "pacbio",');
+            yaml_lines.append('\t\tsingle reads: [');
+            yaml_lines.append('\t\t\t"%s"' % (dataset.reads_path_b));
+            yaml_lines.append('\t\t]');
+            if (current_dataset == len(datasets)):
+                yaml_lines.append('\t},');
+            else:
+                yaml_lines.append('\t}');
+
+        elif (dataset.type == 'nanopore'):
+            yaml_lines.append('\t{');
+            yaml_lines.append('\t\ttype: "nanopore",');
+            yaml_lines.append('\t\tsingle reads: [');
+            yaml_lines.append('\t\t\t"%s"' % (dataset.reads_path_b));
+            yaml_lines.append('\t\t]');
+            if (current_dataset == len(datasets)):
+                yaml_lines.append('\t},');
+            else:
+                yaml_lines.append('\t}');
+
+        yaml_lines.append('\t}');
+    yaml_lines.append(']');
+
+    yaml = '\n'.join(yaml_lines);
+
+    yaml_file_path = '%s/datasets.yaml' % (output_path);
+    try:
+        fp_yaml = open(yaml_file_path, 'w');
+        fp_yaml.write(spec + '\n');
+        fp_yaml.close();
+    except IOError, e:
+        log('ERROR: Could not generate spec file in path: "%s"! Exiting.\n' % (yaml_file_path), fp_log);
+        log(str(e), fp_log);
+
+    command = 'cd %s; %s -o %s/assembly_results --dataset %s' % (output_path, measure_command(memtime_path), ASSEMBLER_BIN, output_path, yaml_file_path)
+    execute_command(command, fp_log, dry_run=DRY_RUN);
+
+
+
+    # if machine_name == 'pacbio':
+
+    # elif machine_name == 'nanopore':
+    # elif machine_name == 'illumina':
+    #     log('\nMachine name "%s" not implemented for %s.\n' % (machine_name, ASSEMBLER_NAME));
+    #     log('Skipping ....\n', fp_log)
+    #     return;
+    # else:
+    #     log('\nMachine name "%s" not implemented for %s.\n' % (machine_name, ASSEMBLER_NAME));
+    #     log('Skipping ....\n', fp_log)
+    #     return;
+
+    # if reads_file[-3:] == '.fq' or reads_file[-6:] == '.fastq':
+    #     command = '%s %s -t %d --s1 %s -o %s' % (measure_command(memtime_path), ASSEMBLER_BIN, num_threads, reads_file, output_path)
+    #     subprocess.call(command, shell='True')
+    # # If reads file is fasta (spades cannot perform error correction)
+    # elif reads_file[-3:] == '.fa' or reads_file[-6:] == '.fasta':
+    #     command = '%s %s --only-assembler -t %d --s1 %s -o %s' % (measure_command(memtime_path), ASSEMBLER_BIN, num_threads, reads_file, output_path)
+    #     subprocess.call(command, shell='True')
+    # else:
+    #     sys.stderr.write('\n[%s wrapper] Unsupported file format (%s)!\n' % (ASSEMBLER_NAME, reads_file))
 
 
 
@@ -306,9 +409,20 @@ def download_and_install():
     if os.path.exists(ASSEMBLER_BIN):
         sys.stderr.write('[%s wrapper] Bin found at %s. Skipping installation ... \n' % (ASSEMBLER_NAME, ASSEMBLER_BIN))
     else:
-        sys.stderr.write('[%s wrapper] Couldn\'t find SPADES installation.\n')
-        sys.stderr.write('[%s wrapper] Install SPADES manually to %s.\n' % (basicdefines.ASSEMBLERS_PATH_ROOT_ABS, basicdefines.ASSEMBLERS_PATH_ROOT_ABS))
-        raw_input('Press key to continue...\n')
+        # sys.stderr.write('[%s wrapper] Couldn\'t find SPADES installation.\n')
+        # sys.stderr.write('[%s wrapper] Install SPADES manually to %s.\n' % (basicdefines.ASSEMBLERS_PATH_ROOT_ABS, basicdefines.ASSEMBLERS_PATH_ROOT_ABS))
+        # raw_input('Press key to continue...\n')
+        if not os.path.exists(ZIP_FILE):
+            sys.stderr.write('[%s wrapper] Downloading archive...\n' % (ASSEMBLER_NAME))
+            command = 'cd %s; wget %s' % (ASSEMBLERS_PATH_ROOT_ABS, ASSEMBLER_URL)
+            sys.stderr.write('[%s wrapper] %s\n' % (ASSEMBLER_NAME, command))
+            subprocess.call(command, shell='True')
+
+        # Decompress
+        command = 'cd %s; tar -xvzf %s' % (ASSEMBLERS_PATH_ROOT_ABS, ZIP_FILE)
+        sys.stderr.write('[%s wrapper] %s\n' % (ASSEMBLER_NAME, command))
+        subprocess.call(command, shell='True')
+
 
 
 # def verbose_usage_and_exit():
