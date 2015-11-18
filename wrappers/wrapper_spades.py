@@ -291,56 +291,56 @@ def run(datasets, output_path):
             pass;
 
         elif (dataset.type == 'paired'):
-            yaml_lines.append('\t{');
-            yaml_lines.append('\t\torientation: "fr",');
-            yaml_lines.append('\t\ttype: "paired-end",');
-            yaml_lines.append('\t\tright reads: [');
-            yaml_lines.append('\t\t\t"%s"' % (dataset.reads_path_b));
-            yaml_lines.append('\t\t],');
-            yaml_lines.append('\t\tleft reads: [');
-            yaml_lines.append('\t\t\t"%s"' % (dataset.reads_path_a));
-            yaml_lines.append('\t\t]');
+            yaml_lines.append(' {');
+            yaml_lines.append('  orientation: "fr",');
+            yaml_lines.append('  type: "paired-end",');
+            yaml_lines.append('  right reads: [');
+            yaml_lines.append('   "%s"' % (dataset.reads_path_b));
+            yaml_lines.append('  ],');
+            yaml_lines.append('  left reads: [');
+            yaml_lines.append('   "%s"' % (dataset.reads_path_a));
+            yaml_lines.append('  ]');
             if (current_dataset == len(datasets)):
-                yaml_lines.append('\t}');
+                yaml_lines.append(' }');
             else:
-                yaml_lines.append('\t},');
+                yaml_lines.append(' },');
 
         elif (dataset.type == 'mate'):
-            yaml_lines.append('\t{');
-            yaml_lines.append('\t\torientation: "rf",');
-            yaml_lines.append('\t\ttype: "mate-pairs",');
-            yaml_lines.append('\t\tright reads: [');
-            yaml_lines.append('\t\t\t"%s"' % (dataset.reads_path_b));
-            yaml_lines.append('\t\t],');
-            yaml_lines.append('\t\tleft reads: [');
-            yaml_lines.append('\t\t\t"%s"' % (dataset.reads_path_a));
-            yaml_lines.append('\t\t]');
+            yaml_lines.append(' {');
+            yaml_lines.append('  orientation: "rf",');
+            yaml_lines.append('  type: "mate-pairs",');
+            yaml_lines.append('  right reads: [');
+            yaml_lines.append('   "%s"' % (dataset.reads_path_b));
+            yaml_lines.append('  ],');
+            yaml_lines.append('  left reads: [');
+            yaml_lines.append('   "%s"' % (dataset.reads_path_a));
+            yaml_lines.append('  ]');
             if (current_dataset == len(datasets)):
-                yaml_lines.append('\t}');
+                yaml_lines.append(' }');
             else:
-                yaml_lines.append('\t},');
+                yaml_lines.append(' },');
 
         elif (dataset.type == 'pacbio'):
-            yaml_lines.append('\t{');
-            yaml_lines.append('\t\ttype: "pacbio",');
-            yaml_lines.append('\t\tsingle reads: [');
-            yaml_lines.append('\t\t\t"%s"' % (dataset.reads_path));
-            yaml_lines.append('\t\t]');
+            yaml_lines.append(' {');
+            yaml_lines.append('  type: "pacbio",');
+            yaml_lines.append('  single reads: [');
+            yaml_lines.append('   "%s"' % (dataset.reads_path));
+            yaml_lines.append('  ]');
             if (current_dataset == len(datasets)):
-                yaml_lines.append('\t}');
+                yaml_lines.append(' }');
             else:
-                yaml_lines.append('\t},');
+                yaml_lines.append(' },');
 
         elif (dataset.type == 'nanopore'):
-            yaml_lines.append('\t{');
-            yaml_lines.append('\t\ttype: "nanopore",');
-            yaml_lines.append('\t\tsingle reads: [');
-            yaml_lines.append('\t\t\t"%s"' % (dataset.reads_path));
-            yaml_lines.append('\t\t]');
+            yaml_lines.append(' {');
+            yaml_lines.append('  type: "nanopore",');
+            yaml_lines.append('  single reads: [');
+            yaml_lines.append('   "%s"' % (dataset.reads_path));
+            yaml_lines.append('  ]');
             if (current_dataset == len(datasets)):
-                yaml_lines.append('\t}');
+                yaml_lines.append(' }');
             else:
-                yaml_lines.append('\t},');
+                yaml_lines.append(' },');
 
     yaml_lines.append(']');
 
