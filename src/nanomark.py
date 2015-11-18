@@ -151,7 +151,7 @@ def benchmark(reads_file, reference_file, technology, wrapper_list = []):
             sys.stderr.write('Executing command: %s\n' % (command));
             exec(command)
             dataset = Dataset('%s,%s' % (technology, creadspath))
-            current_wrapper.run([datasets], assembler_folder, total_ref_len);
+            current_wrapper.run([dataset], assembler_folder, total_ref_len);
 
             # # Run quast on results file?
             # # This might be a part of a wrapper implementation
