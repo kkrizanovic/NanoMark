@@ -19,6 +19,8 @@ except:
     ASSEMBLERS_PATH_ROOT_ABS = os.path.join(SCRIPT_PATH, 'assemblers/');
     TOOLS_ROOT = '%s' % (SCRIPT_PATH);
 
+from time import gmtime, strftime
+
 from dataspec import *
 
 ASSEMBLER_URL = 'http://spades.bioinf.spbau.ru/release3.6.1/SPAdes-3.6.1-Linux.tar.gz'
@@ -280,9 +282,6 @@ def run(datasets, output_path):
     ##################################################################################
     log('Running assembly using %s.' % (ASSEMBLER_NAME), fp_log);
 
-    memtime_path = os.path.join(output_path, ASSEMBLER_NAME + '.memtime')
-
-
     yaml_lines = [];
     yaml_lines.append('[');
     current_dataset = 0;
@@ -357,6 +356,7 @@ def run(datasets, output_path):
         log('ERROR: Could not generate spec file in path: "%s"! Exiting.\n' % (yaml_file_path), fp_log);
         log(str(e), fp_log);
 
+    memtime_path = os.path.join(output_path, ASSEMBLER_NAME + '.memtime')
     command = 'cd %s; %s -o %s/assembly_results --dataset %s' % (output_path, measure_command(memtime_path), ASSEMBLER_BIN, output_path, yaml_file_path)
     execute_command(command, fp_log, dry_run=DRY_RUN);
 
