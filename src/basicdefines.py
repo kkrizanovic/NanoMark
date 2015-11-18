@@ -54,6 +54,24 @@ def find_folders(start_path, depth=0):
 def measure_command(measure_file):
         return (SCRIPT_PATH + r'/../tools/cgmemtime/cgmemtime -o ' + measure_file)
 
+### Logs messages to STDERR and an output log file if provided (opened elsewhere).
+def log(message, fp_log):
+    timestamp = strftime("%Y/%m/%d %H:%M:%S", gmtime());
+
+    sys.stderr.write('[%s wrapper %s] %s\n' % (ASSEMBLER_NAME, timestamp, message))
+    sys.stderr.flush();
+    if (fp_log != None):
+        fp_log.write('[%s wrapper %s] %s\n' % (ASSEMBLER_NAME, timestamp, message))
+        fp_log.flush();
+
+def execute_command(command, fp_log, dry_run=True):
+    if (dry_run == True):
+        log('Executing (dryrun): "%s".' % (command), fp_log);
+    if (dry_run == False):
+        log('Executing: "%s".' % (command), fp_log);
+        subprocess.call(command, shell=True);
+    log('\n', fp_log);
+
 
 if __name__ == '__main__':
 	pass

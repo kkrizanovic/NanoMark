@@ -9,6 +9,7 @@ import subprocess
 
 import setup_nanomark
 import basicdefines
+import fastqparser
 
 # To generate random number for each run, so that multiple runs don't clash
 import uuid
@@ -58,7 +59,7 @@ def benchmark(reads_file, reference_file, technology, wrapper_list = []):
 
     # uuid_string = str(uuid.uuid4())            # Generate a random UUID so that multiple runs don't clash
     timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
-    uuid_string = timestamp;
+    uuid_string = timcreadspathestamp;
 
     output_folder = 'benchmark_' + uuid_string
     output_path = os.path.join(basicdefines.RESULTS_PATH_ROOT_ABS, output_folder)
@@ -66,7 +67,10 @@ def benchmark(reads_file, reference_file, technology, wrapper_list = []):
     creffilename = 'REF_' + uuid_string + os.path.splitext(reference_file)[1]        # preserve extension
     crefpath = os.path.join(output_path, creffilename)
     creadsfilename = 'READS_' + uuid_string + os.path.splitext(reads_file)[1]        # preserve extension
-    creadspath = os.path.join(output_path, creadsfilename)
+    creadspath = os.path.abspath(os.path.join(output_path, creadsfilename))
+
+    [ret_string, num_refs, total_ref_len, average_ref_len] = fastqparser.count_seq_length(reference_file);
+
 
 
     if (not os.path.exists(output_path)):
@@ -139,7 +143,8 @@ def benchmark(reads_file, reference_file, technology, wrapper_list = []):
             # Run each wrapper
             # def run(reads_file, reference_file, machine_name, output_path, output_suffix=''):
             sys.stderr.write('\n\nRunning assembler %s\n' % assembler_name)
-            command = 'import %s; %s.run(\'%s\', \'%s\', \'%s\', \'%s\')' % (wrapper, wrapper, creadspath, crefpath, technology, assembler_folder)
+            # command = 'import %s; %s.run(\'%s\', \'%s\', \'%s\', \'%s\')' % (wrapper, wrapper, creadspath, crefpath, technology, assembler_folder)
+            command = 'import %s; %s.run(\'%s,%s\', \'%s\', %d)' % (wrapper, wrapper, technology, creadspath, assembler_folder, total_ref_len)
             sys.stderr.write('Executing command: %s\n' % (command));
 #            exec(command)
 

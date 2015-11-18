@@ -239,7 +239,7 @@ def parse_memtime_files_and_accumulate(memtime_files, final_memtime_file):
 #    output_path            Folder to which the output will be placed to. Filename will be automatically generated according to the name of the mapper being run.
 #    output_suffix        A custom suffix that can be added to the output filename.
 # def run(reads_file, reference_file, machine_name, output_path, output_suffix=''):
-def run(datasets, output_path):
+def run(datasets, output_path, approx_genome_len=0):
     ##################################################################################
     ### Simple variable definitions.
     ##################################################################################        
@@ -426,39 +426,39 @@ def download_and_install():
 
 def verbose_usage_and_exit():
     sys.stderr.write('Usage:\n')
-    # sys.stderr.write('\t%s mode [<reads_file1>,<reads_file2>,...,<reads_fileN> <machine_name> <output_path>]\n' % sys.argv[0])
-    sys.stderr.write('\t%s mode [<output_path> dataset1 [dataset2 ...]]\n' % sys.argv[0])
+    sys.stderr.write('\t%s mode [<output_path> approx_genome_len dataset1 [dataset2 ...]]\n' % sys.argv[0])
     sys.stderr.write('\n')
     sys.stderr.write('\t- mode - either "run" or "install". If "install" other parameters can be omitted.\n')
     sys.stderr.write('\t- dataset - specification of a dataset in the form: reads_type,<reads_path>[<reads_path_b,frag_len,frag_stddev] .\n');
     sys.stderr.write('\t            Reads_type can be nanopore/pacbio/single/paired/mate. If reads_type != "paired" or "mate", last three parameters can be omitted".\n');
     sys.stderr.write('\t            If reads_type == "paired" or "mate", other end of the pair needs to be in another file provided by reads_path_b.\n');
+    sys.stderr.write('\t- approx_genome_len - approximate length of the genome to be assembled. If unknown, use "-" or "0" instead.\n');
     sys.stderr.write('\n');
 
     sys.stderr.write('Example:\n');
-    sys.stderr.write('\t%s run results/%s paired,datasets/frag_reads.Solexa-25396.A.fastq,datasets/frag_reads.Solexa-25396.B.fastq,180,10 mate,datasets/jump_reads.Solexa-42866.A.fastq,datasets/jump_reads.Solexa-42866.B.fastq,3000,500 mate,datasets/jump_reads.Solexa-44956.A.fastq,datasets/jump_reads.Solexa-44956.B.fastq,3000,500 nanopore,datasets/reads.fastq\n' % (os.path.basename(sys.argv[0]), ASSEMBLER_NAME));
+    sys.stderr.write('\t%s run results/%s - paired,datasets/frag_reads.Solexa-25396.A.fastq,datasets/frag_reads.Solexa-25396.B.fastq,180,10 mate,datasets/jump_reads.Solexa-42866.A.fastq,datasets/jump_reads.Solexa-42866.B.fastq,3000,500 mate,datasets/jump_reads.Solexa-44956.A.fastq,datasets/jump_reads.Solexa-44956.B.fastq,3000,500 nanopore,datasets/reads.fastq\n' % (os.path.basename(sys.argv[0]), ASSEMBLER_NAME));
     sys.stderr.write('\n');
 
     exit(0)
 
 if __name__ == "__main__":
-    if (len(sys.argv) < 2 or len(sys.argv) > 7):
+    if (len(sys.argv) < 2):
         verbose_usage_and_exit()
 
     if (sys.argv[1] == 'install'):
         download_and_install()
-        exit(0)
 
     elif (sys.argv[1] == 'run'):
-        if (len(sys.argv) < 4):
+        if (len(sys.argv) < 5):
             verbose_usage_and_exit()
 
         output_path = sys.argv[2]
+        approx_genome_len = 0 if (sys.argv[3] == '-') else int(sys.argv[3]);
         datasets = [];
-        for arg in sys.argv[3:]:
+        for arg in sys.argv[4:]:
             dataset = Dataset(arg);
             datasets.append(dataset);
-        run(datasets, output_path);
+        run(datasets, output_path, approx_genome_len);
 
     else:
         verbose_usage_and_exit()
