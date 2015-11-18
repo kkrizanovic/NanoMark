@@ -357,7 +357,7 @@ def run(datasets, output_path):
         log(str(e), fp_log);
 
     memtime_path = os.path.join(output_path, ASSEMBLER_NAME + '.memtime')
-    command = 'cd %s; %s -o %s/assembly_results --dataset %s' % (output_path, measure_command(memtime_path), ASSEMBLER_BIN, output_path, yaml_file_path)
+    command = 'cd %s; %s %s -o %s/assembly_results --dataset %s' % (output_path, measure_command(memtime_path), ASSEMBLER_BIN, output_path, yaml_file_path)
     execute_command(command, fp_log, dry_run=DRY_RUN);
 
 
