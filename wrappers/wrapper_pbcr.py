@@ -253,7 +253,7 @@ def run(datasets, output_path, approx_genome_len=0):
             log(str(e), fp_log);
 
         # spec_file = OXFORD_SPEC
-        command = 'cd %s; %s %s -length 500 -partitions 200 -l %s -s %s -fastq %s genomeSize=5000000' % (output_path, measure_command(memtime_path), used_bin, ASSEMBLER_NAME, spec_file_path, reads_file)
+        command = 'cd %s; %s %s -length 500 -partitions 200 -l %s -s %s -fastq %s genomeSize=%s' % (output_path, measure_command(memtime_path), used_bin, ASSEMBLER_NAME, spec_file_path, reads_file, approx_genome_len)
         execute_command(command, fp_log, dry_run=DRY_RUN);
     elif machine_name == 'illumina':
         log('\nMachine name "%s" not implemented for %s.\n' % (machine_name, ASSEMBLER_NAME));
