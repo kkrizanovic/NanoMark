@@ -118,6 +118,7 @@ def benchmark(reads_file, reference_file, technology, wrapper_list = []):
             wrapper = 'wrapper_' + wrapper_basename
             wrapper_path = os.path.join(basicdefines.WRAPPERS_PATH_ROOT_ABS, wrapper + '.py')
             command = 'import %s; assembler_name = %s.ASSEMBLER_NAME; results_file = %s.ASSEMBLER_RESULTS; create_output_folder = %s.CREATE_OUTPUT_FOLDER; assembler_type = %s.ASSEMBLER_TYPE' % (wrapper, wrapper, wrapper, wrapper, wrapper)
+            sys.stderr.write('Executing command: %s\n' % (command));
             exec(command)
             # Run assembly only using non-hybrid assemblers. Using hybrid assemblers complicates uniform specification of the datasets.
             if (assembler_type != 'nonhybrid'):
