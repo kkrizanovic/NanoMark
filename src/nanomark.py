@@ -146,7 +146,7 @@ def benchmark(reads_file, reference_file, technology, wrapper_list = []):
             # command = 'import %s; %s.run(\'%s\', \'%s\', \'%s\', \'%s\')' % (wrapper, wrapper, creadspath, crefpath, technology, assembler_folder)
             command = 'import %s; %s.run(\'%s,%s\', \'%s\', %d)' % (wrapper, wrapper, technology, creadspath, assembler_folder, total_ref_len)
             sys.stderr.write('Executing command: %s\n' % (command));
-#            exec(command)
+            exec(command)
 
             # # Run quast on results file?
             # # This might be a part of a wrapper implementation
