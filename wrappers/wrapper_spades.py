@@ -342,7 +342,6 @@ def run(datasets, output_path):
             else:
                 yaml_lines.append('\t}');
 
-        yaml_lines.append('\t}');
     yaml_lines.append(']');
 
     yaml = '\n'.join(yaml_lines);
