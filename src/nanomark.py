@@ -150,7 +150,7 @@ def benchmark(reads_file, reference_file, technology, wrapper_list = []):
             command = 'import %s as current_wrapper' % (wrapper)
             sys.stderr.write('Executing command: %s\n' % (command));
             exec(command)
-            dataset = Dataset('%s,%s' % (technologx, creadspath))
+            dataset = Dataset('%s,%s' % (technology, creadspath))
             current_wrapper.run([datasets], assembler_folder, total_ref_len);
 
             # # Run quast on results file?
