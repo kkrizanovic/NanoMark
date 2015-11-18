@@ -324,7 +324,7 @@ def run(datasets, output_path):
             yaml_lines.append('\t{');
             yaml_lines.append('\t\ttype: "pacbio",');
             yaml_lines.append('\t\tsingle reads: [');
-            yaml_lines.append('\t\t\t"%s"' % (dataset.reads_path_b));
+            yaml_lines.append('\t\t\t"%s"' % (dataset.reads_path));
             yaml_lines.append('\t\t]');
             if (current_dataset == len(datasets)):
                 yaml_lines.append('\t},');
@@ -335,7 +335,7 @@ def run(datasets, output_path):
             yaml_lines.append('\t{');
             yaml_lines.append('\t\ttype: "nanopore",');
             yaml_lines.append('\t\tsingle reads: [');
-            yaml_lines.append('\t\t\t"%s"' % (dataset.reads_path_b));
+            yaml_lines.append('\t\t\t"%s"' % (dataset.reads_path));
             yaml_lines.append('\t\t]');
             if (current_dataset == len(datasets)):
                 yaml_lines.append('\t},');
