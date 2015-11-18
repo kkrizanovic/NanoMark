@@ -45,14 +45,13 @@ Quast generated fields present in summarized results are represented in a list "
 # Including new assemblers in the benchmark
 
 The benchmarking tool currently includes following assembly tools:
-- IDBA_UD
-- Ray
-- SGA
-- Soap deNovo
+- Loman, Quick and Simpson assembly pipeline (http://www.nature.com/nmeth/journal/v12/n8/full/nmeth.3444.html)
+- PBcR
+- FALCON
 - SPAdes
-- SparseAssember
+- ALLPATHS-LG
 
-Additional assembly tools can be included by writting a wrapper script in Python. Each assembler that needs to be included in the benchmark must have a corresponding wrapper in folder: <root folder>/src/wrappers. Wrapper script filenames must start with "wrapper_"
+Additional assembly tools can be included by writting a wrapper script in Python. Each assembler that needs to be included in the benchmark must have a corresponding wrapper in folder: <root folder>/wrappers. Wrapper script filenames must start with "wrapper_"
 
 Each wrapper must define three varibales:
 - Installation path (ASSEMBLER_PATH)
@@ -64,7 +63,25 @@ Each wrapper must also define two functions:
 - run(reads_file, reference_file, machine_name, output_path, output_suffix='') : runs the assembler on given reads and reference files, results are stored in a given folder: output_folder. Attributes machine_name and output_suffix are currently not used, but must be included in function header for compatibility.
 
 Included wrappers are good examples of wrapper implementation.  
-  
+
+# Usage of wrapper scripts
+Installing an assembler (often requires sudo access):  
+```  
+wrapper_falcon.py install
+```  
+Running the assembly process consists of specifying all reads files in the form: 
+```
+wrapper_?.py run output_folder reads_type,<reads_path>[<reads_path_b,frag_len,frag_stddev]
+```
+More than one dataset can be described in the same command line, simply by listing them in a space-separated manner.  
+Reads_type can be one of: nanopore/pacbio/single/paired/mate. If reads_type != "paired" or "mate", last three parameters can be omitted.  
+If reads_type == "paired" or "mate", other end of the pair needs to be in another file provided by reads_path_b.  
+
+Examples of usage:  
+```  
+wrapper_falcon.py run output_folder nanopore,reads.fa
+wrapper_allpathslg.py run output_folder paired,datasets/frag_reads.Solexa-25396.A.fastq,datasets/frag_reads.Solexa-25396.B.fastq,180,10 mate,datasets/jump_reads.Solexa-42866.A.fastq,datasets/jump_reads.Solexa-42866.B.fastq,3000,500 mate,datasets/jump_reads.Solexa-44956.A.fastq,datasets/jump_reads.Solexa-44956.B.fastq,3000,500 nanopore,datasets/reads.fastq
+```  
 
 # Acknowledgement  
 This work has been supported in part by Croatian Science Fundation under the project UIP-11-2013-7353.  
