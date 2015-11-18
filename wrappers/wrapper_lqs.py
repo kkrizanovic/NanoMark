@@ -654,43 +654,6 @@ def download_and_install():
         command = '; '.join(setup_commands);
         execute_command(command, None, dry_run=DRY_RUN);
 
-
-
-# def verbose_usage_and_exit():
-#     sys.stderr.write('Usage:\n')
-#     sys.stderr.write('\t%s mode [<reads_file1>,<reads_file2>,...,<reads_fileN> <machine_name> <output_path> <reference_file> [<output_suffix>]]\n' % sys.argv[0])
-#     sys.stderr.write('\n')
-#     sys.stderr.write('\t- mode - either "run" or "install". Is "install" other parameters can be ommitted.\n')
-
-#     exit(0)
-
-# if __name__ == "__main__":
-#     if (len(sys.argv) < 2 or len(sys.argv) > 7):
-#         verbose_usage_and_exit()
-
-#     if (sys.argv[1] == 'install'):
-#         download_and_install()
-#         exit(0)
-
-#     elif (sys.argv[1] == 'run'):
-#         if (len(sys.argv) < 5 or len(sys.argv) > 7):
-#             verbose_usage_and_exit()
-
-#         reads_files = sys.argv[2].split(',')         ### Enable specifying multiple FASTQ files for input.
-#         machine_name = sys.argv[3]
-#         output_path = sys.argv[4]
-#         reference_file = '';
-#         output_suffix = ''
-
-#         if (len(sys.argv) >= 6):
-#             reference_file = sys.argv[5]
-#         if (len(sys.argv) == 7):
-#             output_suffix = sys.argv[6]
-#         run(reads_files, reference_file, machine_name, output_path, output_suffix)
-
-#     else:
-#         verbose_usage_and_exit()
-
 def verbose_usage_and_exit():
     sys.stderr.write('Usage:\n')
     # sys.stderr.write('\t%s mode [<reads_file1>,<reads_file2>,...,<reads_fileN> <machine_name> <output_path>]\n' % sys.argv[0])
@@ -698,7 +661,7 @@ def verbose_usage_and_exit():
     sys.stderr.write('\n')
     sys.stderr.write('\t- mode - either "run" or "install". If "install" other parameters can be omitted.\n')
     sys.stderr.write('\t- dataset - specification of a dataset in the form: reads_type,<reads_path>[<reads_path_b,frag_len,frag_stddev] .\n');
-    sys.stderr.write('\t            Reads_type can be nanopore/pacbio/single/paired/mate. If reads_type == "paired" or "mate", last three parameters can be omitted".\n');
+    sys.stderr.write('\t            Reads_type can be nanopore/pacbio/single/paired/mate. If reads_type != "paired" or "mate", last three parameters can be omitted".\n');
     sys.stderr.write('\t            If reads_type == "paired" or "mate", other end of the pair needs to be in another file provided by reads_path_b.\n');
     sys.stderr.write('\n');
     sys.stderr.write('Additional reads_type for LQS pipeline include: nanopore, correct1, correct2, nopolish, celera, polish.\n');
