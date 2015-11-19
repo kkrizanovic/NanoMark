@@ -125,6 +125,7 @@ def benchmark(reads_file, reference_file, technology, wrapper_list = []):
             wrapper = 'wrapper_' + wrapper_basename
             wrapper_path = os.path.join(basicdefines.WRAPPERS_PATH_ROOT_ABS, wrapper + '.py')
 
+            sys.stderr.write('Importing wrapper: "%s".\n' % (wrapper));
             exec('import %s as current_wrapper' % (wrapper))
             assembler_name = current_wrapper.ASSEMBLER_NAME;
             assembly_unpolished = current_wrapper.ASSEMBLY_UNPOLISHED;
