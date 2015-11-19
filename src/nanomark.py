@@ -287,8 +287,8 @@ def summarize_results(results_folder):
             contig_basename = os.path.splitext(os.path.basename(assembly_path))[0];
 
             sys.stderr.write('Processing contig file "%s".\n' % (assembly_path));
-            quast_out_folder = '%s/%s/%s' % (gl_quast_folder, assembler, contig_basename);
-            dnadiff_out_folder = '%s/%s/%s' % (gl_dnadiff_folder, assembler, contig_basename);
+            quast_out_folder = '%s/%s/%s' % (gl_quast_folder, assembler_name, contig_basename);
+            dnadiff_out_folder = '%s/%s/%s' % (gl_dnadiff_folder, assembler_name, contig_basename);
 
             if (os.path.exists(assembly_path)):
                 if (run_type == 'calc'):
