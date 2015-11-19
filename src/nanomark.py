@@ -148,18 +148,8 @@ def benchmark(reads_file, reference_file, technology, wrapper_list = []):
             logfile.write(basicdefines.log_message('%s (%s) finished.' % (assembler_name, wrapper)));
 
 
-# Continue benchmark that was interrupted
-# Takes benchmark results folder as an argument
-def continue_benchmark(results_folder):
-    sys.stderr.write('\nContinuing benchmark in folder: %s\n' % results_folder)
-    # First check if log file exists
-    log_filename = os.path.join(results_folder, 'log.txt')
-    if not os.path.exists(log_filename):
-        sys.stderr.write('\nCannot find log file (log.txt) within benchmark results folder (%s)! Exiting ...\n' % results_folder)
-        verbose_usage_and_exit()
-
-    sys.stderr.write('Reading log file and checking wrapers....\n')
-    fp_log = open(log_filename, 'r');
+def parse_log_file(log_file_path):
+    fp_log = open(log_file_path, 'r');
     log_lines = fp_log.readlines();
     fp_log.close();
 
@@ -188,6 +178,21 @@ def continue_benchmark(results_folder):
         sys.stderr.write('Technology: "%s"\n' % (technology));
         # sys.stderr.write('UUID: "%s"\n' % (uuid_string));
         exit(1);
+
+    return [reference_file, reads_file, technology, wrappers_used];
+
+# Continue benchmark that was interrupted
+# Takes benchmark results folder as an argument
+def continue_benchmark(results_folder):
+    sys.stderr.write('\nContinuing benchmark in folder: %s\n' % results_folder)
+    # First check if log file exists
+    log_filename = os.path.join(results_folder, 'log.txt')
+    if not os.path.exists(log_filename):
+        sys.stderr.write('\nCannot find log file (log.txt) within benchmark results folder (%s)! Exiting ...\n' % results_folder)
+        verbose_usage_and_exit()
+
+    sys.stderr.write('Reading log file and checking wrapers....\n')
+    [reference_file, reads_file, technology, wrappers_used] = parse_log_file(log_file_path);
 
     reference_file = os.path.abspath(reference_file);
     reads_file = os.path.abspath(reads_file);
@@ -230,6 +235,83 @@ def continue_benchmark(results_folder):
     logfile.close();
 
 def summarize_results(results_folder):
+    run_type = 'calc';  # 'calc' or 'collectall'.
+
+    # get global quast folder and log file
+    gl_quast_folder = os.path.join(results_folder, 'quast')
+    gl_dnadiff_folder = os.path.join(results_folder, 'dnadiff')
+    log_filename = os.path.join(results_folder, 'log.txt')
+    # # Collect quast results
+    summaryfilepath = os.path.join(results_folder, 'benchmark_summary.tsv')
+    # report_filename = 'report.txt'
+
+    sys.stderr.write('Reading log file and checking wrapers....\n')
+    [reference_file, reads_file, technology, wrappers_used] = parse_log_file(log_file_path);
+
+    wrapper_list = wrappers_used.split(',');
+    reference_file = os.path.abspath(reference_file);
+    reads_file = os.path.abspath(reads_file);
+    output_path = results_folder;
+
+    # Collect paths to all assembled FASTA files.
+    contig_files = [];
+    for wrapper_basename in wrapper_list:
+        wrapper = 'wrapper_' + wrapper_basename
+        wrapper_path = os.path.join(basicdefines.WRAPPERS_PATH_ROOT_ABS, wrapper + '.py')
+
+        exec('import %s as current_wrapper' % (wrapper))
+        assembler_name = current_wrapper.ASSEMBLER_NAME;
+        assembler_folder = os.path.join(output_path, assembler_name)
+        assembly_unpolished = os.path.join(assembler_folder, current_wrapper.ASSEMBLY_UNPOLISHED);
+        assembly_polished = os.path.join(assembler_folder, current_wrapper.ASSEMBLY_POLISHED);
+        create_output_folder = current_wrapper.CREATE_OUTPUT_FOLDER;
+        assembler_type = current_wrapper.ASSEMBLER_TYPE;
+
+        contig_files.append([assembly_unpolished, assembler_name]);
+        contig_files.append([assembly_polished, assembler_name]);
+
+    try:
+        fp_out = open(summaryfilepath, 'w');
+    except:
+        sys.stderr.write('ERROR: Could not open file "%s" for writing! Exiting.\n' % (summaryfilepath));
+        exit(1);
+
+    QUAST_PATH = '%s/tools/quast-3.1/quast.py';
+    DNADIFF_PATH = '';
+
+    # Run Quast and DNAdiff on the assemblies.
+    for results_file in results_files:
+        for results_file in results_files:
+            [assembly_path, assembler_name] = results_file:
+            contig_basename = os.path.splitext(os.path.basename(assembly_path))[0];
+
+            sys.stderr.write('Processing contig file "%s".\n' % (assembly_path));
+            quast_out_folder = '%s/%s/%s' % (gl_quast_folder, assembler, contig_basename);
+            dnadiff_out_folder = '%s/%s/%s' % (gl_dnadiff_folder, assembler, contig_basename);
+
+            if (os.path.exists(assembly_path)):
+                if (run_type == 'calc'):
+                    sys.stderr.write('Running analyses on the assembly output.\n');
+                    execute_command('mkdir -p %s' % (quast_out_folder));
+                    execute_command('mkdir -p %s/%s/%s' % (dnadiff_out_folder));
+                    execute_command('%s %s -R %s -o %s' % (QUAST_PATH, assembly_path, reference_file, dnadiff_out_folder));
+                    execute_command('%s %s %s -p %s/out' % (DNADIFF_PATH, reference_file, assembly_path, dnadiff_out_folder));
+                pass;
+            else:   # In this case, the contig file does not exist.
+                if (run_type != 'collectall'):  # This will skip processing of non-exitent file. Otherwise, '-' will be placed for that particular assembly.
+                    continue;
+
+            # results_dnadiff = parse_quast_report('%s/analysis-quast/%s/%s/%s/report.tsv' % (data_path, dataset, assembler, contig_file), quast_parameters);
+            # results_quast = parse_dnadiff_report('%s/analysis-dnadiff/%s/%s/%s/out.report' % (data_path, dataset, assembler, contig_file), dnadiff_parameters);
+            # parse_memtime_folder_and_accumulate('%s' % (os.path.dirname(assembly_path)), '%s//total.memtime' % (os.path.dirname(assembly_path)));
+            # results_memtime = parse_memtime_report('%s/total.memtime' % (os.path.dirname(assembly_path)), memtime_parameters, 'h', 'GB');
+
+            # fp_out.write('%s\n' % (';'.join([dataset, assembler, contig_file] + results_dnadiff + results_quast + results_memtime)));
+            # fp_out.flush();
+
+    fp_out.close();
+
+def summarize_results2(results_folder):
 
     # get global quast folder and log file
     gl_quast_folder = os.path.join(results_folder, 'quast')
