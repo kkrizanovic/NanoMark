@@ -53,6 +53,8 @@ def list_wrappers():
 
 
 def benchmark(reads_file, reference_file, technology, wrapper_list = []):
+    reads_file = os.path.abspath(reads_file);
+    reference_file = os.path.abspath(reference_file);
 
     # uuid_string = str(uuid.uuid4())            # Generate a random UUID so that multiple runs don't clash
     timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
@@ -185,6 +187,9 @@ def continue_benchmark(results_folder):
         sys.stderr.write('Technology: "%s"\n' % (technology));
         sys.stderr.write('UUID: "%s"\n' % (uuid_string));
         exit(1);
+
+    reference_file = os.path.abspath(reference_file);
+    reads_file = os.path.abspath(reads_file);
 
     # Get the correct paths to the previous run data. Same as for starting a normal run, save from the output folder which is given through function parameters.
     output_folder = results_folder;
