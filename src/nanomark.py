@@ -224,8 +224,10 @@ def continue_benchmark(results_folder):
         print 'assembly_polished = %s' % (assembly_polished);
         if (os.path.exists(assembly_unpolished) or os.path.exists(assembly_polished)):
             # The results file exists, thi means that the assembler run completed and will not be repeated
-            sys.stderr.write('Assembler %s run previously completed.\n')
+            sys.stderr.write('Assembler %s run previously completed.\n' % (assembler_name))
         else:
+            print 'os.path.exists(assembly_unpolished) == false, "%s"' % (os.path.exists(assembly_unpolished));
+            
             logfile.write(basicdefines.log_message('%s (%s) started: %s' % (assembler_name, wrapper, wrapper_path)));
             sys.stderr.write('\n\nRunning assembler %s\n' % assembler_name)
             dataset = Dataset('%s,%s' % (technology, reads_file))
