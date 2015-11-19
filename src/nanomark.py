@@ -220,7 +220,7 @@ def continue_benchmark(results_folder):
         if (assembler_type != 'nonhybrid'):
             continue;
         assembler_folder = os.path.join(output_path, assembler_name)
-        if (os.path.exists(os.path.join(assembler_folder, assembly_unpolished)) or os.path_exists(os.path.join(assembler_folder, assembly_polished))):
+        if (os.path.exists(os.path.join(assembler_folder, assembly_unpolished)) or os.path.exists(os.path.join(assembler_folder, assembly_polished))):
             # The results file exists, thi means that the assembler run completed and will not be repeated
             sys.stderr.write('Assembler %s run previously completed.\n')
         else:
