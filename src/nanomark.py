@@ -48,7 +48,7 @@ def list_wrappers():
         padding = ' ' * (16 - len(assembler_name));
         sys.stdout.write('\n\t- %s%s- %s' % (assembler_name, padding, assembler_type))
 
-    sys.stdout.write('\n\n')
+    sys.stdout.write('\n')
 
 
 
@@ -141,7 +141,7 @@ def benchmark(reads_file, reference_file, technology, wrapper_list = []):
         
             # Create folder for each assembler's results, and for quast results
             assembler_folder = os.path.join(output_path, assembler_name)
-            sys.stderr.write('\n\nRunning assembler %s\n' % assembler_name)
+            sys.stderr.write('\nRunning assembler %s\n' % assembler_name)
             dataset = Dataset('%s,%s' % (technology, reads_file))
             current_wrapper.run([dataset], assembler_folder, total_ref_len, move_exiting_out_path=True);
 
@@ -151,11 +151,11 @@ def benchmark(reads_file, reference_file, technology, wrapper_list = []):
 # Continue benchmark that was interrupted
 # Takes benchmark results folder as an argument
 def continue_benchmark(results_folder):
-    sys.stderr.write('\n\nContinuing benchmark in folder: %s\n' % results_folder)
+    sys.stderr.write('\nContinuing benchmark in folder: %s\n' % results_folder)
     # First check if log file exists
     log_filename = os.path.join(results_folder, 'log.txt')
     if not os.path.exists(log_filename):
-        sys.stderr.write('\n\nCannot find log file (log.txt) within benchmark results folder (%s)! Exiting ...\n' % results_folder)
+        sys.stderr.write('\nCannot find log file (log.txt) within benchmark results folder (%s)! Exiting ...\n' % results_folder)
         verbose_usage_and_exit()
 
     sys.stderr.write('Reading log file and checking wrapers....\n')
@@ -222,7 +222,7 @@ def continue_benchmark(results_folder):
         else:
 
             logfile.write(basicdefines.log_message('%s (%s) started: %s' % (assembler_name, wrapper, wrapper_path)));
-            sys.stderr.write('\n\nRunning assembler %s\n' % assembler_name)
+            sys.stderr.write('\nRunning assembler %s\n' % assembler_name)
             dataset = Dataset('%s,%s' % (technology, reads_file))
             # The wrapper internally takes care of backing up existing output folders.
             current_wrapper.run([dataset], assembler_folder, total_ref_len, move_exiting_out_path=True);
@@ -372,12 +372,12 @@ def main():
                 assemblers = assemblersstring.split(',')
                 for assembler in assemblers:
                     if assembler not in all_assemblers:
-                        sys.stderr.write('\nUnavailable assembler: %s\n\n' % assembler)
+                        sys.stderr.write('\nUnavailable assembler: %s\n' % assembler)
                         exit(1)
                     else:
                         used_assemblers.append(assembler)
             else:
-                sys.stderr.write('Invalid parameter!.\n\n')
+                sys.stderr.write('Invalid parameter!.\n')
                 exit()
 
         # If no aligners are specified, use all of them
