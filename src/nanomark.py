@@ -295,7 +295,7 @@ def summarize_results(results_folder):
                     sys.stderr.write('Running analyses on the assembly output.\n');
                     basicdefines.execute_command('mkdir -p %s' % (quast_out_folder), None);
                     basicdefines.execute_command('mkdir -p %s' % (dnadiff_out_folder), None);
-                    basicdefines.execute_command('%s %s -R %s -o %s' % (basicdefines.QUAST_BIN, assembly_path, reference_file, dnadiff_out_folder), None);
+                    basicdefines.execute_command('%s %s -R %s -o %s' % (basicdefines.QUAST_BIN, assembly_path, reference_file, quast_out_folder), None);
                     basicdefines.execute_command('%s %s %s -p %s/out' % (basicdefines.DNADIFF_BIN, reference_file, assembly_path, dnadiff_out_folder), None);
                 pass;
             else:   # In this case, the contig file does not exist.
