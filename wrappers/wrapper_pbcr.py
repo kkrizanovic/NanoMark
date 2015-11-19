@@ -160,9 +160,9 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
         sys.stderr.write('ERROR: Input datasets not specified correctly! Exiting.\n');
         exit(1);
 
-    if (len(datasets) > 1):
-        sys.stderr.write('ERROR: More than one input dataset specified. Only one is expected. Exiting.\n');
-        exit(1);
+    # if (len(datasets) > 1):
+    #     sys.stderr.write('ERROR: More than one input dataset specified. Only one is expected. Exiting.\n');
+    #     exit(1);
 
     ##################################################################################
     ### Simple variable definitions.
@@ -192,6 +192,21 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
     except Exception, e:
         log('ERROR: Could not open file "%s" for writing! Using only STDERR for logging.' % (log_file), None);
         fp_log = None;
+
+    ##################################################################################
+    ### Preparing the input datasets.
+    ##################################################################################
+    reads_file = '%s/all_reads.fastq' % (output_path);
+    for dataset in datasets:
+        if (dataset.reads_path.endswith('fasta') or dataset.reads_path.endswith('fa')):
+            converted_reads_path = '%s/%s.fastq' % (output_path, os.path.splitext(os.path.basename(dataset.reads_path))[0]);
+            log('Converting file "%s" to FASTQ format and aggregating to "%s".\n' % (dataset.reads_path, reads_file), fp_log);
+            command = 'java -jar %s/convertFastaAndQualToFastq.jar %s >> %s' % (ASSEMBLER_PATH_ROOT_ABS, dataset.reads_path, reads_file);
+            execute_command(command, fp_log, dry_run=DRY_RUN);
+        else:
+            log('Aggregating FASTQ file "%s" to "%s".\n' % (dataset.reads_path, reads_file), fp_log);
+            command = 'cat %s >> %s' % (dataset.reads_path, reads_file);
+            execute_command(command, fp_log, dry_run=DRY_RUN);
 
     ##################################################################################
     ### Start the important work.
@@ -307,6 +322,10 @@ def download_and_install():
         command = 'cd %s; tar -xvjf %s' % (ASSEMBLERS_PATH_ROOT_ABS, ZIP_FILE)
         sys.stderr.write('[%s wrapper] %s\n' % (ASSEMBLER_NAME, command))
         subprocess.call(command, shell='True')
+
+        command = 'cd %s; wget http://www.cbcb.umd.edu/software/PBcR/data/convertFastaAndQualToFastq.jar' % (ASSEMBLER_PATH);
+        sys.stderr.write('[%s wrapper] %s\n' % (ASSEMBLER_NAME, command))
+        subprocess.call(command, shell='True')        
 
 def verbose_usage_and_exit():
     sys.stderr.write('Usage:\n')
