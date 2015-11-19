@@ -167,7 +167,7 @@ def continue_benchmark(results_folder):
     reference_file = '';
     reads_file = '';
     technology = '';
-    uuid_string = '';
+    # uuid_string = '';
     wrappers_used = '';
     for log_line in log_lines:
         split_line = log_line.stript().split(':');
@@ -177,16 +177,16 @@ def continue_benchmark(results_folder):
             reads_file = split_line[-1].strip();
         elif (split_line[0] == 'Technology'):
             reads_file = split_line[-1].strip();
-        elif (split_line[0] == 'UUID'):
-            uuid_string = split_line[-1].strip();
+        # elif (split_line[0] == 'UUID'):
+        #     uuid_string = split_line[-1].strip();
         elif (split_line[0] == 'Wrappers used'):
             wrappers_used = split_line[-1].strip();
-    if (reference_file == '' or reads_file == '' or technology == '' or uuid_string == '' or wrappers_used == ''):
+    if (reference_file == '' or reads_file == '' or technology == '' or wrappers_used == ''):
         sys.stderr.write('ERROR: Could not load all parameters from log file to continue the assembly.\n');
         sys.stderr.write('Reference file: "%s"\n' % (reference_file));
         sys.stderr.write('Reads file: "%s"\n' % (reads_file));
         sys.stderr.write('Technology: "%s"\n' % (technology));
-        sys.stderr.write('UUID: "%s"\n' % (uuid_string));
+        # sys.stderr.write('UUID: "%s"\n' % (uuid_string));
         exit(1);
 
     reference_file = os.path.abspath(reference_file);
