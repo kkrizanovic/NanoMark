@@ -212,6 +212,7 @@ def continue_benchmark(results_folder):
 
         exec('import %s as current_wrapper' % (wrapper))
         assembler_name = current_wrapper.ASSEMBLER_NAME;
+        assembler_folder = os.path.join(output_path, assembler_name)
         assembly_unpolished = os.path.join(assembler_folder, current_wrapper.ASSEMBLY_UNPOLISHED);
         assembly_polished = os.path.join(assembler_folder, current_wrapper.ASSEMBLY_POLISHED);
         create_output_folder = current_wrapper.CREATE_OUTPUT_FOLDER;
@@ -219,7 +220,6 @@ def continue_benchmark(results_folder):
         # Run assembly only using non-hybrid assemblers. Using hybrid assemblers complicates uniform specification of the datasets.
         if (assembler_type != 'nonhybrid'):
             continue;
-        assembler_folder = os.path.join(output_path, assembler_name)
         print 'assembly_unpolished = %s' % (assembly_unpolished);
         print 'assembly_polished = %s' % (assembly_polished);
         if (os.path.exists(assembly_unpolished) or os.path.exists(assembly_polished)):
