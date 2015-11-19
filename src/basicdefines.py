@@ -75,7 +75,7 @@ def log(message, fp_log):
         fp_log.write('[%s] %s\n' % (timestamp, message))
         fp_log.flush();
 
-def execute_command(command, fp_log, dry_run=True):
+def execute_command(command, fp_log, dry_run=False):
     if (dry_run == True):
         log('Executing (dryrun): "%s".' % (command), fp_log);
     if (dry_run == False):
