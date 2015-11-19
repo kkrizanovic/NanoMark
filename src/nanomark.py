@@ -250,6 +250,7 @@ def summarize_results(results_folder):
                             '[Bases]-UnalignedBases,query', '[Alignments]-AvgIdentity-1-to-1,query', '[Feature Estimates]-Breakpoints,ref',
                             '[Feature Estimates]-Breakpoints,query', '[SNPs]-TotalSNPs,query', '[SNPs]-TotalIndels,query'
                          ];
+    memtime_parameters = ['Real time', 'CPU time', 'Maximum RSS'];
 
     # get global quast folder and log file
     gl_quast_folder = os.path.join(results_folder, 'quast')
