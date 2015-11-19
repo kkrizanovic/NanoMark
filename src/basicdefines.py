@@ -3,6 +3,8 @@
 import os
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
+import sys;
+
 import fnmatch
 from time import gmtime, strftime
 
