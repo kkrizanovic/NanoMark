@@ -176,7 +176,7 @@ def continue_benchmark(results_folder):
         elif (split_line[0] == 'Reads file'):
             reads_file = split_line[-1].strip();
         elif (split_line[0] == 'Technology'):
-            reads_file = split_line[-1].strip();
+            technology = split_line[-1].strip();
         # elif (split_line[0] == 'UUID'):
         #     uuid_string = split_line[-1].strip();
         elif (split_line[0] == 'Wrappers used'):
