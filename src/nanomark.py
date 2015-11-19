@@ -170,7 +170,7 @@ def continue_benchmark(results_folder):
     # uuid_string = '';
     wrappers_used = '';
     for log_line in log_lines:
-        split_line = log_line.strip.split(':');
+        split_line = log_line.strip().split(':');
         if (split_line[0] == 'Reference file'):
             reference_file = split_line[-1].strip();
         elif (split_line[0] == 'Reads file'):
