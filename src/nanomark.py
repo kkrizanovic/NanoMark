@@ -10,6 +10,7 @@ import subprocess
 import setup_nanomark
 import basicdefines
 import fastqparser
+import parseresults
 
 # To generate random number for each run, so that multiple runs don't clash
 import uuid
@@ -240,6 +241,15 @@ def continue_benchmark(results_folder):
 
 def summarize_results(results_folder):
     run_type = 'calc';  # 'calc' or 'collectall'.
+    quast_parameters = [
+                            '# contigs (>= 0 bp)', 'Largest contig', 'Total length (>= 0 bp)', 'N50', 'Unaligned length',
+                            '# mismatches per 100 kbp', '# indels per 100 kbp', 'Genome fraction (%)', 'Duplication ratio'
+                        ];
+    dnadiff_parameters = [
+                            '[Bases]-TotalBases,query', '[Bases]-AlignedBases,ref', '[Bases]-AlignedBases,query', '[Bases]-UnalignedBases,ref',
+                            '[Bases]-UnalignedBases,query', '[Alignments]-AvgIdentity-1-to-1,query', '[Feature Estimates]-Breakpoints,ref',
+                            '[Feature Estimates]-Breakpoints,query', '[SNPs]-TotalSNPs,query', '[SNPs]-TotalIndels,query'
+                         ];
 
     # get global quast folder and log file
     gl_quast_folder = os.path.join(results_folder, 'quast')
@@ -280,6 +290,10 @@ def summarize_results(results_folder):
         sys.stderr.write('ERROR: Could not open file "%s" for writing! Exiting.\n' % (summaryfilepath));
         exit(1);
 
+    header = ['Assembler', 'Assembly'] + quast_parameters + dnadiff_parameters + memtime_parameters;
+    fp_out.write('%s\n' % (';'.join(header)));
+    fp_out.flush();
+
     # Run Quast and DNAdiff on the assemblies.
     for results_file in results_files:
         for results_file in results_files:
@@ -302,13 +316,13 @@ def summarize_results(results_folder):
                 if (run_type != 'collectall'):  # This will skip processing of non-exitent file. Otherwise, '-' will be placed for that particular assembly.
                     continue;
 
-            # results_dnadiff = parse_quast_report('%s/analysis-quast/%s/%s/%s/report.tsv' % (data_path, dataset, assembler, contig_file), quast_parameters);
-            # results_quast = parse_dnadiff_report('%s/analysis-dnadiff/%s/%s/%s/out.report' % (data_path, dataset, assembler, contig_file), dnadiff_parameters);
-            # parse_memtime_folder_and_accumulate('%s' % (os.path.dirname(assembly_path)), '%s//total.memtime' % (os.path.dirname(assembly_path)));
-            # results_memtime = parse_memtime_report('%s/total.memtime' % (os.path.dirname(assembly_path)), memtime_parameters, 'h', 'GB');
+            results_dnadiff = parseresults.parse_quast_report('%s/report.tsv' % (quast_out_folder), quast_parameters);
+            results_quast = parseresults.parse_dnadiff_report('%s/out.report' % (dnadiff_out_folder), dnadiff_parameters);
+            parseresults.parse_memtime_folder_and_accumulate('%s' % (os.path.dirname(assembly_path)), '%s/total.memtime' % (os.path.dirname(assembly_path)));
+            results_memtime = parseresults.parse_memtime_report('%s/total.memtime' % (os.path.dirname(assembly_path)), memtime_parameters, 'h', 'GB');
 
-            # fp_out.write('%s\n' % (';'.join([dataset, assembler, contig_file] + results_dnadiff + results_quast + results_memtime)));
-            # fp_out.flush();
+            fp_out.write('%s\n' % (';'.join([assembler_name, contig_basename] + results_dnadiff + results_quast + results_memtime)));
+            fp_out.flush();
 
     fp_out.close();
 
