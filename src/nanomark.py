@@ -149,9 +149,13 @@ def benchmark(reads_file, reference_file, technology, wrapper_list = []):
 
 
 def parse_log_file(log_file_path):
-    fp_log = open(log_file_path, 'r');
-    log_lines = fp_log.readlines();
-    fp_log.close();
+    try:
+        fp_log = open(log_file_path, 'r');
+        log_lines = fp_log.readlines();
+        fp_log.close();
+    except IOError, e:
+        sys.stderr.write('ERROR: Could not open log file "%s"! Exiting.\n' % (log_file_path));
+        exit(1);
 
     # Load info about the input dataset.
     reference_file = '';
