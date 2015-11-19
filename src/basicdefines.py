@@ -55,13 +55,17 @@ def measure_command(measure_file):
         return (SCRIPT_PATH + r'/../tools/cgmemtime/cgmemtime -o ' + measure_file)
 
 ### Logs messages to STDERR and an output log file if provided (opened elsewhere).
+def log_message(message):
+    timestamp = strftime("%Y/%m/%d %H:%M:%S", gmtime());
+    return '[%s] %s\n' % (timestamp, message);
+
 def log(message, fp_log):
     timestamp = strftime("%Y/%m/%d %H:%M:%S", gmtime());
 
-    sys.stderr.write('[%s wrapper %s] %s\n' % (ASSEMBLER_NAME, timestamp, message))
+    sys.stderr.write('[%s] %s\n' % (timestamp, message))
     sys.stderr.flush();
     if (fp_log != None):
-        fp_log.write('[%s wrapper %s] %s\n' % (ASSEMBLER_NAME, timestamp, message))
+        fp_log.write('[%s] %s\n' % (timestamp, message))
         fp_log.flush();
 
 def execute_command(command, fp_log, dry_run=True):

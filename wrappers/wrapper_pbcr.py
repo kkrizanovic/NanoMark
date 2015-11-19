@@ -31,7 +31,9 @@ ZIP_PATH = os.path.join(ASSEMBLERS_PATH_ROOT_ABS, ZIP_FILE)
 ASSEMBLER_BIN = os.path.join(ASSEMBLER_PATH,'Linux-amd64/bin/runCA')
 ASSEMBLER_ECBIN = os.path.join(ASSEMBLER_PATH,'Linux-amd64/bin/PBcR')
 ASSEMBLER_NAME = 'PBcR'
-ASSEMBLER_RESULTS = 'out/9-terminator/asm.ctg.fasta'
+# ASSEMBLER_RESULTS = 'out/9-terminator/asm.ctg.fasta'
+ASSEMBLY_UNPOLISHED = 'benchmark-unpolished_assembly.fasta'
+ASSEMBLY_POLISHED = 'benchmark-polished_assembly.fasta'
 CREATE_OUTPUT_FOLDER = True
 
 # PACBIO_SPEC = os.path.join(ASSEMBLER_PATH, 'wgs_pacbio.spec')
@@ -142,7 +144,7 @@ def get_single_read(fp):
 #    output_path            Folder to which the output will be placed to. Filename will be automatically generated according to the name of the mapper being run.
 #    output_suffix        A custom suffix that can be added to the output filename.
 # def run(reads_file, reference_file, machine_name, output_path, output_suffix=''):
-def run(datasets, output_path, approx_genome_len=0):
+def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
     ##################################################################################
     ### Sanity check for input datasets.
     ##################################################################################    
@@ -173,9 +175,10 @@ def run(datasets, output_path, approx_genome_len=0):
     ##################################################################################
     ### Backup old assembly results, and create the new output folder.
     ##################################################################################
-    if (os.path.exists(output_path)):
-        timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
-        os.rename(output_path, '%s.bak_%s' % (output_path, timestamp));
+    if (move_exiting_out_path == True):
+        if (os.path.exists(output_path)):
+            timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
+            os.rename(output_path, '%s.bak_%s' % (output_path, timestamp));
     if (not os.path.exists(output_path)):
         log('Creating a directory on path "%s".' % (output_path), None);
         os.makedirs(output_path);
@@ -264,8 +267,12 @@ def run(datasets, output_path, approx_genome_len=0):
         log('Skipping ....\n', fp_log)
         return;
 
+    command = 'cp %s/out/9-terminator/asm.ctg.fasta %s/%s' % (output_path, output_path, ASSEMBLY_UNPOLISHED);
+    execute_command(command, fp_log, dry_run=DRY_RUN);
+
     if (fp_log != None):
         fp_log.close();
+
 
 
 # A placeholder for a function that runs quast on assembly results

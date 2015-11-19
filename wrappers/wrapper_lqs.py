@@ -35,7 +35,10 @@ ASSEMBLER_PATH = os.path.join(basicdefines.ASSEMBLERS_PATH_ROOT_ABS, 'LQS')
 # ZIP_PATH = os.path.join(basicdefines.ASSEMBLERS_PATH_ROOT_ABS, ZIP_FILE)
 ASSEMBLER_BIN = os.path.join(ASSEMBLER_PATH, 'full-pipeline.make')
 ASSEMBLER_NAME = 'LQS'
-ASSEMBLER_RESULTS = 'contig-100.fa'
+# ASSEMBLER_RESULTS = 'contig-100.fa'
+ASSEMBLY_UNPOLISHED = 'benchmark-unpolished_assembly.fasta'
+ASSEMBLY_POLISHED = 'benchmark-polished_assembly.fasta'
+
 CREATE_OUTPUT_FOLDER = True
 NANOCORRECT_PATH = '%s/nanocorrect/' % (ASSEMBLER_PATH);
 NANOPOLISH_PATH = '%s/nanopolish/' % (ASSEMBLER_PATH);
@@ -296,7 +299,7 @@ def parse_memtime_files_and_accumulate(memtime_files, final_memtime_file):
 #    output_path            Folder to which the output will be placed to. Filename will be automatically generated according to the name of the mapper being run.
 #    output_suffix        A custom suffix that can be added to the output filename.
 # def run(reads_files, reference_file, machine_name, output_path, output_suffix=''):
-def run(datasets, output_path, approx_genome_len=0):
+def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
     ### make -f full-pipeline.make CORES=64 polished_genome.fasta
 
     ##################################################################################
@@ -351,9 +354,10 @@ def run(datasets, output_path, approx_genome_len=0):
     ### In case only polishing needs to be run, don't move the output folder to a different location.
     if (machine_name == 'nanopore' or machine_name == 'correct1'):
         ### Backup old assembly results, and create the new output folder.
-        if (os.path.exists(output_path)):
-            timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
-            os.rename(output_path, '%s.bak_%s' % (output_path, timestamp));
+        if (move_exiting_out_path == True):
+            if (os.path.exists(output_path)):
+                timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
+                os.rename(output_path, '%s.bak_%s' % (output_path, timestamp));
         if (not os.path.exists(output_path)):
             log('Creating a directory on path "%s".' % (output_path), None);
             os.makedirs(output_path);
@@ -491,6 +495,7 @@ def run(datasets, output_path, approx_genome_len=0):
         commands.append('%s runCA -d celera-assembly -p asm -s %s/revised_ovlErrorRate0.04.spec assembly.frg' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), ASSEMBLER_PATH));
         current_memtime_id += 1;
         commands.append('%s ln -s celera-assembly/9-terminator/asm.scf.fasta draft_genome.fasta' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id))));
+        commands.append('%s cp celera-assembly/9-terminator/asm.scf.fasta %s/%s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), output_path, ASSEMBLY_UNPOLISHED));
 
     if (machine_name == 'nanopore' or machine_name == 'polish'):
         current_memtime_id = 12;
@@ -524,7 +529,7 @@ def run(datasets, output_path, approx_genome_len=0):
         commands.append('%s python %s/scripts/nanopolish_merge.py %s/draft_genome.fasta %s/nanopolish.scf*.fa > polished_genome.fasta' %
                         (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), NANOPOLISH_PATH, output_path, output_path));
 
-        commands.append('cp %s/polished_genome.fasta %s/benchmark-final_assembly.fasta' % (output_path, output_path));
+        commands.append('cp %s/polished_genome.fasta %s/%s' % (output_path, output_path, ASSEMBLY_POLISHED));
 
     command = '; '.join(commands);
     execute_command(command, None, dry_run=DRY_RUN);

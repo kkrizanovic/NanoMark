@@ -31,7 +31,8 @@ ASSEMBLER_URL = 'git://github.com/PacificBiosciences/FALCON-integrate.git'
 ASSEMBLER_PATH = os.path.join(ASSEMBLERS_PATH_ROOT_ABS, 'FALCON-integrate')
 ASSEMBLER_BIN = os.path.join(ASSEMBLER_PATH, 'fc_env/bin/fc_run.py')
 ASSEMBLER_NAME = 'FALCON'
-# ASSEMBLER_RESULTS = 'contig-100.fa'
+ASSEMBLY_UNPOLISHED = 'benchmark-unpolished_assembly.fasta'
+ASSEMBLY_POLISHED = 'benchmark-polished_assembly.fasta'
 CREATE_OUTPUT_FOLDER = True
 
 # DRY_RUN = True;
@@ -199,7 +200,9 @@ def convert_reads_to_pacbio_format(reads_file, out_reads_file, fp_log, read_coun
 #    output_path            Folder to which the output will be placed to. Filename will be automatically generated according to the name of the mapper being run.
 #    output_suffix        A custom suffix that can be added to the output filename.
 # def run(reads_files, reference_file, machine_name, output_path, output_suffix=''):
-def run(datasets, output_path, approx_genome_len=0):
+#    approx_genome_len      Some assemblers need this parameter in order to run. For others, it's not necessary.
+#    rerun                  If True, the specified output path will be moved to a backup location, and a new output folder created. Otherwise, the same folder will be used if it exists.
+def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
     ##################################################################################
     ### Sanity check for input datasets.
     ##################################################################################    
@@ -224,9 +227,10 @@ def run(datasets, output_path, approx_genome_len=0):
     ##################################################################################
     ### Backup old assembly results, and create the new output folder.
     ##################################################################################
-    if (os.path.exists(output_path)):
-        timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
-        os.rename(output_path, '%s.bak_%s' % (output_path, timestamp));
+    if (move_exiting_out_path == True):
+        if (os.path.exists(output_path)):
+            timestamp = strftime("%Y_%m_%d-%H_%M_%S", gmtime());
+            os.rename(output_path, '%s.bak_%s' % (output_path, timestamp));
     if (not os.path.exists(output_path)):
         log('Creating a directory on path "%s".' % (output_path), None);
         os.makedirs(output_path);
@@ -424,7 +428,7 @@ def run(datasets, output_path, approx_genome_len=0):
     run_commands.append('. %s/bin/activate' % (FC_path));
     run_commands.append('cd %s' % (output_path));
     run_commands.append('%s %s/bin/fc_run.py %s' % (measure_command(memtime_file), FC_path, cfg_file));
-    run_commands.append('cp %s/2-asm-falcon/p_ctg.fa %s/benchmark-final_assembly.fasta' % (output_path, output_path));
+    run_commands.append('cp %s/2-asm-falcon/p_ctg.fa %s/%s' % (output_path, output_path, ASSEMBLY_UNPOLISHED));
     command = '; '.join(run_commands);
     execute_command(command, fp_log, dry_run=DRY_RUN);
 
