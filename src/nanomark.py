@@ -276,9 +276,6 @@ def summarize_results(results_folder):
         sys.stderr.write('ERROR: Could not open file "%s" for writing! Exiting.\n' % (summaryfilepath));
         exit(1);
 
-    QUAST_PATH = '%s/tools/quast-3.1/quast.py';
-    DNADIFF_PATH = '';
-
     # Run Quast and DNAdiff on the assemblies.
     for results_file in results_files:
         for results_file in results_files:
@@ -294,8 +291,8 @@ def summarize_results(results_folder):
                     sys.stderr.write('Running analyses on the assembly output.\n');
                     execute_command('mkdir -p %s' % (quast_out_folder));
                     execute_command('mkdir -p %s/%s/%s' % (dnadiff_out_folder));
-                    execute_command('%s %s -R %s -o %s' % (QUAST_PATH, assembly_path, reference_file, dnadiff_out_folder));
-                    execute_command('%s %s %s -p %s/out' % (DNADIFF_PATH, reference_file, assembly_path, dnadiff_out_folder));
+                    execute_command('%s %s -R %s -o %s' % (basicdefines.QUAST_BIN, assembly_path, reference_file, dnadiff_out_folder));
+                    execute_command('%s %s %s -p %s/out' % (basicdefines.DNADIFF_BIN, reference_file, assembly_path, dnadiff_out_folder));
                 pass;
             else:   # In this case, the contig file does not exist.
                 if (run_type != 'collectall'):  # This will skip processing of non-exitent file. Otherwise, '-' will be placed for that particular assembly.

@@ -9,11 +9,12 @@ import subprocess
 
 import basicdefines
 
-QUAST_URL = 'http://sourceforge.net/projects/quast/files/quast-3.0.tar.gz'
-QUAST_ZIP_FILE = 'quast-3.0.tar.gz'
+# QUAST_URL = 'http://sourceforge.net/projects/quast/files/quast-3.0.tar.gz'
+QUAST_URL = 'http://sourceforge.net/projects/quast/files/quast-3.1.tar.gz';
+QUAST_ZIP_FILE = os.path.basename(QUAST_URL); # 'quast-3.0.tar.gz'
 QUAST_ZIP_PATH = os.path.join(basicdefines.TOOLS_ROOT_ABS, QUAST_ZIP_FILE)
 QUAST_BIN_FILE = 'quast.py'
-QUAST_BIN_PATH = os.path.join(basicdefines.TOOLS_ROOT_ABS, 'quast-3.0', QUAST_BIN_FILE)
+QUAST_BIN_PATH = os.path.join(basicdefines.TOOLS_ROOT_ABS, 'quast-3.1', QUAST_BIN_FILE)
 CGMEMTIME_FILE = 'cgmemtime'
 CGMEMTIME_PATH = os.path.join(basicdefines.TOOLS_ROOT_ABS, 'cgmemtime', CGMEMTIME_FILE)
 
@@ -65,6 +66,11 @@ def setup_tools():
 
 		# Decompress
 		command = 'cd %s; tar -xzf %s' % (basicdefines.TOOLS_ROOT_ABS, QUAST_ZIP_FILE)
+		subprocess.call(command, shell='True')
+		sys.stderr.write('\n')
+
+		# Compile MUMmer
+		command = 'cd %s; make' % (basicdefines.DNADIFF_PATH_ROOT_ABS);
 		subprocess.call(command, shell='True')
 		sys.stderr.write('\n')
 
