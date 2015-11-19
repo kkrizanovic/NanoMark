@@ -292,7 +292,7 @@ def summarize_results(results_folder):
         exit(1);
 
     header = ['Assembler', 'Assembly'] + quast_parameters + dnadiff_parameters + memtime_parameters;
-    fp_out.write('%s\n' % (';'.join(header)));
+    fp_out.write('%s\n' % ('\t'.join(header)));
     fp_out.flush();
 
     # Run Quast and DNAdiff on the assemblies.
@@ -322,7 +322,7 @@ def summarize_results(results_folder):
             parseresults.parse_memtime_folder_and_accumulate('%s' % (os.path.dirname(assembly_path)), '%s/total.memtime' % (os.path.dirname(assembly_path)));
             results_memtime = parseresults.parse_memtime_report('%s/total.memtime' % (os.path.dirname(assembly_path)), memtime_parameters, 'h', 'GB');
 
-            fp_out.write('%s\n' % (';'.join([assembler_name, contig_basename] + results_dnadiff + results_quast + results_memtime)));
+            fp_out.write('%s\n' % ('\t'.join([assembler_name, contig_basename] + results_dnadiff + results_quast + results_memtime)));
             fp_out.flush();
 
     fp_out.close();
