@@ -279,7 +279,7 @@ def summarize_results(results_folder):
     # Run Quast and DNAdiff on the assemblies.
     for results_file in results_files:
         for results_file in results_files:
-            [assembly_path, assembler_name] = results_file:
+            [assembly_path, assembler_name] = results_file;
             contig_basename = os.path.splitext(os.path.basename(assembly_path))[0];
 
             sys.stderr.write('Processing contig file "%s".\n' % (assembly_path));
