@@ -267,7 +267,7 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
         log('Skipping ....\n', fp_log)
         return;
 
-    command = 'cp %s/out/9-terminator/asm.ctg.fasta %s/%s' % (output_path, output_path, ASSEMBLY_UNPOLISHED);
+    command = 'cp %s/%s/9-terminator/asm.ctg.fasta %s/%s' % (output_path, ASSEMBLER_NAME, output_path, ASSEMBLY_UNPOLISHED);
     execute_command(command, fp_log, dry_run=DRY_RUN);
 
     if (fp_log != None):
