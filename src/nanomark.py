@@ -61,10 +61,10 @@ def benchmark(reads_file, reference_file, technology, wrapper_list = []):
     output_folder = 'benchmark_' + uuid_string
     output_path = os.path.join(basicdefines.RESULTS_PATH_ROOT_ABS, output_folder)
     log_filename = os.path.join(output_path, 'log.txt')
-    creffilename = 'REF_' + uuid_string + os.path.splitext(reference_file)[1]        # preserve extension
-    crefpath = os.path.join(output_path, creffilename)
-    creadsfilename = 'READS_' + uuid_string + os.path.splitext(reads_file)[1]        # preserve extension
-    creadspath = os.path.abspath(os.path.join(output_path, creadsfilename))
+    # creffilename = 'REF_' + uuid_string + os.path.splitext(reference_file)[1]        # preserve extension
+    # crefpath = os.path.join(output_path, creffilename)
+    # creadsfilename = 'READS_' + uuid_string + os.path.splitext(reads_file)[1]        # preserve extension
+    # creadspath = os.path.abspath(os.path.join(output_path, creadsfilename))
 
     [ret_string, num_refs, total_ref_len, average_ref_len] = fastqparser.count_seq_length(reference_file);
 
@@ -80,14 +80,14 @@ def benchmark(reads_file, reference_file, technology, wrapper_list = []):
         sys.stderr.write('Running benchmark for one reads file!\n')
         sys.stderr.write('UUID: %s\n' % uuid_string)
         sys.stderr.write('Reads file: %s\n' % reads_file)
-        sys.stderr.write('References file: %s\n' % reference_file)
+        sys.stderr.write('Reference file: %s\n' % reference_file)
 
         # Copy reference file to output folder while preserving extension
-        shutil.copy(reference_file, crefpath)
+        # shutil.copy(reference_file, crefpath)
         logfile.write('Reference file: %s\n' % reference_file)
 
         # Copy reads file to output folder while preserving extension
-        shutil.copy(reads_file, creadspath)
+        # shutil.copy(reads_file, creadspath)
         logfile.write('Reads file: %s\n' % reads_file)
 
         logfile.write('Technology: %s\n' % technology)
@@ -139,7 +139,7 @@ def benchmark(reads_file, reference_file, technology, wrapper_list = []):
             # Create folder for each assembler's results, and for quast results
             assembler_folder = os.path.join(output_path, assembler_name)
             sys.stderr.write('\n\nRunning assembler %s\n' % assembler_name)
-            dataset = Dataset('%s,%s' % (technology, creadspath))
+            dataset = Dataset('%s,%s' % (technology, reads_file))
             current_wrapper.run([dataset], assembler_folder, total_ref_len, move_exiting_out_path=True);
 
             logfile.write(basic_defines.log_message('%s (%s) finished.' % (assembler_name, wrapper)));
@@ -190,12 +190,12 @@ def continue_benchmark(results_folder):
     output_folder = results_folder;
     output_path = os.path.join(basicdefines.RESULTS_PATH_ROOT_ABS, output_folder)
     log_filename = os.path.join(output_path, 'log.txt')
-    creffilename = 'REF_' + uuid_string + os.path.splitext(reference_file)[1]        # preserve extension
-    crefpath = os.path.join(output_path, creffilename)
-    creadsfilename = 'READS_' + uuid_string + os.path.splitext(reads_file)[1]        # preserve extension
-    creadspath = os.path.abspath(os.path.join(output_path, creadsfilename))
+    # creffilename = 'REF_' + uuid_string + os.path.splitext(reference_file)[1]        # preserve extension
+    # crefpath = os.path.join(output_path, creffilename)
+    # creadsfilename = 'READS_' + uuid_string + os.path.splitext(reads_file)[1]        # preserve extension
+    # creadspath = os.path.abspath(os.path.join(output_path, creadsfilename))
 
-    [ret_string, num_refs, total_ref_len, average_ref_len] = fastqparser.count_seq_length(crefpath);
+    [ret_string, num_refs, total_ref_len, average_ref_len] = fastqparser.count_seq_length(reference_file);
 
     wrapper_list = wrappers_used.split(',');
 
@@ -220,7 +220,7 @@ def continue_benchmark(results_folder):
         else:
             logfile.write(basic_defines.log_message('%s (%s) started: %s' % (assembler_name, wrapper, wrapper_path)));
             sys.stderr.write('\n\nRunning assembler %s\n' % assembler_name)
-            dataset = Dataset('%s,%s' % (technology, creadspath))
+            dataset = Dataset('%s,%s' % (technology, reads_file))
             # The wrapper internally takes care of backing up existing output folders.
             current_wrapper.run([dataset], assembler_folder, total_ref_len, move_exiting_out_path=True);
             logfile.write(basic_defines.log_message('%s (%s) finished.' % (assembler_name, wrapper)));
