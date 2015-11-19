@@ -29,8 +29,8 @@ QUAST_PATH_ROOT_ABS = os.path.join(TOOLS_ROOT_ABS, QUAST_PATH)
 QUAST_BIN = os.path.join(QUAST_PATH_ROOT_ABS, 'quast.py')
 
 DNADIFF_PATH = 'quast-3.1/libs/MUMmer3.23-linux/';
-DNADIFF_PATH_ROOT_ABS = os.path.join(TOOLS_ROOT_ABS, QUAST_PATH)
-DNADIFF_BIN = os.path.join(QUAST_PATH_ROOT_ABS, 'dnadiff')
+DNADIFF_PATH_ROOT_ABS = os.path.join(TOOLS_ROOT_ABS, DNADIFF_PATH)
+DNADIFF_BIN = os.path.join(DNADIFF_PATH_ROOT_ABS, 'dnadiff')
 
 DATASETS_PATH = 'intermediate'
 DATASETS_PATH_ROOT_ABS = SCRIPT_PATH + '/../' + DATASETS_PATH
