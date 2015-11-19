@@ -195,7 +195,7 @@ def continue_benchmark(results_folder):
     # Get the correct paths to the previous run data. Same as for starting a normal run, save from the output folder which is given through function parameters.
     output_folder = results_folder;
     output_path = os.path.join(basicdefines.RESULTS_PATH_ROOT_ABS, output_folder)
-    log_filename = os.path.join(output_path, 'log.txt')
+    # log_filename = os.path.join(output_path, 'log.txt')
     # creffilename = 'REF_' + uuid_string + os.path.splitext(reference_file)[1]        # preserve extension
     # crefpath = os.path.join(output_path, creffilename)
     # creadsfilename = 'READS_' + uuid_string + os.path.splitext(reads_file)[1]        # preserve extension
