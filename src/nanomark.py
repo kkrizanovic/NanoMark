@@ -258,7 +258,7 @@ def summarize_results(results_folder):
     output_path = results_folder;
 
     # Collect paths to all assembled FASTA files.
-    contig_files = [];
+    results_files = [];
     for wrapper_basename in wrapper_list:
         wrapper = 'wrapper_' + wrapper_basename
         wrapper_path = os.path.join(basicdefines.WRAPPERS_PATH_ROOT_ABS, wrapper + '.py')
@@ -271,8 +271,8 @@ def summarize_results(results_folder):
         create_output_folder = current_wrapper.CREATE_OUTPUT_FOLDER;
         assembler_type = current_wrapper.ASSEMBLER_TYPE;
 
-        contig_files.append([assembly_unpolished, assembler_name]);
-        contig_files.append([assembly_polished, assembler_name]);
+        results_files.append([assembly_unpolished, assembler_name]);
+        results_files.append([assembly_polished, assembler_name]);
 
     try:
         fp_out = open(summaryfilepath, 'w');
