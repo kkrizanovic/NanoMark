@@ -191,16 +191,7 @@ def continue_benchmark(results_folder):
 
     reference_file = os.path.abspath(reference_file);
     reads_file = os.path.abspath(reads_file);
-
-    # Get the correct paths to the previous run data. Same as for starting a normal run, save from the output folder which is given through function parameters.
-    # output_folder = results_folder;
-    # output_path = os.path.join(basicdefines.RESULTS_PATH_ROOT_ABS, output_folder)
     output_path = results_folder;
-    # log_filename = os.path.join(output_path, 'log.txt')
-    # creffilename = 'REF_' + uuid_string + os.path.splitext(reference_file)[1]        # preserve extension
-    # crefpath = os.path.join(output_path, creffilename)
-    # creadsfilename = 'READS_' + uuid_string + os.path.splitext(reads_file)[1]        # preserve extension
-    # creadspath = os.path.abspath(os.path.join(output_path, creadsfilename))
 
     [ret_string, num_refs, total_ref_len, average_ref_len] = fastqparser.count_seq_length(reference_file);
 
@@ -221,13 +212,14 @@ def continue_benchmark(results_folder):
         # Run assembly only using non-hybrid assemblers. Using hybrid assemblers complicates uniform specification of the datasets.
         if (assembler_type != 'nonhybrid'):
             continue;
-        print 'assembly_unpolished = %s' % (assembly_unpolished);
-        print 'assembly_polished = %s' % (assembly_polished);
         if (os.path.exists(assembly_unpolished) or os.path.exists(assembly_polished)):
             # The results file exists, thi means that the assembler run completed and will not be repeated
+            if (os.path.exists(assembly_unpolished)):
+                sys.stderr.write('Previously constructed (unpolished) assembly found at: "%s".\n' % (assembly_unpolished));
+            if (os.path.exists(assembly_polished)):
+                sys.stderr.write('Previously constructed (polished) assembly found at: "%s".\n' % (assembly_polished));
             sys.stderr.write('Assembler %s run previously completed.\n' % (assembler_name))
         else:
-            print 'os.path.exists(assembly_unpolished) == false, "%s"' % ((assembly_unpolished));
 
             logfile.write(basicdefines.log_message('%s (%s) started: %s' % (assembler_name, wrapper, wrapper_path)));
             sys.stderr.write('\n\nRunning assembler %s\n' % assembler_name)
@@ -236,113 +228,6 @@ def continue_benchmark(results_folder):
             current_wrapper.run([dataset], assembler_folder, total_ref_len, move_exiting_out_path=True);
             logfile.write(basicdefines.log_message('%s (%s) finished.' % (assembler_name, wrapper)));
     logfile.close();
-
-
-
-#     # Global quast folder
-#     gl_quast_folder = os.path.join(output_path, 'quast')
-#     if not os.path.exists(gl_quast_folder):
-#         sys.stderr.write('Creating global QUAST folder for the benchmark...\n')
-#         os.makedirs(gl_quast_folder)
-
-#     sys.stderr.write('Reading log file and checking wrapers....\n')
-#     # Load wrapper names from log file, log file is only used to see which wrappers were supposed to be used
-#     # in a bechmark. Which wrappers completed their run is check by looking if a corresponding results file exists.
-#     # This could also be done read from the logfile.
-#     # Check if a results file exists for each wrapper. If results file doesn't exist, run the assembler again
-#     with open(log_filename, 'r') as logfile:
-#         # Skip 4 lines
-#         logfile.readline();logfile.readline();logfile.readline();logfile.readline()
-#         # Get a line with wrapper names
-#         line = logfile.readline()
-#         sys.stderr.write(line)
-#         line = line[15:-1]          # Remove 'Wrappers used: ' from the start and \n from the end
-#         wrapper_list = line.split(',')
-
-#         for wrapper_basename in wrapper_list:
-#             assembler_name = ''
-#             results_file = ''
-#             create_output_folder = True
-#             wrapper = 'wrapper_' + wrapper_basename
-#             wrapper_path = os.path.join(basicdefines.WRAPPERS_PATH_ROOT_ABS, wrapper + '.py')
-
-#             exec('import %s as current_wrapper' % (wrapper))
-#             assembler_name = current_wrapper.ASSEMBLER_NAME;
-#             assembly_unpolished = current_wrapper.ASSEMBLY_UNPOLISHED;
-#             assembly_polished = current_wrapper.ASSEMBLY_POLISHED;
-#             create_output_folder = current_wrapper.CREATE_OUTPUT_FOLDER;
-#             assembler_type = current_wrapper.ASSEMBLER_TYPE;
-
-#             # Run assembly only using non-hybrid assemblers. Using hybrid assemblers complicates uniform specification of the datasets.
-#             if (assembler_type != 'nonhybrid'):
-#                 continue;
-
-#             assembler_folder = os.path.join(output_path, assembler_name)
-#             # results_path = os.path.join(assembler_folder, results_file)
-#             # loc_quast_folder = os.path.join(gl_quast_folder, assembler_name)
-
-#             # Get reads and reference files, they should be inside benchmark folder
-#             # With names that start with READS_ and REF_
-
-#             # if os.path.exists(assembly_unpolished) or os.path.exists(:
-#             if (os.path.exists(os.path.join(assembler_folder, assembly_unpolished)) or os.path_exists(os.path.join(assembler_folder, assembly_polished))):
-#                 # The results file exists, thi means that the assembler run completed and will not be repeated
-#                 sys.stderr.write('Assembler %s run previously completed.\n')
-#             else:
-#                 sys.stderr.write('\n\nRunning assembler %s\n' % assembler_name)
-#                 dataset = Dataset('%s,%s' % (technology, creadspath))
-#                 # The wrapper internally takes care of backing up existing output folders.
-#                 current_wrapper.run([dataset], assembler_folder, total_ref_len, rerun=False);
-
-#             # # If results file doesn't exist, the assembler didn't complete its run and needs to repeat it
-#             # # First remove whole assembler folder if it exists, and then recreate it
-#             # if os.path.exists(assembler_folder):
-#             #     os.rmdir(assembler_folder)
-#             # # Create output folder if specified in the wrapper
-#             # if create_output_folder:
-#             #     os.makedirs(assembler_folder)
-#             # # Remove local QUAST folder if it exists, and then recreate it
-#             # if os.path.exists(loc_quast_folder):
-#             #     os.rmdir(loc_quast_folder)
-#             # os.makedirs(loc_quast_folder)
-
-
-#             # Run each wrapper
-#             # def run(reads_file, reference_file, machine_name, output_path, output_suffix=''):
-#             # command = 'import %s; %s.run(\'%s\', \'%s\', \'machine_name\', \'%s\')' % (wrapper, wrapper, creadspath, crefpath, assembler_folder)
-#             # sys.stderr.write('Executing command: %s\n' % (command));
-#         #            exec(command)
-
-#         # # Run quast on results file?
-#         # # This might be a part of a wrapper implementation
-#         # # however it seems more logical to place come here instead of in each wrapper
-#         # results_path = os.path.join(assembler_folder, results_file)
-#         # if os.path.exists(results_path):
-#         #     sys.stderr.write('Running quast for assembler %s\n' % assembler_name)
-#         #     command = '%s %s -R %s -o %s' % (basicdefines.QUAST_BIN, results_path, crefpath, loc_quast_folder)
-#         #     subprocess.call(command, shell='True')
-#         #     logfile.write('OK\n')
-#         # else:
-#         #     sys.stderr.write('Cannot find results file %s for assembler %s\n' % (results_file, assembler_name))
-#         #     logfile.write('ERROR\n')
-
-#         # # Collect quast and cgmemtime results
-#         # summarize_results(output_path)
-
-
-
-# # def continueBenchmark_cf(results_folder):
-# #     sys.stderr.write('Function %s not implemented yet!\n\n' % (sys._getframe().f_code.co_name))
-# #     exit(1)
-# #     pass
-
-
-# # def run_quast(results_folder):
-# #     sys.stderr.write('Function %s not implemented yet!\n\n' % (sys._getframe().f_code.co_name))
-# #     exit(1)
-# #     pass
-
-
 
 def summarize_results(results_folder):
 
