@@ -201,7 +201,7 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
         if (dataset.reads_path.endswith('fasta') or dataset.reads_path.endswith('fa')):
             converted_reads_path = '%s/%s.fastq' % (output_path, os.path.splitext(os.path.basename(dataset.reads_path))[0]);
             log('Converting file "%s" to FASTQ format and aggregating to "%s".\n' % (dataset.reads_path, reads_file), fp_log);
-            command = 'java -jar %s/convertFastaAndQualToFastq.jar %s >> %s' % (ASSEMBLER_PATH_ROOT_ABS, dataset.reads_path, reads_file);
+            command = 'java -jar %s/convertFastaAndQualToFastq.jar %s >> %s' % (ASSEMBLER_PATH, dataset.reads_path, reads_file);
             execute_command(command, fp_log, dry_run=DRY_RUN);
         else:
             log('Aggregating FASTQ file "%s" to "%s".\n' % (dataset.reads_path, reads_file), fp_log);
