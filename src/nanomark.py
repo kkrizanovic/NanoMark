@@ -246,7 +246,7 @@ def summarize_results(results_folder):
     # report_filename = 'report.txt'
 
     sys.stderr.write('Reading log file and checking wrapers....\n')
-    [reference_file, reads_file, technology, wrappers_used] = parse_log_file(log_file_path);
+    [reference_file, reads_file, technology, wrappers_used] = parse_log_file(log_filename);
 
     wrapper_list = wrappers_used.split(',');
     reference_file = os.path.abspath(reference_file);
@@ -395,7 +395,7 @@ def verbose_usage_and_exit():
     sys.stderr.write('\t\tsetup\n')
     sys.stderr.write('\t\tbenchmark\n')
     sys.stderr.write('\t\tcontinue\n')
-    sys.stderr.write('\t\tsummarize_results\n')
+    sys.stderr.write('\t\tsummarize\n')
     sys.stderr.write('\t\tlist\n')
     sys.stderr.write('\n')
     exit(0)
@@ -478,9 +478,9 @@ def main():
         results_folder = sys.argv[2]
         continue_benchmark(results_folder)
 
-    elif mode == 'summarize_results':
+    elif mode == 'summarize':
         if (len(sys.argv) != 3):
-            sys.stderr.write('Summarizes results from quast and cgmem timefiles.\n')
+            sys.stderr.write('Summarizes results from Quast, DNAdiff and cgmem timefiles.\n')
             sys.stderr.write('\n')
             sys.stderr.write('Usage:\n')
             sys.stderr.write('\t%s %s <results_folder>' % (sys.argv[0], sys.argv[1]))
