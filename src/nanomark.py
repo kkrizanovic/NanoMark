@@ -293,10 +293,10 @@ def summarize_results(results_folder):
             if (os.path.exists(assembly_path)):
                 if (run_type == 'calc'):
                     sys.stderr.write('Running analyses on the assembly output.\n');
-                    execute_command('mkdir -p %s' % (quast_out_folder));
-                    execute_command('mkdir -p %s/%s/%s' % (dnadiff_out_folder));
-                    execute_command('%s %s -R %s -o %s' % (basicdefines.QUAST_BIN, assembly_path, reference_file, dnadiff_out_folder));
-                    execute_command('%s %s %s -p %s/out' % (basicdefines.DNADIFF_BIN, reference_file, assembly_path, dnadiff_out_folder));
+                    basicdefines.execute_command('mkdir -p %s' % (quast_out_folder), None);
+                    basicdefines.execute_command('mkdir -p %s/%s/%s' % (dnadiff_out_folder), None);
+                    basicdefines.execute_command('%s %s -R %s -o %s' % (basicdefines.QUAST_BIN, assembly_path, reference_file, dnadiff_out_folder), None);
+                    basicdefines.execute_command('%s %s %s -p %s/out' % (basicdefines.DNADIFF_BIN, reference_file, assembly_path, dnadiff_out_folder), None);
                 pass;
             else:   # In this case, the contig file does not exist.
                 if (run_type != 'collectall'):  # This will skip processing of non-exitent file. Otherwise, '-' will be placed for that particular assembly.
