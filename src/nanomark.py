@@ -137,7 +137,7 @@ def benchmark(reads_file, reference_file, technology, wrapper_list = []):
             if (assembler_type != 'nonhybrid'):
                 continue;
             # logfile.write('%s (%s): %s\n' % (assembler_name, wrapper, wrapper_path))
-            logfile.write(basic_defines.log_message('%s (%s) started: %s' % (assembler_name, wrapper, wrapper_path)));
+            logfile.write(basicdefines.log_message('%s (%s) started: %s' % (assembler_name, wrapper, wrapper_path)));
         
             # Create folder for each assembler's results, and for quast results
             assembler_folder = os.path.join(output_path, assembler_name)
@@ -145,7 +145,7 @@ def benchmark(reads_file, reference_file, technology, wrapper_list = []):
             dataset = Dataset('%s,%s' % (technology, reads_file))
             current_wrapper.run([dataset], assembler_folder, total_ref_len, move_exiting_out_path=True);
 
-            logfile.write(basic_defines.log_message('%s (%s) finished.' % (assembler_name, wrapper)));
+            logfile.write(basicdefines.log_message('%s (%s) finished.' % (assembler_name, wrapper)));
 
 
 # Continue benchmark that was interrupted
@@ -224,12 +224,12 @@ def continue_benchmark(results_folder):
             # The results file exists, thi means that the assembler run completed and will not be repeated
             sys.stderr.write('Assembler %s run previously completed.\n')
         else:
-            logfile.write(basic_defines.log_message('%s (%s) started: %s' % (assembler_name, wrapper, wrapper_path)));
+            logfile.write(basicdefines.log_message('%s (%s) started: %s' % (assembler_name, wrapper, wrapper_path)));
             sys.stderr.write('\n\nRunning assembler %s\n' % assembler_name)
             dataset = Dataset('%s,%s' % (technology, reads_file))
             # The wrapper internally takes care of backing up existing output folders.
             current_wrapper.run([dataset], assembler_folder, total_ref_len, move_exiting_out_path=True);
-            logfile.write(basic_defines.log_message('%s (%s) finished.' % (assembler_name, wrapper)));
+            logfile.write(basicdefines.log_message('%s (%s) finished.' % (assembler_name, wrapper)));
     logfile.close();
 
 
