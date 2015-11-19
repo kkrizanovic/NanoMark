@@ -160,7 +160,7 @@ def continue_benchmark(results_folder):
 
     sys.stderr.write('Reading log file and checking wrapers....\n')
     fp_log = open(log_filename, 'r');
-    loglines = fp_log.readlines();
+    log_lines = fp_log.readlines();
     fp_log.close();
 
     # Load info about the input dataset.
