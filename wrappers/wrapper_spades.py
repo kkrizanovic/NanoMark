@@ -30,7 +30,9 @@ ASSEMBLER_PATH = os.path.join(ASSEMBLERS_PATH_ROOT_ABS, 'SPAdes-3.6.1-Linux')
 ZIP_FILE = os.path.join(ASSEMBLERS_PATH_ROOT_ABS, os.path.basename(ASSEMBLER_URL));
 ASSEMBLER_BIN = os.path.join(ASSEMBLER_PATH,'bin/spades.py')
 ASSEMBLER_NAME = 'SPADES'
-ASSEMBLER_RESULTS = 'contigs.fasta'
+# ASSEMBLER_RESULTS = 'contigs.fasta'
+ASSEMBLY_UNPOLISHED = 'benchmark-unpolished_assembly.fasta'
+ASSEMBLY_POLISHED = 'benchmark-polished_assembly.fasta'
 CREATE_OUTPUT_FOLDER = True
 
 # DRY_RUN = True;
