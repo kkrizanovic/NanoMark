@@ -251,6 +251,7 @@ def summarize_results(results_folder):
                             '[Feature Estimates]-Breakpoints,query', '[SNPs]-TotalSNPs,query', '[SNPs]-TotalIndels,query'
                          ];
     memtime_parameters = ['Real time', 'CPU time', 'Maximum RSS'];
+    memtime_parameters_verbose = ['Real time [h]', 'CPU time [h]', 'Maximum RSS [GB]'];
 
     # get global quast folder and log file
     gl_quast_folder = os.path.join(results_folder, 'quast')
@@ -291,39 +292,38 @@ def summarize_results(results_folder):
         sys.stderr.write('ERROR: Could not open file "%s" for writing! Exiting.\n' % (summaryfilepath));
         exit(1);
 
-    header = ['Assembler', 'Assembly'] + quast_parameters + dnadiff_parameters + memtime_parameters;
+    header = ['Assembler', 'Assembly'] + quast_parameters + dnadiff_parameters + memtime_parameters_verbose;
     fp_out.write('%s\n' % ('\t'.join(header)));
     fp_out.flush();
 
     # Run Quast and DNAdiff on the assemblies.
     for results_file in results_files:
-        for results_file in results_files:
-            [assembly_path, assembler_name] = results_file;
-            contig_basename = os.path.splitext(os.path.basename(assembly_path))[0];
+        [assembly_path, assembler_name] = results_file;
+        contig_basename = os.path.splitext(os.path.basename(assembly_path))[0];
 
-            sys.stderr.write('Processing contig file "%s".\n' % (assembly_path));
-            quast_out_folder = '%s/%s/%s' % (gl_quast_folder, assembler_name, contig_basename);
-            dnadiff_out_folder = '%s/%s/%s' % (gl_dnadiff_folder, assembler_name, contig_basename);
+        sys.stderr.write('Processing contig file "%s".\n' % (assembly_path));
+        quast_out_folder = '%s/%s/%s' % (gl_quast_folder, assembler_name, contig_basename);
+        dnadiff_out_folder = '%s/%s/%s' % (gl_dnadiff_folder, assembler_name, contig_basename);
 
-            if (os.path.exists(assembly_path)):
-                if (run_type == 'calc'):
-                    sys.stderr.write('Running analyses on the assembly output.\n');
-                    basicdefines.execute_command('mkdir -p %s' % (quast_out_folder), None);
-                    basicdefines.execute_command('mkdir -p %s' % (dnadiff_out_folder), None);
-                    basicdefines.execute_command('%s %s -R %s -o %s' % (basicdefines.QUAST_BIN, assembly_path, reference_file, quast_out_folder), None);
-                    basicdefines.execute_command('%s %s %s -p %s/out' % (basicdefines.DNADIFF_BIN, reference_file, assembly_path, dnadiff_out_folder), None);
-                pass;
-            else:   # In this case, the contig file does not exist.
-                if (run_type != 'collectall'):  # This will skip processing of non-exitent file. Otherwise, '-' will be placed for that particular assembly.
-                    continue;
+        if (os.path.exists(assembly_path)):
+            if (run_type == 'calc'):
+                sys.stderr.write('Running analyses on the assembly output.\n');
+                basicdefines.execute_command('mkdir -p %s' % (quast_out_folder), None);
+                basicdefines.execute_command('mkdir -p %s' % (dnadiff_out_folder), None);
+                basicdefines.execute_command('%s %s -R %s -o %s' % (basicdefines.QUAST_BIN, assembly_path, reference_file, quast_out_folder), None);
+                basicdefines.execute_command('%s %s %s -p %s/out' % (basicdefines.DNADIFF_BIN, reference_file, assembly_path, dnadiff_out_folder), None);
+            pass;
+        else:   # In this case, the contig file does not exist.
+            if (run_type != 'collectall'):  # This will skip processing of non-exitent file. Otherwise, '-' will be placed for that particular assembly.
+                continue;
 
-            results_dnadiff = parseresults.parse_quast_report('%s/report.tsv' % (quast_out_folder), quast_parameters);
-            results_quast = parseresults.parse_dnadiff_report('%s/out.report' % (dnadiff_out_folder), dnadiff_parameters);
-            parseresults.parse_memtime_folder_and_accumulate('%s' % (os.path.dirname(assembly_path)), '%s/total.memtime' % (os.path.dirname(assembly_path)));
-            results_memtime = parseresults.parse_memtime_report('%s/total.memtime' % (os.path.dirname(assembly_path)), memtime_parameters, 'h', 'GB');
+        results_dnadiff = parseresults.parse_quast_report('%s/report.tsv' % (quast_out_folder), quast_parameters);
+        results_quast = parseresults.parse_dnadiff_report('%s/out.report' % (dnadiff_out_folder), dnadiff_parameters);
+        parseresults.parse_memtime_folder_and_accumulate('%s' % (os.path.dirname(assembly_path)), '%s/total.memtime' % (os.path.dirname(assembly_path)));
+        results_memtime = parseresults.parse_memtime_report('%s/total.memtime' % (os.path.dirname(assembly_path)), memtime_parameters, 'h', 'GB');
 
-            fp_out.write('%s\n' % ('\t'.join([assembler_name, contig_basename] + results_dnadiff + results_quast + results_memtime)));
-            fp_out.flush();
+        fp_out.write('%s\n' % ('\t'.join([assembler_name, contig_basename] + results_dnadiff + results_quast + results_memtime)));
+        fp_out.flush();
 
     fp_out.close();
 
