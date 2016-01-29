@@ -4,7 +4,7 @@ DNA Assembly Benchmark for Nanopore long reads
 A system for benchmarking DNA assembly tools, based on 3rd generation sequencers.
 
 # Setup
-After cloning the repository first run: DNAssMark --setup.
+After cloning the repository first run: NanoMark --setup.
 This will download and compile all tools necessary to run a benchmark.
 - cgmemtime to measure runtime andmaximum memory consumption
 - Quast to estimake assembly quality
@@ -13,7 +13,7 @@ This will download and compile all tools necessary to run a benchmark.
 All tools will be downloaded to folder <root folder>/tools
 
 # Running a benchmark
-Run benchmark with a following command: DNAssMark.py --benchmark <reads_file> <reference_file>
+Run benchmark with a following command: NanoMark.py --benchmark <reads_file> <reference_file>
 
 Benchmark results will be stored in folder: <root folder>/intermediate
 Each benchmark will have its own folder with a randomly generated name, e.g. benchmark_129eed95-377d-4e8e-a5bf-309631e3df3d. Inside will be a folder for each assembler and a folder for Quast results (containing quast results for each assembler).
@@ -40,7 +40,7 @@ Obtained from Quast:
 - # mismatches per 100 kbp
 - # indels per 100 kbp
 
-Quast generated fields present in summarized results are represented in a list "qfields" in function "summarize_results" in DNAssMark.py. New field can be added by modifying that list.
+Quast generated fields present in summarized results are represented in a list "qfields" in function "summarize_results" in NanoMark.py. New field can be added by modifying that list.
 
 # Including new assemblers in the benchmark
 
