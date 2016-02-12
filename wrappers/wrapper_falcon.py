@@ -57,6 +57,8 @@ def execute_command(command, fp_log, dry_run=True):
         log('Executing: "%s".' % (command), fp_log);
         p = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE);
     [output, err] = p.communicate()
+    log('Captured STDOUT:\n%s\n\n' % (output), fp_log);
+    log('Captured STDERR:\n%s\n\n' % (err), fp_log);
     rc = p.returncode
     sys.stderr.write('\n');
     if (rc != 0):
