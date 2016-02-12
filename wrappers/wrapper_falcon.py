@@ -48,17 +48,22 @@ def log(message, fp_log):
         fp_log.write('[%s wrapper %s] %s\n' % (ASSEMBLER_NAME, timestamp, message))
         fp_log.flush();
 
+import traceback;
 def execute_command(command, fp_log, dry_run=True):
+    sys.stderr.write('Executing command: "%s"\n' % command);
     if (dry_run == True):
-        # sys.stderr.write('Warning: dry_run == True\n');
-#        sys.stderr.write('[%s wrapper] Executing (dryrun): "%s"\n' % (ASSEMBLER_NAME, command));
         log('Executing (dryrun): "%s".' % (command), fp_log);
     if (dry_run == False):
-        # sys.stderr.write('[%s wrapper] Executing: "%s"\n' % (ASSEMBLER_NAME, command));
         log('Executing: "%s".' % (command), fp_log);
-        subprocess.call(command, shell=True);
-    # sys.stderr.write('\n');
-    log('\n', fp_log);
+        p = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE);
+    [output, err] = p.communicate()
+    rc = p.returncode
+    sys.stderr.write('\n');
+    if (rc != 0):
+        log('ERROR: subprocess call returned error code: %d.\n' % (rc), fp_log);
+        traceback.print_stack(fp_log);
+        exit(1);
+    return [rc, output, err];
 
 def measure_command(measure_file):
     if (MODULE_BASICDEFINES == True):
