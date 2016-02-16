@@ -76,14 +76,21 @@ def log(message, fp_log):
         fp_log.write('[%s] %s\n' % (timestamp, message))
         fp_log.flush();
 
-def execute_command(command, fp_log, dry_run=False):
+import traceback;
+def execute_command(command, fp_log, dry_run=True):
     if (dry_run == True):
         log('Executing (dryrun): "%s".' % (command), fp_log);
+        log('\n', fp_log);
+        return 0;
     if (dry_run == False):
         log('Executing: "%s".' % (command), fp_log);
-        subprocess.call(command, shell=True);
-    log('\n', fp_log);
-
+        rc = subprocess.call(command, shell=True);
+        if (rc != 0):
+            log('ERROR: subprocess call returned error code: %d.' % (rc), fp_log);
+            log('Traceback:', fp_log);
+            traceback.print_stack(fp_log);
+            exit(1);
+        return rc;
 
 if __name__ == '__main__':
 	pass

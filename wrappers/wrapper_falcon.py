@@ -50,22 +50,37 @@ def log(message, fp_log):
 
 import traceback;
 def execute_command(command, fp_log, dry_run=True):
-    sys.stderr.write('Executing command: "%s"\n' % command);
     if (dry_run == True):
         log('Executing (dryrun): "%s".' % (command), fp_log);
+        log('\n', fp_log);
+        return 0;
     if (dry_run == False):
         log('Executing: "%s".' % (command), fp_log);
-        p = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE);
-    [output, err] = p.communicate()
-    log('Captured STDOUT:\n%s\n\n' % (output), fp_log);
-    log('Captured STDERR:\n%s\n\n' % (err), fp_log);
-    rc = p.returncode
-    sys.stderr.write('\n');
-    if (rc != 0):
-        log('ERROR: subprocess call returned error code: %d.\n' % (rc), fp_log);
-        traceback.print_stack(fp_log);
-        exit(1);
-    return [rc, output, err];
+        rc = subprocess.call(command, shell=True);
+        if (rc != 0):
+            log('ERROR: subprocess call returned error code: %d.' % (rc), fp_log);
+            log('Traceback:', fp_log);
+            traceback.print_stack(fp_log);
+            exit(1);
+        return rc;
+
+# def execute_command(command, fp_log, dry_run=True):
+#     sys.stderr.write('Executing command: "%s"\n' % command);
+#     if (dry_run == True):
+#         log('Executing (dryrun): "%s".' % (command), fp_log);
+#     if (dry_run == False):
+#         log('Executing: "%s".' % (command), fp_log);
+#         p = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE);
+#     [output, err] = p.communicate()
+#     log('Captured STDOUT:\n%s\n\n' % (output), fp_log);
+#     log('Captured STDERR:\n%s\n\n' % (err), fp_log);
+#     rc = p.returncode
+#     sys.stderr.write('\n');
+#     if (rc != 0):
+#         log('ERROR: subprocess call returned error code: %d.\n' % (rc), fp_log);
+#         traceback.print_stack(fp_log);
+#         exit(1);
+#     return [rc, output, err];
 
 def measure_command(measure_file):
     if (MODULE_BASICDEFINES == True):

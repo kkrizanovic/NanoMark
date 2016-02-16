@@ -26,7 +26,7 @@ except:
     ASSEMBLERS_PATH_ROOT_ABS = os.path.join(SCRIPT_PATH, 'assemblers/');
     TOOLS_ROOT = '%s' % (SCRIPT_PATH);
 
-ASSEMBLER_URL = 'http://www.cellprofiler.org/ftp/pub/crd/nightly/allpathslg/allpathslg-52488.tar.gz'
+ASSEMBLER_URL = 'ftp://ftp.broadinstitute.org/pub/crd/ALLPATHS/Release-LG/latest_source_code/allpathslg-52488.tar.gz'
 ASSEMBLER_PATH = os.path.join(ASSEMBLERS_PATH_ROOT_ABS, 'allpathslg-52488')
 ASSEMBLER_BIN = os.path.join(ASSEMBLER_PATH, 'bin/RunAllPathsLG')
 ASSEMBLER_NAME = 'ALLPATHS-LG'
@@ -53,20 +53,35 @@ def log(message, fp_log):
 
 import traceback;
 def execute_command(command, fp_log, dry_run=True):
-    sys.stderr.write('Executing command: "%s"\n' % command);
     if (dry_run == True):
         log('Executing (dryrun): "%s".' % (command), fp_log);
+        log('\n', fp_log);
+        return 0;
     if (dry_run == False):
         log('Executing: "%s".' % (command), fp_log);
-        p = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE);
-    [output, err] = p.communicate()
-    rc = p.returncode
-    sys.stderr.write('\n');
-    if (rc != 0):
-        log('ERROR: subprocess call returned error code: %d.\n' % (rc), fp_log);
-        traceback.print_stack(fp_log);
-        exit(1);
-    return [rc, output, err];
+        rc = subprocess.call(command, shell=True);
+        if (rc != 0):
+            log('ERROR: subprocess call returned error code: %d.' % (rc), fp_log);
+            log('Traceback:', fp_log);
+            traceback.print_stack(fp_log);
+            exit(1);
+        return rc;
+
+# def execute_command(command, fp_log, dry_run=True):
+#     sys.stderr.write('Executing command: "%s"\n' % command);
+#     if (dry_run == True):
+#         log('Executing (dryrun): "%s".' % (command), fp_log);
+#     if (dry_run == False):
+#         log('Executing: "%s".' % (command), fp_log);
+#         p = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE);
+#     [output, err] = p.communicate()
+#     rc = p.returncode
+#     sys.stderr.write('\n');
+#     if (rc != 0):
+#         log('ERROR: subprocess call returned error code: %d.\n' % (rc), fp_log);
+#         traceback.print_stack(fp_log);
+#         exit(1);
+#     return [rc, output, err];
 
 def measure_command(measure_file):
     if (MODULE_BASICDEFINES == True):
