@@ -487,7 +487,7 @@ def download_and_install():
             import virtualenv;
 	except:
             log('Virtualenv not installed! Sudo access will be required.\n', None);
-            execute_command('sudo apt-get install virtualenv', None, dry_run=DRY_RUN);
+            execute_command('sudo pip install virtualenv', None, dry_run=DRY_RUN);
 
 
 
