@@ -483,6 +483,15 @@ def download_and_install():
     else:
         # sys.stderr.write('[%s wrapper] Started installation of %s.\n' % (ASSEMBLER_NAME, ASSEMBLER_NAME))
         log('Started installation of %s.' % (ASSEMBLER_NAME), None);
+	try:
+            import virtualenv;
+	except:
+            log('Virtualenv not installed! Sudo access will be required.\n', None);
+            execute_command('sudo apt-get install virtualenv', None, dry_run=DRY_RUN);
+
+
+
+
         if (not os.path.exists(ASSEMBLERS_PATH_ROOT_ABS)):
             # sys.stderr.write('[%s wrapper] Creating a directory on path "%s".\n' % (ASSEMBLER_NAME, ASSEMBLERS_PATH_ROOT_ABS))
             log('Creating a directory on path "%s".' % (ASSEMBLERS_PATH_ROOT_ABS), None);
