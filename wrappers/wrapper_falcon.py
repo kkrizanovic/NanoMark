@@ -488,6 +488,11 @@ def download_and_install():
 	except:
             log('Virtualenv not installed! Sudo access will be required.\n', None);
             execute_command('sudo pip install virtualenv', None, dry_run=DRY_RUN);
+            
+        # Falcon requires the python-dev package to be installed.
+        from distutils import sysconfig as s; python_path = s.get_config_vars()['INCLUDEPY'];
+        if (os.path.exists('%s/Python.h' % (python_path)) == False):
+            execute_command('sudo apt-get install python-dev', None, dry_run=DRY_RUN);
 
 
 
