@@ -24,26 +24,14 @@ except:
     ASSEMBLERS_PATH_ROOT_ABS = os.path.join(SCRIPT_PATH, 'assemblers/');
     TOOLS_ROOT = '%s' % (SCRIPT_PATH);
 
-ASSEMBLER_URL = 'http://sourceforge.net/projects/wgs-assembler/files/wgs-assembler/wgs-8.3/wgs-8.3rc2-Linux_amd64.tar.bz2'
-ASSEMBLER_PATH = os.path.join(ASSEMBLERS_PATH_ROOT_ABS, 'wgs-8.3rc2')
-ZIP_FILE = 'wgs-8.3rc2-Linux_amd64.tar.bz2'
-ZIP_PATH = os.path.join(ASSEMBLERS_PATH_ROOT_ABS, ZIP_FILE)
-ASSEMBLER_BIN = os.path.join(ASSEMBLER_PATH,'Linux-amd64/bin/runCA')
-ASSEMBLER_ECBIN = os.path.join(ASSEMBLER_PATH,'Linux-amd64/bin/PBcR')
-ASSEMBLER_NAME = 'PBcR'
+ASSEMBLER_URL = 'https://github.com/lh3/miniasm.git'
+ASSEMBLER_PATH = os.path.join(ASSEMBLERS_PATH_ROOT_ABS, 'miniasm')
+ASSEMBLER_BIN = os.path.join(ASSEMBLER_PATH,'miniasm/miniasm')
+ASSEMBLER_NAME = 'Miniasm'
 # ASSEMBLER_RESULTS = 'out/9-terminator/asm.ctg.fasta'
 ASSEMBLY_UNPOLISHED = 'benchmark-unpolished_assembly.fasta'
 ASSEMBLY_POLISHED = 'benchmark-polished_assembly.fasta'
 CREATE_OUTPUT_FOLDER = True
-
-# PACBIO_SPEC = os.path.join(ASSEMBLER_PATH, 'wgs_pacbio.spec')
-# OXFORD_SPEC = os.path.join(ASSEMBLER_PATH, 'wgs_oxford.spec')
-
-DO_ERROR_CORRECTION = True
-
-# Run parameters
-P_LENGTH = 500
-P_PARTITIONS = 200
 
 # DRY_RUN = True;
 DRY_RUN = False;
@@ -219,10 +207,7 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
     reads_file = '%s/all_reads.fastq' % (output_path);
     for dataset in datasets:
         if (dataset.reads_path.endswith('fasta') or dataset.reads_path.endswith('fa')):
-            converted_reads_path = '%s/%s.fastq' % (output_path, os.path.splitext(os.path.basename(dataset.reads_path))[0]);
-            log('Converting file "%s" to FASTQ format and aggregating to "%s".\n' % (dataset.reads_path, reads_file), fp_log);
-            command = 'java -jar %s/convertFastaAndQualToFastq.jar %s >> %s' % (ASSEMBLER_PATH, dataset.reads_path, reads_file);
-            execute_command(command, fp_log, dry_run=DRY_RUN);
+            log('ERROR: Assembler %s expects only FASTQ files for input. Trouble loading "%s". Exiting.\n' % (ASSEMBLER_NAME, dataset.reads_path));
         else:
             log('Aggregating FASTQ file "%s" to "%s".\n' % (dataset.reads_path, reads_file), fp_log);
             command = 'cat %s >> %s' % (dataset.reads_path, reads_file);
@@ -231,79 +216,42 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
     ##################################################################################
     ### Start the important work.
     ##################################################################################
-    used_bin = ''
-    if DO_ERROR_CORRECTION:
-        used_bin = ASSEMBLER_ECBIN
-    else:
-        used_bin = ASSEMBLER_BIN
     memtime_path = os.path.join(output_path, ASSEMBLER_NAME + '.memtime')
 
     spec_file = ''
     if machine_name == 'pacbio':
-        spec_lines = [];
-        spec_lines.append('# limit to 32GB. By default the pipeline will auto-detect memory and try to use maximum. This allow limiting it');
-        spec_lines.append('ovlMemory = 32');
-        spec_lines.append('ovlStoreMemory= 32000');
-        spec_lines.append('merylMemory = 32000');
-        spec = '\n'.join(spec_lines);
+        overlaps_file = '%s/overlaps.paf.gz' % (output_path);
+        command = '%s/minimap/minimap -Sw5 -L100 -m0 -t%d %s %s | gzip -1 > %s' % (ASSEMBLER_PATH, num_threads, reads_file, reads_file, overlaps_file);
+        execute_command(command, fp_log, dry_run=DRY_RUN);
 
-        spec_file_path = '%s/pacbio.spec' % (output_path);
-        try:
-            fp_spec = open(spec_file_path, 'w');
-            fp_spec.write(spec + '\n');
-            fp_spec.close();
-        except IOError, e:
-            log('ERROR: Could not generate spec file in path: "%s"! Exiting.\n' % (spec_file_path), fp_log);
-            log(str(e), fp_log);
+        gfa_file = '%s/miniasm.gfa' % (output_path);
+        command = '%s -f %s %s > %s' % (ASSEMBLER_BIN, reads_file, overlaps_file, gfa_file);
+        execute_command(command, fp_log, dry_run=DRY_RUN);
 
-        # spec_file = PACBIO_SPEC
-        command = 'cd %s; %s %s -pbCNS -length 500 -partitions 200 -l %s -s %s -fastq %s ' % (output_path, measure_command(memtime_path), used_bin, ASSEMBLER_NAME, spec_file_path, reads_file)
+        command = 'awk \'$1 ~/S/ {print ">"$2"\\n"$3}\' %s > %s/%s' % (gfa_file, output_path, ASSEMBLY_UNPOLISHED);
         execute_command(command, fp_log, dry_run=DRY_RUN);
 
     elif machine_name == 'nanopore':
-        spec_lines = [];
-        spec_lines.append('# decrease mer size');
-        spec_lines.append('merSize=14');
-        spec_lines.append('');
-        spec_lines.append('# use falcon_sense consensus with adjusted parameters for lower quality reads');
-        spec_lines.append('falconForce=1');
-        spec_lines.append('falconOptions=--max_n_read 200 --min_idt 0.50 --output_multi --local_match_count_threshold 0');
-        spec_lines.append('');
-        spec_lines.append('# adjust assembly parameters to overlap at high error rate since the corrected reads are not 99% like pacbio');
-        spec_lines.append('asmOvlErrorRate = 0.3');
-        spec_lines.append('asmUtgErrorRate = 0.3');
-        spec_lines.append('asmCgwErrorRate = 0.3');
-        spec_lines.append('asmCnsErrorRate = 0.3');
-        spec_lines.append('asmOBT=0');
-        spec_lines.append('batOptions=-RS -CS');
-        spec_lines.append('utgGraphErrorRate = 0.3');
-        spec_lines.append('utgMergeErrorRate = 0.3');
-        spec_lines.append('');
-        spec = '\n'.join(spec_lines);
-
-        spec_file_path = '%s/oxford.spec' % (output_path);
-        try:
-            fp_spec = open(spec_file_path, 'w');
-            fp_spec.write(spec + '\n');
-            fp_spec.close();
-        except IOError, e:
-            log('ERROR: Could not generate spec file in path: "%s"! Exiting.\n' % (spec_file_path), fp_log);
-            log(str(e), fp_log);
-
-        # spec_file = OXFORD_SPEC
-        command = 'cd %s; %s %s -length 500 -partitions 200 -l %s -s %s -fastq %s genomeSize=%s' % (output_path, measure_command(memtime_path), used_bin, ASSEMBLER_NAME, spec_file_path, reads_file, approx_genome_len)
+        overlaps_file = '%s/overlaps.paf.gz' % (output_path);
+        command = '%s/minimap/minimap -Sw5 -L100 -m0 -t%d %s %s | gzip -1 > %s' % (ASSEMBLER_PATH, num_threads, reads_file, reads_file, overlaps_file);
         execute_command(command, fp_log, dry_run=DRY_RUN);
+
+        gfa_file = '%s/miniasm.gfa' % (output_path);
+        command = '%s -f %s %s > %s' % (ASSEMBLER_BIN, reads_file, overlaps_file, gfa_file);
+        execute_command(command, fp_log, dry_run=DRY_RUN);
+
+        command = 'awk \'$1 ~/S/ {print ">"$2"\\n"$3}\' %s > %s/%s' % (gfa_file, output_path, ASSEMBLY_UNPOLISHED);
+        execute_command(command, fp_log, dry_run=DRY_RUN);
+
     elif machine_name == 'illumina':
         log('\nMachine name "%s" not implemented for %s.\n' % (machine_name, ASSEMBLER_NAME));
         log('Skipping ....\n', fp_log)
         return;
+
     else:
         log('\nMachine name "%s" not implemented for %s.\n' % (machine_name, ASSEMBLER_NAME));
         log('Skipping ....\n', fp_log)
         return;
-
-    command = 'cp %s/%s/9-terminator/asm.ctg.fasta %s/%s' % (output_path, ASSEMBLER_NAME, output_path, ASSEMBLY_UNPOLISHED);
-    execute_command(command, fp_log, dry_run=DRY_RUN);
 
     if (fp_log != None):
         fp_log.close();
@@ -332,16 +280,14 @@ def download_and_install():
     else:
         sys.stderr.write('[%s wrapper] Started installation of %s.\n' % (ASSEMBLER_NAME, ASSEMBLER_NAME))
 
-        if not os.path.exists(ZIP_PATH):
-            sys.stderr.write('[%s wrapper] Downloading tar.bz2...\n' % (ASSEMBLER_NAME))
-            command = 'cd %s; wget %s' % (ASSEMBLERS_PATH_ROOT_ABS, ASSEMBLER_URL)
-            execute_command(command, None, dry_run=DRY_RUN);
+        if (not os.path.exists(ASSEMBLER_PATH)):
+            log('Creating a directory on path "%s".' % (ASSEMBLER_PATH), None);
+            os.makedirs(ASSEMBLER_PATH);
 
-        # Decompress
-        command = 'cd %s; tar -xvjf %s' % (ASSEMBLERS_PATH_ROOT_ABS, ZIP_FILE)
+        command = 'cd %s; git clone https://github.com/lh3/minimap && (cd minimap && make)' % (ASSEMBLER_PATH)
         execute_command(command, None, dry_run=DRY_RUN);
 
-        command = 'cd %s; wget http://www.cbcb.umd.edu/software/PBcR/data/convertFastaAndQualToFastq.jar' % (ASSEMBLER_PATH);
+        command = 'cd %s; git clone %s && (cd miniasm && make)' % (ASSEMBLER_PATH, ASSEMBLER_URL)
         execute_command(command, None, dry_run=DRY_RUN);
 
 def verbose_usage_and_exit():
