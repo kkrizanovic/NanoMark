@@ -4,13 +4,18 @@ DNA Assembly Benchmark for Nanopore long reads
 A system for benchmarking DNA assembly tools, based on 3rd generation sequencers.
 
 # Setup
-After cloning the repository first run: NanoMark --setup.
-This will download and compile all tools necessary to run a benchmark.
-- cgmemtime to measure runtime andmaximum memory consumption
-- Quast to estimake assembly quality
-- Everyhting needed to run each denovo assembly tool for whom a wrapper is defined in folder: <root folder>/src/wrappers
+```
+git clone https://github.com/kkrizanovic/NanoMark.git
+cd NanoMark
+src/nanomark.py setup
+```
 
-All tools will be downloaded to folder <root folder>/tools
+This will download and compile all tools necessary to run a benchmark.
+- Cgmemtime to measure runtime andmaximum memory consumption
+- Quast to estimate assembly quality
+- Everyhting needed to run each denovo assembly tool for whom a wrapper is defined in folder: ¨¨¨NanoMark/wrappers```
+
+All tools will be downloaded to folder ```NanoMark/tools```.
 
 # Running a benchmark
 Run benchmark with a following command: NanoMark.py --benchmark <reads_file> <reference_file>
