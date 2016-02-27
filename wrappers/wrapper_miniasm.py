@@ -314,7 +314,11 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
     reads_file = '%s/all_reads.fastq' % (output_path);
     for dataset in datasets:
         if (dataset.reads_path.endswith('fasta') or dataset.reads_path.endswith('fa')):
-            log('ERROR: Assembler %s expects only FASTQ files for input. Trouble loading "%s". Exiting.\n' % (ASSEMBLER_NAME, dataset.reads_path), fp_log);
+            # log('ERROR: Assembler %s expects only FASTQ files for input. Trouble loading "%s". Exiting.\n' % (ASSEMBLER_NAME, dataset.reads_path), fp_log);
+            converted_reads_path = '%s/%s.fastq' % (output_path, os.path.splitext(os.path.basename(dataset.reads_path))[0]);
+            log('Converting file "%s" to FASTQ format and aggregating to "%s".\n' % (dataset.reads_path, reads_file), fp_log);
+            command = 'java -jar %s/convertFastaAndQualToFastq.jar %s >> %s' % (ASSEMBLER_PATH, dataset.reads_path, reads_file);
+            execute_command(command, fp_log, dry_run=DRY_RUN);
         else:
             log('Aggregating FASTQ file "%s" to "%s".\n' % (dataset.reads_path, reads_file), fp_log);
             command = 'cat %s >> %s' % (dataset.reads_path, reads_file);
@@ -390,6 +394,9 @@ def download_and_install():
         execute_command(command, None, dry_run=DRY_RUN);
 
         command = 'cd %s; git clone %s && (cd miniasm && make)' % (ASSEMBLER_PATH, ASSEMBLER_URL)
+        execute_command(command, None, dry_run=DRY_RUN);
+        
+        command = 'cd %s; wget http://www.cbcb.umd.edu/software/PBcR/data/convertFastaAndQualToFastq.jar' % (ASSEMBLER_PATH);
         execute_command(command, None, dry_run=DRY_RUN);
 
 def verbose_usage_and_exit():
