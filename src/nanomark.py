@@ -412,6 +412,7 @@ def verbose_usage_and_exit():
     sys.stderr.write('\n')
     sys.stderr.write('\tmode:\n')
     sys.stderr.write('\t\tsetup\n')
+    sys.stderr.write('\t\tsetup-tools-only\n')
     sys.stderr.write('\t\tbenchmark\n')
     sys.stderr.write('\t\tcontinue\n')
     sys.stderr.write('\t\tsummarize\n')
@@ -433,6 +434,15 @@ def main():
             exit(1)
 
         setup_nanomark.setup_all()
+
+    elif mode == 'setup-tools-only':
+        if (len(sys.argv) != 2):
+            sys.stderr.write('Setup the folder structures and install necessary tools.\n')
+            sys.stderr.write('Requires no additional parameters to run.\n')
+            sys.stderr.write('\n')
+            exit(1)
+
+        setup_nanomark.setup_tools()
 
     elif mode == 'benchmark':
         if (len(sys.argv) < 5 or len(sys.argv) > 7):

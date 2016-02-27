@@ -380,7 +380,8 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
     ##################################################################################
     ### Accumulate the memtime stats.
     ##################################################################################
-    memtime_file = '%s/%s.memtime' % (output_path, ASSEMBLER_NAME);
+    # memtime_file = '%s/%s.memtime' % (output_path, ASSEMBLER_NAME);
+    memtime_file = '%s/total.memtime' % (output_path);
     all_memtimes = ['%s-%d.memtime' % (ASSEMBLER_NAME, value) for value in xrange(1, num_memtimes)];
     parse_memtime_files_and_accumulate(all_memtimes, memtime_file);
 

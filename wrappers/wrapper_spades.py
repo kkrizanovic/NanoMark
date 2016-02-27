@@ -384,7 +384,8 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
         log('ERROR: Could not generate spec file in path: "%s"! Exiting.\n' % (yaml_file_path), fp_log);
         log(str(e), fp_log);
 
-    memtime_path = os.path.join(output_path, ASSEMBLER_NAME + '.memtime')
+    # memtime_path = os.path.join(output_path, ASSEMBLER_NAME + '.memtime')
+    memtime_file = '%s/total.memtime' % (output_path);
     command = 'cd %s; %s %s -o %s/assembly_results --dataset %s' % (output_path, measure_command(memtime_path), ASSEMBLER_BIN, output_path, yaml_file_path)
     execute_command(command, fp_log, dry_run=DRY_RUN);
 

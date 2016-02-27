@@ -236,7 +236,8 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
         used_bin = ASSEMBLER_ECBIN
     else:
         used_bin = ASSEMBLER_BIN
-    memtime_path = os.path.join(output_path, ASSEMBLER_NAME + '.memtime')
+    # memtime_path = os.path.join(output_path, ASSEMBLER_NAME + '.memtime')
+    memtime_file = '%s/total.memtime' % (output_path);
 
     spec_file = ''
     if machine_name == 'pacbio':

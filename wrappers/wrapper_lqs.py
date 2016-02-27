@@ -445,7 +445,8 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
         log('Skipping ....\n', fp_log)
         return;
 
-    memtime_file = '%s/%s.memtime' % (output_path, ASSEMBLER_NAME);
+    # memtime_file = '%s/%s.memtime' % (output_path, ASSEMBLER_NAME);
+    memtime_file = '%s/total.memtime' % (output_path);
     # memtime_files_prefis = 
     memtime_files_prefix =  '%s/%s' % (output_path, ASSEMBLER_NAME);
 

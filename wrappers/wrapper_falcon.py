@@ -444,7 +444,8 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
     #     command = 'sudo %s/cgmemtime/cgmemtime --setup -g %s --perm 775' % (basicdefines.TOOLS_ROOT, getpass.getuser());
     #     execute_command(command, fp_log, dry_run=DRY_RUN);
 
-    memtime_file = '%s/%s.memtime' % (output_path, ASSEMBLER_NAME);
+    # memtime_file = '%s/%s.memtime' % (output_path, ASSEMBLER_NAME);
+    memtime_file = '%s/total.memtime' % (output_path);
     FC_path = '%s/fc_env' % (ASSEMBLER_PATH);
     run_commands = [];
     run_commands.append('. %s/bin/activate' % (FC_path));

@@ -142,6 +142,113 @@ def get_single_read(fp):
 ##############################################################
 ##############################################################
 ##############################################################
+def parse_memtime(memtime_path):
+    cmdline = '';
+    realtime = 0;
+    cputime = 0;
+    usertime = 0;
+    systemtime = 0;
+    maxrss = 0;
+    rsscache = 0;
+    time_unit = '';
+    mem_unit = '';
+
+    try:
+        fp = open(memtime_path, 'r');
+        lines = [line.strip() for line in fp.readlines() if (len(line.strip()) > 0)];
+        fp.close();
+    except Exception, e:
+        sys.stderr.write('Could not find memory and time statistics in file "%s".\n' % (memtime_path));
+        return [cmdline, realtime, cputime, usertime, systemtime, maxrss, time_unit, mem_unit];
+
+    for line in lines:
+        if (line.startswith('Command line:')):
+            cmdline = line.split(':')[1].strip();
+        elif (line.startswith('Real time:')):
+            split_line = line.split(':')[1].strip().split(' ');
+            realtime = float(split_line[0].strip());
+            time_unit = split_line[1].strip();
+        elif (line.startswith('CPU time:')):
+            split_line = line.split(':')[1].strip().split(' ');
+            cputime = float(split_line[0].strip());
+            time_unit = split_line[1].strip();
+        elif (line.startswith('User time:')):
+            split_line = line.split(':')[1].strip().split(' ');
+            usertime = float(split_line[0].strip());
+            time_unit = split_line[1].strip();
+        elif (line.startswith('System time:')):
+            split_line = line.split(':')[1].strip().split(' ');
+            systemtime = float(split_line[0].strip());
+            time_unit = split_line[1].strip();
+        elif (line.startswith('Maximum RSS:')):
+            split_line = line.split(':')[1].strip().split(' ');
+            maxrss = float(split_line[0].strip());
+            mem_unit = split_line[1].strip();
+        # elif (line.startswith('')):
+        #   split_line = line.split(':')[1].strip().split(' ');
+        #   rsscache = float(split_line[0].strip());
+        #   mem_unit = split_line[1].strip();
+
+    return [cmdline, realtime, cputime, usertime, systemtime, maxrss, time_unit, mem_unit];
+
+def parse_memtime_files_and_accumulate(memtime_files, final_memtime_file):
+    final_command_line = '';
+    final_real_time = 0.0;
+    final_cpu_time = 0.0;
+    final_user_time = 0.0;
+    final_system_time = 0.0;
+    final_time_unit = '';
+    final_max_rss = 0;
+    final_mem_unit = '';
+
+    i = 0;
+    for memtime_file in memtime_files:
+        i += 1;
+        sys.stderr.write('Parsing memtime file "%s"...\n' % (memtime_file));
+
+        [cmdline, realtime, cputime, usertime, systemtime, maxrss, time_unit, mem_unit] = parse_memtime(memtime_file);
+        if (i == 1):
+            final_command_line = cmdline;
+            final_real_time = realtime;
+            final_cpu_time = cputime;
+            final_user_time = usertime;
+            final_system_time = systemtime;
+            final_max_rss += maxrss;
+            final_time_unit = time_unit;
+            final_mem_unit = mem_unit;
+        else:
+            if (time_unit == final_time_unit and mem_unit == final_mem_unit):
+                final_command_line += '; ' + cmdline;
+                final_real_time += realtime;
+                final_cpu_time += cputime;
+                final_user_time += usertime;
+                final_system_time += systemtime;
+                final_max_rss += maxrss;
+            else:
+                sys.stderr.write('Memory or time units not the same in all files! Instead of handling this, we decided to be lazy and just give up.\n');
+                break;
+
+    try:
+        fp = open(final_memtime_file, 'w');
+    except Exception, e:
+        sys.stderr.write('ERROR: Could not open file "%s" for writing!\n' % (final_memtime_file));
+        return;
+
+    if (final_cpu_time <= 0.0):
+        final_cpu_time = final_user_time + final_system_time;
+
+    fp.write('Command line: %s\n' % (final_command_line));
+    fp.write('Real time: %f %s\n' % (final_real_time, final_time_unit));
+    fp.write('CPU time: %f %s\n' % (final_cpu_time, final_time_unit));
+    fp.write('User time: %f %s\n' % (final_user_time, final_time_unit));
+    fp.write('System time: %f %s\n' % (final_system_time, final_time_unit));
+    fp.write('Maximum RSS: %f %s\n' % (final_max_rss, final_mem_unit));
+
+    fp.close();
+
+##############################################################
+##############################################################
+##############################################################
 
 # Function 'run' should provide a standard interface for running a mapper. Given input parameters, it should run the
 # alignment process, and convert any custom output results to the SAM format. Function should return a string with the
@@ -216,28 +323,20 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
     ##################################################################################
     ### Start the important work.
     ##################################################################################
-    memtime_path = os.path.join(output_path, ASSEMBLER_NAME + '.memtime')
+    memtime_path = os.path.join(output_path, 'total.memtime')
+    memtime_files_prefix =  '%s/%s' % (output_path, ASSEMBLER_NAME);
+    current_memtime_id = 0;
 
     spec_file = ''
-    if machine_name == 'pacbio':
+    if machine_name == 'pacbio' or machine_name == 'nanopore':
         overlaps_file = '%s/overlaps.paf.gz' % (output_path);
-        command = '%s/minimap/minimap -Sw5 -L100 -m0 -t%d %s %s | gzip -1 > %s' % (ASSEMBLER_PATH, num_threads, reads_file, reads_file, overlaps_file);
+        current_memtime_id += 1;
+        command = '%s %s/minimap/minimap -Sw5 -L100 -m0 -t%d %s %s | gzip -1 > %s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), ASSEMBLER_PATH, num_threads, reads_file, reads_file, overlaps_file);
         execute_command(command, fp_log, dry_run=DRY_RUN);
 
         gfa_file = '%s/miniasm.gfa' % (output_path);
-        command = '%s -f %s %s > %s' % (ASSEMBLER_BIN, reads_file, overlaps_file, gfa_file);
-        execute_command(command, fp_log, dry_run=DRY_RUN);
-
-        command = 'awk \'$1 ~/S/ {print ">"$2"\\n"$3}\' %s > %s/%s' % (gfa_file, output_path, ASSEMBLY_UNPOLISHED);
-        execute_command(command, fp_log, dry_run=DRY_RUN);
-
-    elif machine_name == 'nanopore':
-        overlaps_file = '%s/overlaps.paf.gz' % (output_path);
-        command = '%s/minimap/minimap -Sw5 -L100 -m0 -t%d %s %s | gzip -1 > %s' % (ASSEMBLER_PATH, num_threads, reads_file, reads_file, overlaps_file);
-        execute_command(command, fp_log, dry_run=DRY_RUN);
-
-        gfa_file = '%s/miniasm.gfa' % (output_path);
-        command = '%s -f %s %s > %s' % (ASSEMBLER_BIN, reads_file, overlaps_file, gfa_file);
+        current_memtime_id += 1;
+        command = '%s %s -f %s %s > %s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), ASSEMBLER_BIN, reads_file, overlaps_file, gfa_file);
         execute_command(command, fp_log, dry_run=DRY_RUN);
 
         command = 'awk \'$1 ~/S/ {print ">"$2"\\n"$3}\' %s > %s/%s' % (gfa_file, output_path, ASSEMBLY_UNPOLISHED);
@@ -255,6 +354,9 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
 
     if (fp_log != None):
         fp_log.close();
+
+    all_memtimes = ['%s-%s.memtime' % (memtime_files_prefix, value) for value in xrange(1, current_memtime_id)];
+    parse_memtime_files_and_accumulate(all_memtimes, memtime_path);
 
 
 
