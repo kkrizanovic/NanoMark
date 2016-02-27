@@ -314,7 +314,7 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
     reads_file = '%s/all_reads.fastq' % (output_path);
     for dataset in datasets:
         if (dataset.reads_path.endswith('fasta') or dataset.reads_path.endswith('fa')):
-            log('ERROR: Assembler %s expects only FASTQ files for input. Trouble loading "%s". Exiting.\n' % (ASSEMBLER_NAME, dataset.reads_path));
+            log('ERROR: Assembler %s expects only FASTQ files for input. Trouble loading "%s". Exiting.\n' % (ASSEMBLER_NAME, dataset.reads_path), fp_log);
         else:
             log('Aggregating FASTQ file "%s" to "%s".\n' % (dataset.reads_path, reads_file), fp_log);
             command = 'cat %s >> %s' % (dataset.reads_path, reads_file);
