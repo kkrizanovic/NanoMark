@@ -606,8 +606,24 @@ def download_and_install():
         setup_commands.append('sudo apt-get install parallel');
         setup_commands.append('sudo apt-get install ncurses-dev');
         setup_commands.append('sudo apt-get install libhdf5-dev');
-        setup_commands.append('sudo apt-get install r-base');
         setup_commands.append('sudo pip install virtualenv');
+
+        # Check if R is installed.
+        # setup_commands.append('sudo apt-get install r-base');
+        proc = subprocess.Popen(["which", "R"],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        exit_code = proc.wait()
+        if (exit_code != 0):
+            log('R is not installed. This is something that needs to be done manually. Please install the latest version of R to continue.\n', fp_log);
+            log('Suggestion for Ubuntu 14.04:\n', fp_log);
+            log('  sudo sh -c \'echo "deb http://cran.rstudio.com/bin/linux/ubuntu trusty/" >> /etc/apt/sources.list\'\n', fp_log);
+            log('  gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9\n', fp_log);
+            log('  gpg -a --export E084DAB9 | sudo apt-key add -\n', fp_log);
+            log('  sudo apt-get update\n', fp_log);
+            log('  sudo apt-get -y install r-base\n', fp_log);
+            log('\n', fp_log);
+            log('Exiting.\n', fp_log);
+            exit(1);
+
         # Install Python dependencies.
         setup_commands.append('LS_ENV=%s/ls_env' % (ASSEMBLER_PATH));
         setup_commands.append('virtualenv --no-site-packages --always-copy $LS_ENV');
