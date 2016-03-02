@@ -78,6 +78,18 @@ def execute_command(command, fp_log, dry_run=True):
             exit(1);
         return rc;
 
+def execute_command_get_stdout(command, fp_log, dry_run=True):
+    if (dry_run == True):
+        log('Executing (dryrun): "%s".' % (command), fp_log);
+        log('\n', fp_log);
+        return ['', ''];
+    if (dry_run == False):
+        log('Executing: "%s".' % (command), fp_log);
+        p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+        [out, err] = p.communicate()
+        sys.stderr.write('\n');
+        return [out, err];
+
 # def execute_command(command, fp_log, dry_run=True):
 #     sys.stderr.write('Executing command: "%s"\n' % command);
 #     if (dry_run == True):
@@ -597,7 +609,7 @@ def download_and_install():
 
         # command = 'cd %s; git clone %s' % (ASSEMBLERS_PATH_ROOT_ABS, ASSEMBLER_URL)
         # execute_command(command, None, dry_run=DRY_RUN);
-        
+
         # Check if R is installed.
         # setup_commands.append('sudo apt-get install r-base');
         proc = subprocess.Popen(["which", "R"],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
@@ -613,6 +625,24 @@ def download_and_install():
             log('\n', fp_log);
             log('Exiting.\n', fp_log);
             exit(1);
+        else:
+            [out, err] = execute_command_get_stdout('R --version', fp_log, DRY_RUN);
+            print 'out:';
+            print out;
+            print 'err:';
+            print err;
+            exit(1);
+
+        # else:
+        #     log('Please make sure that the latest version of R is installed. Rpy requires the latest version, which is currently not available on the official repo, but a new source has to be added.\n', fp_log);
+        #     log('Suggestion for Ubuntu 14.04:\n', fp_log);
+        #     log('  sudo sh -c \'echo "deb http://cran.rstudio.com/bin/linux/ubuntu trusty/" >> /etc/apt/sources.list\'\n', fp_log);
+        #     log('  gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9\n', fp_log);
+        #     log('  gpg -a --export E084DAB9 | sudo apt-key add -\n', fp_log);
+        #     log('  sudo apt-get update\n', fp_log);
+        #     log('  sudo apt-get -y install r-base\n', fp_log);
+        #     log('\n', fp_log);
+        #     log('Are you sure you have the ')
 
         setup_commands = [];
         # The programs we will install must be on the PATH');
