@@ -374,12 +374,12 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
     if (fp_log != None):
         fp_log.close();
 
-    if (os.path.exists('%s/canu.consensus.fasta' % (output_path))):
-        command = 'cp %s/canu.consensus.fasta %s/%s' % (output_path, ASSEMBLER_NAME, output_path, ASSEMBLY_UNPOLISHED);
+    if (os.path.exists('%s/canu.contigs.fasta' % (output_path))):
+        command = 'cp %s/canu.contigs.fasta %s/%s' % (output_path, ASSEMBLER_NAME, output_path, ASSEMBLY_UNPOLISHED);
         execute_command(command, fp_log, dry_run=DRY_RUN);
     else:
         # Nothing was generated (i.e. the assembly was unsuccessful). Just touch the file.
-        fp = open('%s.%s' % (output_path, ASSEMBLY_UNPOLISHED), 'w');
+        fp = open('%s/%s' % (output_path, ASSEMBLY_UNPOLISHED), 'w');
         fp.close();
 
 
