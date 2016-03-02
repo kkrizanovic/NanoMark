@@ -87,7 +87,6 @@ def execute_command_get_stdout(command, fp_log, dry_run=True):
         log('Executing: "%s".' % (command), fp_log);
         p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
         [out, err] = p.communicate()
-        sys.stderr.write('\n');
         return [out, err];
 
 # def execute_command(command, fp_log, dry_run=True):
@@ -612,26 +611,50 @@ def download_and_install():
 
         # Check if R is installed.
         # setup_commands.append('sudo apt-get install r-base');
+	fp_log = None;
         proc = subprocess.Popen(["which", "R"],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         exit_code = proc.wait()
         if (exit_code != 0):
-            log('R is not installed. This is something that needs to be done manually. Please install the latest version of R to continue.\n', fp_log);
-            log('Suggestion for Ubuntu 14.04:\n', fp_log);
-            log('  sudo sh -c \'echo "deb http://cran.rstudio.com/bin/linux/ubuntu trusty/" >> /etc/apt/sources.list\'\n', fp_log);
-            log('  gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9\n', fp_log);
-            log('  gpg -a --export E084DAB9 | sudo apt-key add -\n', fp_log);
-            log('  sudo apt-get update\n', fp_log);
-            log('  sudo apt-get -y install r-base\n', fp_log);
-            log('\n', fp_log);
+            log('R is not installed. This is something that needs to be done manually. Please install the latest version of R to continue.', fp_log);
+            log('Suggestion for Ubuntu 14.04:', fp_log);
+            log('  sudo sh -c \'echo "deb http://cran.rstudio.com/bin/linux/ubuntu trusty/" >> /etc/apt/sources.list\'', fp_log);
+            log('  gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9', fp_log);
+            log('  gpg -a --export E084DAB9 | sudo apt-key add -', fp_log);
+            log('  sudo apt-get update', fp_log);
+            log('  sudo apt-get -y install r-base', fp_log);
             log('Exiting.\n', fp_log);
             exit(1);
         else:
-            [out, err] = execute_command_get_stdout('R --version', fp_log, DRY_RUN);
-            print 'out:';
-            print out;
-            print 'err:';
-            print err;
-            exit(1);
+            [out, err] = execute_command_get_stdout('R --version', None, DRY_RUN);
+            wrong_R_version = False;
+#            split_out = out.split('\n');
+	    try:
+	            m = re.search(r'.*R version ([0-9]+)\.([0-9]+)\.([0-9]+)', out, re.M|re.I|re.S);
+#            print 'out:';
+#            print split_out[0];
+                    major = int(m.group(1));
+                    minor = int(m.group(2));
+                    patch = int(m.group(3));
+        	    print 'R version: major = %d, minor = %d, patch = %d' % (major, minor, patch);
+        	    print 'Required:  major = 3, minor = 2, patch = 3';
+                    if (major < 3 or (major == 3 and minor < 2) or (major == 3 and minor == 2 and patch < 3)):
+                      wrong_R_version = True;
+#            print 'err:';
+#            print err;
+            except Exception, e:
+              sys.stderr.write('Error:\n%s\n\n' % (str(e)));
+              wrong_R_version = True;
+            if (wrong_R_version == True):
+              log('Wrong version of R is installed. Minimum required version is 3.2.3.', fp_log);
+              log('This is something that needs to be done manually. Please install the latest version of R to continue.', fp_log);
+              log('Suggestion for Ubuntu 14.04:', fp_log);
+              log('  sudo sh -c \'echo "deb http://cran.rstudio.com/bin/linux/ubuntu trusty/" >> /etc/apt/sources.list\'', fp_log);
+              log('  gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9', fp_log);
+              log('  gpg -a --export E084DAB9 | sudo apt-key add -', fp_log);
+              log('  sudo apt-get update', fp_log);
+              log('  sudo apt-get -y install r-base', fp_log);
+              log('Exiting.\n', fp_log);
+              exit(1);
 
         # else:
         #     log('Please make sure that the latest version of R is installed. Rpy requires the latest version, which is currently not available on the official repo, but a new source has to be added.\n', fp_log);
@@ -653,6 +676,8 @@ def download_and_install():
         setup_commands.append('sudo apt-get install ncurses-dev');
         setup_commands.append('sudo apt-get install libhdf5-dev');
         setup_commands.append('sudo pip install virtualenv');
+        setup_commands.append('sudo apt-get install libreadline-dev');
+        setup_commands.append('sudo apt-get install r-base-dev');
 
         # Install Python dependencies.
         setup_commands.append('LS_ENV=%s/ls_env' % (ASSEMBLER_PATH));
