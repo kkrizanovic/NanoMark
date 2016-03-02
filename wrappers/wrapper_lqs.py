@@ -597,17 +597,7 @@ def download_and_install():
 
         # command = 'cd %s; git clone %s' % (ASSEMBLERS_PATH_ROOT_ABS, ASSEMBLER_URL)
         # execute_command(command, None, dry_run=DRY_RUN);
-
-        setup_commands = [];
-        # The programs we will install must be on the PATH');
-        # Install the BioPerl dependency, as well as other dependencies.
-        setup_commands.append('cd %s' % (ASSEMBLER_PATH));
-        setup_commands.append('sudo apt-get install bioperl');
-        setup_commands.append('sudo apt-get install parallel');
-        setup_commands.append('sudo apt-get install ncurses-dev');
-        setup_commands.append('sudo apt-get install libhdf5-dev');
-        setup_commands.append('sudo pip install virtualenv');
-
+        
         # Check if R is installed.
         # setup_commands.append('sudo apt-get install r-base');
         proc = subprocess.Popen(["which", "R"],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
@@ -623,6 +613,16 @@ def download_and_install():
             log('\n', fp_log);
             log('Exiting.\n', fp_log);
             exit(1);
+
+        setup_commands = [];
+        # The programs we will install must be on the PATH');
+        # Install the BioPerl dependency, as well as other dependencies.
+        setup_commands.append('cd %s' % (ASSEMBLER_PATH));
+        setup_commands.append('sudo apt-get install bioperl');
+        setup_commands.append('sudo apt-get install parallel');
+        setup_commands.append('sudo apt-get install ncurses-dev');
+        setup_commands.append('sudo apt-get install libhdf5-dev');
+        setup_commands.append('sudo pip install virtualenv');
 
         # Install Python dependencies.
         setup_commands.append('LS_ENV=%s/ls_env' % (ASSEMBLER_PATH));
