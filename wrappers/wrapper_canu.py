@@ -371,16 +371,17 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
         log('Skipping ....\n', fp_log)
         return;
 
-    if (fp_log != None):
-        fp_log.close();
-
+    # Copy the resulting contigs to a new file. If the contigs file does not exist, create an empty file.
     if (os.path.exists('%s/canu.contigs.fasta' % (output_path))):
-        command = 'cp %s/canu.contigs.fasta %s/%s' % (output_path, ASSEMBLER_NAME, output_path, ASSEMBLY_UNPOLISHED);
+        command = 'cp %s/canu.contigs.fasta %s/%s' % (output_path, output_path, ASSEMBLY_UNPOLISHED);
         execute_command(command, fp_log, dry_run=DRY_RUN);
     else:
         # Nothing was generated (i.e. the assembly was unsuccessful). Just touch the file.
         fp = open('%s/%s' % (output_path, ASSEMBLY_UNPOLISHED), 'w');
         fp.close();
+
+    if (fp_log != None):
+        fp_log.close();
 
 
 
