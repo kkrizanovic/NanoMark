@@ -21,10 +21,16 @@ try:
     MODULE_BASICDEFINES = True;
     ASSEMBLERS_PATH_ROOT_ABS = basicdefines.ASSEMBLERS_PATH_ROOT_ABS;
     TOOLS_ROOT = basicdefines.TOOLS_ROOT;
+    CGMEMTIME_PATH = basicdefines.CGMEMTIME_PATH;
+    CGMEMTIME_BIN = basicdefines.CGMEMTIME_FILE;
+    TOOLS_ROOT_ABS = basicdefines.TOOLS_ROOT_ABS;
 except:
     MODULE_BASICDEFINES = False;
     ASSEMBLERS_PATH_ROOT_ABS = os.path.join(SCRIPT_PATH, 'assemblers/');
     TOOLS_ROOT = '%s' % (SCRIPT_PATH);
+    CGMEMTIME_PATH = os.path.join(SCRIPT_PATH, 'tools/cgmemtime/');
+    CGMEMTIME_BIN = 'cgmemtime';
+    TOOLS_ROOT_ABS = '%s/tools/' % (SCRIPT_PATH);
 
 ASSEMBLER_URL = 'ftp://ftp.broadinstitute.org/pub/crd/ALLPATHS/Release-LG/latest_source_code/allpathslg-52488.tar.gz'
 ASSEMBLER_PATH = os.path.join(ASSEMBLERS_PATH_ROOT_ABS, 'allpathslg-52488')
@@ -429,6 +435,12 @@ def download_and_install():
         execute_command(command, None, dry_run=DRY_RUN);
 
         command = 'cd %s; wget %s; unzip %s' % (ASSEMBLER_PATH, PICARDTOOLS_URL, os.path.basename(PICARDTOOLS_URL));
+        execute_command(command, None, dry_run=DRY_RUN);
+
+    if os.path.exists(CGMEMTIME_PATH + '/' + CGMEMTIME_BIN):
+        sys.stderr.write('Cgmemtime already installed. Skipping...\n')
+    else:
+        command = 'mkdir -p %s; cd %s; git clone https://github.com/isovic/cgmemtime.git' % (TOOLS_ROOT_ABS, TOOLS_ROOT_ABS)
         execute_command(command, None, dry_run=DRY_RUN);
 
 def verbose_usage_and_exit():

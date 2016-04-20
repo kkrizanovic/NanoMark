@@ -35,6 +35,10 @@ DNADIFF_BIN = os.path.join(DNADIFF_PATH_ROOT_ABS, 'dnadiff')
 DATASETS_PATH = 'intermediate'
 DATASETS_PATH_ROOT_ABS = SCRIPT_PATH + '/../' + DATASETS_PATH
 
+CGMEMTIME_FILE = 'cgmemtime'
+CGMEMTIME_PATH = os.path.join(TOOLS_ROOT_ABS, 'cgmemtime')
+CGMEMTIME_PATH_ABS = SCRIPT_PATH + '/../' + os.path.join(TOOLS_ROOT_ABS, 'cgmemtime')
+
 TECH = ['illumina', 'pacbio', 'nanopore']
 
 
