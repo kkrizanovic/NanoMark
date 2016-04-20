@@ -35,9 +35,10 @@ DNADIFF_BIN = os.path.join(DNADIFF_PATH_ROOT_ABS, 'dnadiff')
 DATASETS_PATH = 'intermediate'
 DATASETS_PATH_ROOT_ABS = SCRIPT_PATH + '/../' + DATASETS_PATH
 
-CGMEMTIME_FILE = 'cgmemtime'
+CGMEMTIME_BIN = 'cgmemtime'
 CGMEMTIME_PATH = os.path.join(TOOLS_ROOT_ABS, 'cgmemtime')
 CGMEMTIME_PATH_ABS = SCRIPT_PATH + '/../' + os.path.join(TOOLS_ROOT_ABS, 'cgmemtime')
+CGMEMTIME_FILE = CGMEMTIME_PATH_ABS + '/' + CGMEMTIME_BIN;
 
 TECH = ['illumina', 'pacbio', 'nanopore']
 
@@ -95,6 +96,21 @@ def execute_command(command, fp_log, dry_run=True):
             traceback.print_stack(fp_log);
             exit(1);
         return rc;
+
+# def setup_measure_command():
+#     ### Run a simple measure to try and see if the Cgroups was initialized.
+#     # command = '%s time' % (measure_command('/tmp/temp-measure.txt'));
+#     # [out, err, returncode] = execute_command(command);
+#     # if (returncode != 0 or ('Could not create new sub-cgroup' in out) or ('Could not create new sub-cgroup' in err)):
+#     # if (returncode != 0):
+#     sys.stderr.write('Sudo is needed for the Cgroups API (memory and time measurements).\n');
+#     command = 'sudo %s/../tools/cgmemtime/cgmemtime --setup -g $USER --perm 775' % (SCRIPT_PATH);
+#     [out, err, returncode] = execute_command(command);
+#     # p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+#     # [out, err] = p.communicate()
+#     # if (('Could not create new sub-cgroup' in out) or ('Could not create new sub-cgroup' in err)):
+#     #   sys.stderr.write('ERROR: Could not initialize Cgmemtime! Exiting.\n');
+#     # exit(1);
 
 if __name__ == '__main__':
 	pass
