@@ -44,6 +44,8 @@ def download_assemblers():
 
 
 def setup_tools():
+	create_folders()
+
 	if os.path.exists(CGMEMTIME_PATH):
 		sys.stderr.write('Cgmemtime already installed. Skipping...\n')
 	else:
