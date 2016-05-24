@@ -190,6 +190,9 @@ def convert_reads_to_pacbio_format(reads_file, out_reads_file, fp_log, read_coun
 
         ### Check if the read is already formatted like PacBio.
         if (re.match('^(.*?)/([\d]+)/([\d]+)_([\d]+)$', header) != None):
+            read[1] = re.sub("(.{500})", "\\1\n", read[1], 0, re.DOTALL);   ### Wrap the sequence line, because DALIGNER has a 9998bp line len limit.
+            fp_out.write('>%s\n' % (read[0]));
+            fp_out.write('%s\n' % (read[1]));   ### Wrap the sequence line, because DALIGNER has a 9998bp line len limit.
             continue;
 
         ### Take only the part of the header up to the first whitespace, and replace all existing '/' with '_' to reduce chances of
@@ -332,10 +335,10 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
         cfg_lines += '#input_type = preads\n';
         cfg_lines += '\n';
         cfg_lines += '# The length cutoff used for seed reads used for initial mapping\n';
-        cfg_lines += 'length_cutoff = 12000\n';
+        cfg_lines += 'length_cutoff = 2000\n';
         cfg_lines += '\n';
         cfg_lines += '# The length cutoff used for seed reads usef for pre-assembly\n';
-        cfg_lines += 'length_cutoff_pr = 12000\n';
+        cfg_lines += 'length_cutoff_pr = 2000\n';
         cfg_lines += '\n';
         cfg_lines += '# job_type= local\n';
         cfg_lines += 'jobqueue = your_queue\n';
@@ -507,7 +510,7 @@ def download_and_install():
             log('Creating a directory on path "%s".' % (ASSEMBLERS_PATH_ROOT_ABS), None);
             os.makedirs(ASSEMBLERS_PATH_ROOT_ABS);
 
-        command = 'cd %s; git clone %s' % (ASSEMBLERS_PATH_ROOT_ABS, ASSEMBLER_URL)
+        command = 'cd %s; git clone %s; cd %s; git checkout 8bb2737fd1d70e8914ade7479b434cd1223d5009' % (ASSEMBLERS_PATH_ROOT_ABS, ASSEMBLER_URL, ASSEMBLER_PATH)
         execute_command(command, None, dry_run=DRY_RUN);
 
         setup_commands = [];
