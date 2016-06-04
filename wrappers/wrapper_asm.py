@@ -32,7 +32,7 @@ except:
 
 ASSEMBLER_URL = 'https://github.com/isovic/asm.git'
 ASSEMBLER_PATH = os.path.join(ASSEMBLERS_PATH_ROOT_ABS, 'asm')
-ASSEMBLER_BIN = os.path.join(ASSEMBLER_PATH,'asm/asm.py')
+ASSEMBLER_BIN = os.path.join(ASSEMBLER_PATH, 'asm.py')
 ASSEMBLER_NAME = 'Asm'
 # ASSEMBLER_RESULTS = 'out/9-terminator/asm.ctg.fasta'
 ASSEMBLY_UNPOLISHED = 'benchmark-unpolished_assembly.fasta'
