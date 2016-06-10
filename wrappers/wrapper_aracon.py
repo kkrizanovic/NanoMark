@@ -340,6 +340,7 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
         current_memtime_id += 1;
         command = '%s %s %s %s --num-threads %d' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), ASSEMBLER_BIN, reads_file, output_path, num_threads);
         execute_command(command, fp_log, dry_run=DRY_RUN);
+        current_memtime_id += 1;
 
         # Copy the resulting contigs to a new file. If the contigs file does not exist, create an empty file.
         if (os.path.exists('%s/assembly.consensus.iter2.fasta' % (output_path))):
@@ -354,6 +355,7 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
         current_memtime_id += 1;
         command = '%s %s %s %s --num-threads %d --erc' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), ASSEMBLER_BIN, reads_file, output_path, num_threads);
         execute_command(command, fp_log, dry_run=DRY_RUN);
+        current_memtime_id += 1;
 
         # Copy the resulting contigs to a new file. If the contigs file does not exist, create an empty file.
         if (os.path.exists('%s/assembly.consensus.iter2.fasta' % (output_path))):
