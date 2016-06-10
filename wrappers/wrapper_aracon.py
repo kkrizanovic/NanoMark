@@ -30,10 +30,10 @@ except:
     CGMEMTIME_FILE = CGMEMTIME_PATH + '/cgmemtime';
     TOOLS_ROOT_ABS = '%s/tools/' % (SCRIPT_PATH);
 
-ASSEMBLER_URL = 'https://github.com/isovic/asm.git'
-ASSEMBLER_PATH = os.path.join(ASSEMBLERS_PATH_ROOT_ABS, 'asm')
-ASSEMBLER_BIN = os.path.join(ASSEMBLER_PATH, 'asm.py')
-ASSEMBLER_NAME = 'Asm'
+ASSEMBLER_URL = 'https://github.com/isovic/aracon.git'
+ASSEMBLER_PATH = os.path.join(ASSEMBLERS_PATH_ROOT_ABS, 'aracon')
+ASSEMBLER_BIN = os.path.join(ASSEMBLER_PATH, 'aracon')
+ASSEMBLER_NAME = 'Aracon'
 # ASSEMBLER_RESULTS = 'out/9-terminator/asm.ctg.fasta'
 ASSEMBLY_UNPOLISHED = 'benchmark-unpolished_assembly.fasta'
 ASSEMBLY_POLISHED = 'benchmark-polished_assembly.fasta'
@@ -350,6 +350,20 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
             fp = open('%s/%s' % (output_path, ASSEMBLY_UNPOLISHED), 'w');
             fp.close();
 
+    elif machine_name == 'erc':
+        current_memtime_id += 1;
+        command = '%s %s %s %s --num-threads %d --erc' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), ASSEMBLER_BIN, reads_file, output_path, num_threads);
+        execute_command(command, fp_log, dry_run=DRY_RUN);
+
+        # Copy the resulting contigs to a new file. If the contigs file does not exist, create an empty file.
+        if (os.path.exists('%s/assembly.consensus.iter2.fasta' % (output_path))):
+            command = 'cp %s/assembly.consensus.iter2.fasta %s/%s' % (output_path, output_path, ASSEMBLY_UNPOLISHED);
+            execute_command(command, fp_log, dry_run=DRY_RUN);
+        else:
+            # Nothing was generated (i.e. the assembly was unsuccessful). Just touch the file.
+            fp = open('%s/%s' % (output_path, ASSEMBLY_UNPOLISHED), 'w');
+            fp.close();
+
     elif machine_name == 'illumina':
         log('\nMachine name "%s" not implemented for %s.\n' % (machine_name, ASSEMBLER_NAME));
         log('Skipping ....\n', fp_log)
@@ -394,7 +408,7 @@ def download_and_install():
             log('Creating a directory on path "%s".' % (ASSEMBLER_PATH), None);
             os.makedirs(ASSEMBLER_PATH);
 
-        command = 'cd %s; git clone %s; cd %s; git checkout dev' % (ASSEMBLERS_PATH_ROOT_ABS, ASSEMBLER_URL, ASSEMBLER_PATH);
+        command = 'cd %s; git clone %s; cd %s' % (ASSEMBLERS_PATH_ROOT_ABS, ASSEMBLER_URL, ASSEMBLER_PATH);
         execute_command(command, None, dry_run=DRY_RUN);
 
         command = 'cd %s; make' % (ASSEMBLER_PATH)
