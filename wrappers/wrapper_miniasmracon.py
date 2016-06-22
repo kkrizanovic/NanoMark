@@ -35,7 +35,7 @@ ASSEMBLER_PATH = os.path.join(ASSEMBLERS_PATH_ROOT_ABS, 'miniasmracon')
 ASSEMBLER_BIN = os.path.join(ASSEMBLER_PATH,'miniasm/miniasm')
 ASSEMBLER_NAME = 'MiniasmRacon'
 RACON_BIN = os.path.join(ASSEMBLER_PATH,'racon/bin/racon')
-PAF2MHAP_BIN = os.path.join(ASSEMBLER_PATH,'racon/scripts/paf2mhap.pl')
+# PAF2MHAP_BIN = os.path.join(ASSEMBLER_PATH,'racon/scripts/paf2mhap.pl')
 # ASSEMBLER_RESULTS = 'out/9-terminator/asm.ctg.fasta'
 ASSEMBLY_UNPOLISHED = 'benchmark-unpolished_assembly.fasta'
 ASSEMBLY_POLISHED = 'benchmark-polished_assembly.fasta'
@@ -393,20 +393,20 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
         current_memtime_id += 1;
         command = '%s %s/minimap/minimap %s %s > %s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), ASSEMBLER_PATH, assembly_iter0_fasta, reads_file, mapping_iter1_paf);
         execute_command(command, fp_log, dry_run=DRY_RUN);
-        command = '%s %s %s %s > %s' % (PAF2MHAP_BIN, assembly_iter0_fasta, reads_file_fasta, mapping_iter1_paf, mapping_iter1_mhap);
-        execute_command(command, fp_log, dry_run=DRY_RUN);
+        # command = '%s %s %s %s > %s' % (PAF2MHAP_BIN, assembly_iter0_fasta, reads_file_fasta, mapping_iter1_paf, mapping_iter1_mhap);
+        # execute_command(command, fp_log, dry_run=DRY_RUN);
         current_memtime_id += 1;
-        command = '%s %s -M 5 -X -4 -G -8 -E -6 --bq 10 -t %d %s %s %s %s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), RACON_BIN, num_threads, reads_file, mapping_iter1_mhap, assembly_iter0_fasta, assembly_iter1_fasta);
+        command = '%s %s -M 5 -X -4 -G -8 -E -6 --bq 10 -t %d %s %s %s %s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), RACON_BIN, num_threads, reads_file, mapping_iter1_paf, assembly_iter0_fasta, assembly_iter1_fasta);
         execute_command(command, fp_log, dry_run=DRY_RUN);
 
         # Run the first iteration of Racon.
         current_memtime_id += 1;
         command = '%s %s/minimap/minimap %s %s > %s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), ASSEMBLER_PATH, assembly_iter1_fasta, reads_file, mapping_iter2_paf);
         execute_command(command, fp_log, dry_run=DRY_RUN);
-        command = '%s %s %s %s > %s' % (PAF2MHAP_BIN, assembly_iter1_fasta, reads_file_fasta, mapping_iter2_paf, mapping_iter2_mhap);
-        execute_command(command, fp_log, dry_run=DRY_RUN);
+        # command = '%s %s %s %s > %s' % (PAF2MHAP_BIN, assembly_iter1_fasta, reads_file_fasta, mapping_iter2_paf, mapping_iter2_mhap);
+        # execute_command(command, fp_log, dry_run=DRY_RUN);
         current_memtime_id += 1;
-        command = '%s %s -M 5 -X -4 -G -8 -E -6 --bq 10 -t %d %s %s %s %s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), RACON_BIN, num_threads, reads_file, mapping_iter2_mhap, assembly_iter1_fasta, assembly_iter2_fasta);
+        command = '%s %s -M 5 -X -4 -G -8 -E -6 --bq 10 -t %d %s %s %s %s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), RACON_BIN, num_threads, reads_file, mapping_iter2_paf, assembly_iter1_fasta, assembly_iter2_fasta);
         execute_command(command, fp_log, dry_run=DRY_RUN);
 
         command = 'cp %s %s/%s' % (assembly_iter2_fasta, output_path, ASSEMBLY_UNPOLISHED);
