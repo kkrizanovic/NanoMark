@@ -217,7 +217,7 @@ def parse_memtime_files_and_accumulate(memtime_files, final_memtime_file):
             final_cpu_time = cputime;
             final_user_time = usertime;
             final_system_time = systemtime;
-            final_max_rss += maxrss;
+            final_max_rss = maxrss;
             final_time_unit = time_unit;
             final_mem_unit = mem_unit;
         else:
@@ -227,7 +227,7 @@ def parse_memtime_files_and_accumulate(memtime_files, final_memtime_file):
                 final_cpu_time += cputime;
                 final_user_time += usertime;
                 final_system_time += systemtime;
-                final_max_rss += maxrss;
+                final_max_rss = max(final_max_rss, maxrss);
             else:
                 sys.stderr.write('Memory or time units not the same in all files! Instead of handling this, we decided to be lazy and just give up.\n');
                 break;
