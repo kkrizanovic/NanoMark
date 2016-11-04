@@ -297,6 +297,118 @@ def parse_memtime_files_and_accumulate(memtime_files, final_memtime_file):
 ##############################################################
 ##############################################################
 
+def split_contigs(contigs_file, split_contig_dir):
+    split_contig_files = [];
+
+    try:
+        fp_in = open(contigs_file, 'r');
+    except:
+        sys.stderr.write('ERROR: Could not open file "%s" for reading! Exiting.\n' % contigs_file);
+        exit(0);
+
+    i = 0;
+    while True:
+        i += 1;
+        [header, read] = get_single_read(fp_in);
+        if (len(read) == 0):
+            break;
+
+        split_contig_files.append('%s/%s%s' % (split_contig_dir, header.split()[0], os.path.splitext(contigs_file)[1]));
+        output_contig_file = split_contig_files[-1];
+        try:
+            fp_out = open(output_contig_file, 'w');
+        except:
+            sys.stderr.write('ERROR: Could not open file "%s" for writing! Exiting.\n' % output_fasta_path);
+            exit(0);
+        fp_out.write('%s\n' % ('\n'.join(read)));
+        fp_out.close();
+
+    fp_in.close();
+
+    return split_contig_files;
+
+def split_m5_by_ref_name(m5_file, split_m5_dir):
+    try:
+        fp = open(m5_file, 'r');
+    except Exception, e:
+        sys.stderr.write('ERROR: Could not open file "%s" for reading!\n' % (m5_file));
+        return;
+
+    aln_hash = {};
+
+    ln = 0;
+    for line in fp:
+        ln += 1;
+        line = line.strip();
+        if (len(line) == 0): continue;
+        sl = line.split();
+        if (len(sl) != 19):
+            sys.stderr.write('ERROR: m5 line #%d has invalid number of arguments (%d instead of 19)!\n' % (ln, len(sl)));
+            continue;
+
+        tname = sl[5];
+        if (tname in aln_hash):
+            aln_hash[tname].append(line);
+        else:
+            aln_hash[tname] = [line];
+    fp.close();
+
+    for key in aln_hash.keys():
+        split_m5_file = '%s/%s.m5' % (split_m5_dir, key);
+        try:
+            fp = open(split_m5_file, 'w');
+        except Exception, e:
+            sys.stderr.write('ERROR: Could not open file "%s" for writing!\n' % (split_m5_file));
+            return;
+        for line in aln_hash[key]:
+            fp.write('%s\n' % line);
+        fp.close();
+
+def run_consensus_iteration(prev_iteration, current_iteration, memtime_files_prefix, current_memtime_id, fp_log, num_threads, prev_contigs_fasta, reads_file_fasta):
+    # prev_iter = 'iter0';
+    # current_iter = 'iter1';
+    # prev_contigs_fasta = '%s/consensus-iter%d.fasta' % (output_path, prev_iteration);
+    current_contigs_fasta = '%s/consensus-iter%d.fasta' % (output_path, current_iteration);
+
+    total_m5_file = '%s-iter%d.m5' % (prev_contigs_fasta, current_iteration);
+    split_m5_dir = '%s/split-m5-iter%d' % (output_path, current_iteration);
+    split_contig_dir = '%s/split-contig-iter%d' % (output_path, current_iteration);
+    split_consensus_dir = '%s/split-consensus-iter%d' % (output_path, current_iteration);
+
+    if (not os.path.exists(split_m5_dir)):
+        os.makedirs(split_m5_dir);
+    if (not os.path.exists(split_contig_dir)):
+        os.makedirs(split_contig_dir);
+    if (not os.path.exists(split_consensus_dir)):
+        os.makedirs(split_consensus_dir);
+
+    # Align all reads to all contigs.
+    current_memtime_id += 1;
+    command = '%s %s -nproc %d %s %s -bestn 1 -m 5 -minMatch 19 -out %s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), BLASR_BIN, num_threads, reads_file_fasta, prev_contigs_fasta, total_m5_file);
+    execute_command(command, fp_log, dry_run=DRY_RUN);
+
+    # Split contigs into individual files.
+    split_contig_file = split_contigs(prev_contigs_fasta, split_contig_dir);
+    # Split alignments into individual files (by contig name).
+    split_m5_by_ref_name(total_m5_file, split_m5_dir);
+
+    # Run Sparc on each separate contig.
+    for single_contig_path in split_contig_file:
+        single_m5 = '%s/%s.m5' % (split_m5_dir, os.path.splitext(os.path.basename(single_contig_path))[0]);
+        single_contig_consensus = '%s/%s.sparc' % (split_consensus_dir, os.path.basename(single_contig_path));
+
+        current_memtime_id += 1;
+        command = '%s %s m %s b %s k 1 c 2 g 1 HQ_Prefix Contig boost 5 t 0.2 o %s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), SPARC_BIN, single_m5, single_contig_path, single_contig_consensus);
+        execute_command(command, fp_log, dry_run=DRY_RUN);
+
+        # Concatenate the results.
+        command = 'cat %s.consensus.fasta >> %s' % (single_contig_consensus, current_contigs_fasta);
+        execute_command(command, fp_log, dry_run=DRY_RUN);
+
+    return [current_contigs_fasta, current_memtime_id];
+
+
+
 # Function 'run' should provide a standard interface for running a mapper. Given input parameters, it should run the
 # alignment process, and convert any custom output results to the SAM format. Function should return a string with the
 # path to the output file.
@@ -393,67 +505,14 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
         execute_command(command, fp_log, dry_run=DRY_RUN);
 
         assembly_iter0_fasta = '%s/consensus-iter0.fasta' % (output_path);
-        assembly_iter1_fasta = '%s/consensus-iter1.fasta' % (output_path);
-        assembly_iter2_fasta = '%s/consensus-iter2.fasta' % (output_path);
-        mapping_iter1_paf = '%s/mapping-iter1.paf' % (output_path);
-        mapping_iter1_mhap = '%s/mapping-iter1.mhap' % (output_path);
-        mapping_iter2_paf = '%s/mapping-iter2.paf' % (output_path);
-        mapping_iter2_mhap = '%s/mapping-iter2.mhap' % (output_path);
+        # assembly_iter1_fasta = '%s/consensus-iter1.fasta' % (output_path);
+        # assembly_iter2_fasta = '%s/consensus-iter2.fasta' % (output_path);
 
         command = "awk '$1 ~/S/ {print \">\"$2\"\\n\"$3}' %s > %s" % (assembly_raw_gfa, assembly_iter0_fasta);
         execute_command(command, fp_log, dry_run=DRY_RUN);
 
-        # Iteration 1.
-        split_dir = '%s/split-iter1' % (output_path);
-        command = 'mkdir -p %s; split -l 2 -d %s %s/' % (split_dir, assembly_iter0_fasta, split_dir);
-        execute_command(command, fp_log, dry_run=DRY_RUN);
-        split_contigs = find_files(split_dir, '*');
-        print split_contigs;
-
-        for single_contig_path in split_contigs:
-            # single_contig_path = '';
-            single_m5 = '%s.m5' % (single_contig_path);
-            single_contig_consensus = '%s.sparc' % (single_contig_path);
-
-            current_memtime_id += 1;
-            command = '%s %s -nproc %d %s %s -bestn 1 -m 5 -minMatch 19 -out %s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), BLASR_BIN, num_threads, reads_file_fasta, single_contig_path, single_m5);
-            execute_command(command, fp_log, dry_run=DRY_RUN);
-
-            current_memtime_id += 1;
-            command = '%s %s m %s b %s k 1 c 2 g 1 HQ_Prefix Contig boost 5 t 0.2 o %s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), SPARC_BIN, single_m5, single_contig_path, single_contig_consensus);
-            execute_command(command, fp_log, dry_run=DRY_RUN);
-
-            # Concatenate the results.
-            command = 'cat %s.consensus.fasta >> %s' % (single_contig_consensus, assembly_iter1_fasta);
-            execute_command(command, fp_log, dry_run=DRY_RUN);
-
-
-
-        # Iteration 2.
-        split_dir = '%s/split-iter2' % (output_path);
-        command = 'mkdir -p %s; split -l 2 -d %s %s/' % (split_dir, assembly_iter1_fasta, split_dir);
-        execute_command(command, fp_log, dry_run=DRY_RUN);
-        split_contigs = find_files(split_dir, '*');
-
-        for single_contig_path in split_contigs:
-            # single_contig_path = '';
-            single_m5 = '%s.m5' % (single_contig_path);
-            single_contig_consensus = '%s.sparc' % (single_contig_path);
-
-            current_memtime_id += 1;
-            command = '%s %s -nproc %d %s %s -bestn 1 -m 5 -minMatch 19 -out %s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), BLASR_BIN, num_threads, reads_file_fasta, single_contig_path, single_m5);
-            execute_command(command, fp_log, dry_run=DRY_RUN);
-
-            current_memtime_id += 1;
-            command = '%s %s m %s b %s k 1 c 2 g 1 HQ_Prefix Contig boost 5 t 0.2 o %s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), SPARC_BIN, single_m5, single_contig_path, single_contig_consensus);
-            execute_command(command, fp_log, dry_run=DRY_RUN);
-
-            # Concatenate the results.
-            command = 'cat %s.consensus.fasta >> %s' % (single_contig_consensus, assembly_iter2_fasta);
-            execute_command(command, fp_log, dry_run=DRY_RUN);
-
-
-
+        [assembly_iter1_fasta, current_memtime_id] = run_consensus_iteration(0, 1, memtime_files_prefix, current_memtime_id, fp_log, num_threads, assembly_iter0_fasta, reads_file_fasta);
+        [assembly_iter2_fasta, current_memtime_id] = run_consensus_iteration(1, 2, memtime_files_prefix, current_memtime_id, fp_log, num_threads, assembly_iter1_fasta, reads_file_fasta);
 
         command = 'cp %s %s/%s' % (assembly_iter2_fasta, output_path, ASSEMBLY_UNPOLISHED);
         execute_command(command, fp_log, dry_run=DRY_RUN);
