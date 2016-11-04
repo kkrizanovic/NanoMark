@@ -364,7 +364,7 @@ def split_m5_by_ref_name(m5_file, split_m5_dir):
             fp.write('%s\n' % line);
         fp.close();
 
-def run_consensus_iteration(prev_iteration, current_iteration, memtime_files_prefix, current_memtime_id, fp_log, num_threads, prev_contigs_fasta, reads_file_fasta):
+def run_consensus_iteration(prev_iteration, current_iteration, memtime_files_prefix, current_memtime_id, fp_log, machine_name, num_threads, prev_contigs_fasta, reads_file_fasta):
     # prev_iter = 'iter0';
     # current_iter = 'iter1';
     # prev_contigs_fasta = '%s/consensus-iter%d.fasta' % (output_path, prev_iteration);
@@ -397,9 +397,14 @@ def run_consensus_iteration(prev_iteration, current_iteration, memtime_files_pre
         single_m5 = '%s/%s.m5' % (split_m5_dir, os.path.splitext(os.path.basename(single_contig_path))[0]);
         single_contig_consensus = '%s/%s.sparc' % (split_consensus_dir, os.path.basename(single_contig_path));
 
-        current_memtime_id += 1;
-        command = '%s %s m %s b %s k 1 c 2 g 1 HQ_Prefix Contig boost 5 t 0.2 o %s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), SPARC_BIN, single_m5, single_contig_path, single_contig_consensus);
-        execute_command(command, fp_log, dry_run=DRY_RUN);
+        if machine_name == 'pacbio':
+            current_memtime_id += 1;
+            command = '%s %s m %s b %s k 1 g 1 HQ_Prefix Contig boost 5 t 0.2 o %s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), SPARC_BIN, single_m5, single_contig_path, single_contig_consensus);
+            execute_command(command, fp_log, dry_run=DRY_RUN);
+        elif machine_name == 'nanopore':
+            current_memtime_id += 1;
+            command = '%s %s m %s b %s k 2 g 2 HQ_Prefix Contig boost 5 t 0.2 o %s' % (measure_command('%s-%s.memtime' % (memtime_files_prefix, current_memtime_id)), SPARC_BIN, single_m5, single_contig_path, single_contig_consensus);
+            execute_command(command, fp_log, dry_run=DRY_RUN);
 
         # Concatenate the results.
         command = 'cat %s.consensus.fasta >> %s' % (single_contig_consensus, current_contigs_fasta);
@@ -511,8 +516,8 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
         command = "awk '$1 ~/S/ {print \">\"$2\"\\n\"$3}' %s > %s" % (assembly_raw_gfa, assembly_iter0_fasta);
         execute_command(command, fp_log, dry_run=DRY_RUN);
 
-        [assembly_iter1_fasta, current_memtime_id] = run_consensus_iteration(0, 1, memtime_files_prefix, current_memtime_id, fp_log, num_threads, assembly_iter0_fasta, reads_file_fasta);
-        [assembly_iter2_fasta, current_memtime_id] = run_consensus_iteration(1, 2, memtime_files_prefix, current_memtime_id, fp_log, num_threads, assembly_iter1_fasta, reads_file_fasta);
+        [assembly_iter1_fasta, current_memtime_id] = run_consensus_iteration(0, 1, memtime_files_prefix, current_memtime_id, fp_log, machine_name, num_threads, assembly_iter0_fasta, reads_file_fasta);
+        [assembly_iter2_fasta, current_memtime_id] = run_consensus_iteration(1, 2, memtime_files_prefix, current_memtime_id, fp_log, machine_name, num_threads, assembly_iter1_fasta, reads_file_fasta);
 
         command = 'cp %s %s/%s' % (assembly_iter2_fasta, output_path, ASSEMBLY_UNPOLISHED);
         execute_command(command, fp_log, dry_run=DRY_RUN);
