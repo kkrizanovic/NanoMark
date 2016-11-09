@@ -231,7 +231,7 @@ def convert_reads_to_pacbio_format(reads_file, out_reads_file, fp_log, read_coun
 # def run(reads_files, reference_file, machine_name, output_path, output_suffix=''):
 #    approx_genome_len      Some assemblers need this parameter in order to run. For others, it's not necessary.
 #    rerun                  If True, the specified output path will be moved to a backup location, and a new output folder created. Otherwise, the same folder will be used if it exists.
-def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
+def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True, run_type='run'):
     ##################################################################################
     ### Sanity check for input datasets.
     ##################################################################################    
@@ -332,6 +332,10 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
         cfg_lines += 'input_fofn = %s\n' % (fofn_file);
         cfg_lines += '\n';
         cfg_lines += 'input_type = raw\n';
+        if (run_type == 'erc'):
+                cfg_lines += 'target = pre-assembly\n';
+        else:
+                cfg_lines += 'target = assembly\n';
         cfg_lines += '#input_type = preads\n';
         cfg_lines += '\n';
         cfg_lines += '# The length cutoff used for seed reads used for initial mapping\n';
@@ -375,6 +379,10 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
             cfg_lines += 'input_type = preads\n';
         else:
             cfg_lines += 'input_type = raw\n';
+        if (run_type == 'erc'):
+                cfg_lines += 'target = pre-assembly\n';
+        else:
+                cfg_lines += 'target = assembly\n';
         cfg_lines += '\n';
         cfg_lines += '# The length cutoff used for seed reads used for initial mapping\n';
         cfg_lines += 'length_cutoff = 1000\n';
@@ -458,7 +466,8 @@ def run(datasets, output_path, approx_genome_len=0, move_exiting_out_path=True):
     run_commands.append('. %s/bin/activate' % (FC_path));
     run_commands.append('cd %s' % (output_path));
     run_commands.append('%s %s/bin/fc_run.py %s' % (measure_command(memtime_file), FC_path, cfg_file));
-    run_commands.append('cp %s/2-asm-falcon/p_ctg.fa %s/%s' % (output_path, output_path, ASSEMBLY_UNPOLISHED));
+    if (run_type != 'erc'):
+        run_commands.append('cp %s/2-asm-falcon/p_ctg.fa %s/%s' % (output_path, output_path, ASSEMBLY_UNPOLISHED));
     command = '; '.join(run_commands);
     execute_command(command, fp_log, dry_run=DRY_RUN);
 
@@ -563,7 +572,7 @@ if __name__ == "__main__":
     if (sys.argv[1] == 'install'):
         download_and_install()
 
-    elif (sys.argv[1] == 'run'):
+    elif (sys.argv[1] == 'run' or sys.argv[1] == 'erc'):
         if (len(sys.argv) < 5):
             verbose_usage_and_exit()
 
@@ -573,7 +582,7 @@ if __name__ == "__main__":
         for arg in sys.argv[4:]:
             dataset = Dataset(arg);
             datasets.append(dataset);
-        run(datasets, output_path, approx_genome_len);
+        run(datasets, output_path, approx_genome_len, run_type=sys.argv[1]);
 
     else:
         verbose_usage_and_exit()
