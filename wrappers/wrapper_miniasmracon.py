@@ -459,10 +459,10 @@ def download_and_install():
             log('Creating a directory on path "%s".' % (ASSEMBLER_PATH), None);
             os.makedirs(ASSEMBLER_PATH);
 
-        command = 'cd %s; git clone https://github.com/lh3/minimap && (cd minimap && make)' % (ASSEMBLER_PATH)
+        command = 'cd %s; git clone https://github.com/lh3/minimap && cd minimap && git checkout 1cd6ae3bc7c7a6f9e7c03c0b7a93a12647bba244 && make' % (ASSEMBLER_PATH)
         execute_command(command, None, dry_run=DRY_RUN);
 
-        command = 'cd %s; git clone %s && (cd miniasm && make)' % (ASSEMBLER_PATH, ASSEMBLER_URL)
+        command = 'cd %s; git clone %s && cd miniasm && git checkout 17d5bd12290e0e8a48a5df5afaeaef4d171aa133 && make' % (ASSEMBLER_PATH, ASSEMBLER_URL)
         execute_command(command, None, dry_run=DRY_RUN);
         
         command = 'cd %s; git clone https://github.com/isovic/racon.git && (cd racon && git checkout mhap && make modules && make tools && make)' % (ASSEMBLER_PATH)

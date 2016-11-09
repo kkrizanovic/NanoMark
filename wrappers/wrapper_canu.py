@@ -420,7 +420,7 @@ def download_and_install():
             # log('Creating a directory on path "%s".' % (ASSEMBLER_PATH), None);
             # os.makedirs(ASSEMBLER_PATH);
 
-        command = 'cd %s; git clone %s' % (ASSEMBLERS_PATH_ROOT_ABS, ASSEMBLER_URL)
+        command = 'cd %s; git clone %s; cd canu; git checkout ab50ba3c0cf032915242e7c30f82360312246b8f' % (ASSEMBLERS_PATH_ROOT_ABS, ASSEMBLER_URL)
         execute_command(command, None, dry_run=DRY_RUN);
 
         command = 'cd %s; cd canu/src && make -j' % (ASSEMBLERS_PATH_ROOT_ABS)
