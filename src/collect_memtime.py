@@ -175,7 +175,7 @@ def verbose_usage_and_exit():
 
 if __name__ == "__main__":
     if (len(sys.argv) < 2):
-        verbose_usage_and_exit()
+        verbose_usage_and_exit();
 
 #    if (len(sys.argv) != 4):
 #        verbose_usage_and_exit()
@@ -189,29 +189,34 @@ if __name__ == "__main__":
 	    sys.stderr.write('\n');
     	    exit(1);
 
-        memtime_folder = sys.argv[1];
-        out_file = sys.argv[2];
-        memtime_prefix = sys.argv[3];
+        memtime_folder = sys.argv[2];
+        out_file = sys.argv[3];
+        memtime_prefix = sys.argv[4];
 
         files = find_files(memtime_folder, memtime_prefix);
         print files;
         parse_memtime_files_and_accumulate(files, out_file);
 
-    elif (sys.argv[2] == 'number'):
-        if (len(sys.argv) != 5):
+    elif (sys.argv[1] == 'number'):
+        if (len(sys.argv) != 7):
             sys.stderr.write('Tool for collecting memtime results.\n');
 	    sys.stderr.write('Usage:\n');
 	    sys.stderr.write('\t%s mode <memtime_folder> <out_total_memtime_file> memtime_prefix start_num end_num' % (sys.argv[0]));
-	    sys.stderr.write('mode - either "pattern" or "number". If pattern, all memtime files will be found using a given pattern. If number, a prefix is used in combination with a range of numbers spanning all file names.\n' % (sys.argv[0]));
+	    sys.stderr.write('start_num - number of the first memtime file.\n');
+	    sys.stderr.write('end_num - number of the last memtime file (inclusive).\n');
+	    sys.stderr.write('mode - either "pattern" or "number". If pattern, all memtime files will be found using a given pattern. If number, a prefix is used in combination with a range of numbers spanning all file names.\n');
 	    sys.stderr.write('\n');
     	    exit(1);
 
-        memtime_folder = sys.argv[1];
-        out_file = sys.argv[2];
-        memtime_prefix = sys.argv[3];
+        memtime_folder = sys.argv[2];
+        out_file = sys.argv[3];
+        memtime_prefix = sys.argv[4];
+        start_num = int(sys.argv[5]);
+        end_num = int(sys.argv[6]) + 1;
 
 #        files = find_files(memtime_folder, memtime_prefix);
-        
+        files = ['%s/%s-%s.memtime' % (memtime_folder, memtime_prefix, value) for value in xrange(start_num, end_num)];
         print files;
         parse_memtime_files_and_accumulate(files, out_file);
-
+    else:
+        verbose_usage_and_exit();
