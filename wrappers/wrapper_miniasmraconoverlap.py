@@ -31,9 +31,9 @@ except:
     TOOLS_ROOT_ABS = '%s/tools/' % (SCRIPT_PATH);
 
 ASSEMBLER_URL = 'https://github.com/lh3/miniasm.git'
-ASSEMBLER_PATH = os.path.join(ASSEMBLERS_PATH_ROOT_ABS, 'miniasmracon')
+ASSEMBLER_PATH = os.path.join(ASSEMBLERS_PATH_ROOT_ABS, 'miniasmraconoverlap')
 ASSEMBLER_BIN = os.path.join(ASSEMBLER_PATH,'miniasm/miniasm')
-ASSEMBLER_NAME = 'MiniasmRacon'
+ASSEMBLER_NAME = 'MiniasmRaconOverlap'
 RACON_BIN = os.path.join(ASSEMBLER_PATH,'racon/bin/racon')
 # PAF2MHAP_BIN = os.path.join(ASSEMBLER_PATH,'racon/scripts/paf2mhap.pl')
 # ASSEMBLER_RESULTS = 'out/9-terminator/asm.ctg.fasta'
@@ -465,7 +465,7 @@ def download_and_install():
         command = 'cd %s; git clone %s && cd miniasm && git checkout 17d5bd12290e0e8a48a5df5afaeaef4d171aa133 && make' % (ASSEMBLER_PATH, ASSEMBLER_URL)
         execute_command(command, None, dry_run=DRY_RUN);
         
-        command = 'cd %s; git clone https://github.com/isovic/racon.git && (cd racon && git checkout mhap && make modules && make tools && make)' % (ASSEMBLER_PATH)
+        command = 'cd %s; git clone https://github.com/isovic/racon.git && (cd racon && git checkout overlap && make modules && make tools && make)' % (ASSEMBLER_PATH)
         execute_command(command, None, dry_run=DRY_RUN);
 
         command = 'cd %s; wget http://www.cbcb.umd.edu/software/PBcR/data/convertFastaAndQualToFastq.jar' % (ASSEMBLER_PATH);
