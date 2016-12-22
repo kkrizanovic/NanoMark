@@ -166,8 +166,8 @@ def verbose_usage_and_exit():
 	sys.stderr.write('Tool for collecting memtime results.\n');
 	sys.stderr.write('Usage:\n');
 #	sys.stderr.write('\t%s <memtime_folder> <out_total_memtime_file> memtime_prefix [last_memtime_name]\n' % (sys.argv[0]));
-	sys.stderr.write('\t%s mode' % (sys.argv[0]));
-	sys.stderr.write('mode - either "pattern" or "number". If pattern, all memtime files will be found using a given pattern. If number, a prefix is used in combination with a range of numbers spanning all file names.\n' % (sys.argv[0]));
+	sys.stderr.write('\t%s mode\n' % (sys.argv[0]));
+	sys.stderr.write('mode - either "pattern" or "number". If pattern, all memtime files will be found using a given pattern. If number, a prefix is used in combination with a range of numbers spanning all file names.\n');
 #	sys.stderr.write('\t%s <memtime_folder> <out_total_memtime_file> memtime_prefix [last_memtime_name]\n' % (sys.argv[0]));
 #	sys.stderr.write('last_memtime_name - the list of memtime files is first sorted. If there is a file specified by this parameter, all following files will be ignored.\n')
 	sys.stderr.write('\n');
